@@ -1,5 +1,8 @@
 import jwt from 'jsonwebtoken';
 
+/**
+ * Auth middleware: JWT verify করে user attach করে request-এ
+ */
 const auth = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
 
@@ -9,7 +12,7 @@ const auth = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // Normalize token payload for robustness across token shapes
+
     req.user = {
       userId: decoded.userId || decoded.id || decoded._id,
       role: decoded.role || decoded.userRole || null,
@@ -21,10 +24,13 @@ const auth = (req, res, next) => {
 
     next();
   } catch (error) {
-    return res.status(401).json({ error: 'Invalid token' });
+    return res.status(401).json({ error: 'Invalid or expired token' });
   }
 };
 
+/**
+ * Role-based access control
+ */
 const authorize = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
