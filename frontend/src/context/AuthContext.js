@@ -1,5 +1,6 @@
+// src/context/AuthContext.js
 import React, { createContext, useState, useEffect } from 'react';
-import api, { authService } from '../services/api';
+import { authService } from '../services/api';
 
 export const AuthContext = createContext();
 
@@ -8,72 +9,61 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // axios response interceptor: auto logout on 401
-  useEffect(() => {
-    const interceptor = api.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        if (error.response?.status === 401) {
-          console.warn('Token expired or invalid. Logging out...');
-          logout();
-        }
-        return Promise.reject(error);
-      }
-    );
-    return () => api.interceptors.response.eject(interceptor);
-  }, []);
-
-  // load token & user on app start
+  // On mount: check for token in localStorage
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
     if (savedToken) {
       setToken(savedToken);
-      fetchUser(savedToken);
+      fetchCurrentUser(savedToken);
     } else {
       setLoading(false);
     }
   }, []);
 
-  const fetchUser = async (token) => {
+  // Fetch current user with token
+  const fetchCurrentUser = async (token) => {
     try {
-      if (!token) return;
-      // token is already in localStorage, axios interceptor will attach it
-      const res = await authService.getCurrentUser();
-      setUser(res.data.user);
+      const response = await authService.getCurrentUser(token);
+      setUser(response.data.user);
     } catch (error) {
-      console.error('Fetching user failed:', error.response?.data || error.message);
+      console.error('Fetch user failed:', error);
       logout();
     } finally {
       setLoading(false);
     }
   };
 
-  const register = async (name, email, mobile, password, role) => {
-    try {
-      const res = await authService.register({ name, email, mobile, password, role });
-      const newToken = res.data.token;
-      localStorage.setItem('token', newToken);
-      setToken(newToken);
-      setUser(res.data.user);
-      return res.data;
-    } catch (error) {
-      throw error.response?.data?.error || 'Registration failed';
-    }
-  };
-
+  // Login
   const login = async (email, password) => {
     try {
-      const res = await authService.login(email, password);
-      const newToken = res.data.token;
-      localStorage.setItem('token', newToken);
-      setToken(newToken);
-      setUser(res.data.user);
-      return res.data;
+      const response = await authService.login(email, password);
+      const token = response.token;
+
+      localStorage.setItem('token', token);
+      setToken(token);
+      setUser(response.user);
+      return response;
     } catch (error) {
       throw error.response?.data?.error || 'Login failed';
     }
   };
 
+  // Register
+  const register = async (name, email, mobile, password, role) => {
+    try {
+      const response = await authService.register(name, email, mobile, password, role);
+      const token = response.token;
+
+      localStorage.setItem('token', token);
+      setToken(token);
+      setUser(response.user);
+      return response;
+    } catch (error) {
+      throw error.response?.data?.error || 'Registration failed';
+    }
+  };
+
+  // Logout
   const logout = () => {
     localStorage.removeItem('token');
     setToken(null);
@@ -87,8 +77,8 @@ export const AuthProvider = ({ children }) => {
         token,
         loading,
         isAuthenticated: !!token,
-        register,
         login,
+        register,
         logout,
       }}
     >
