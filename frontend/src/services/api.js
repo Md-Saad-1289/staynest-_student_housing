@@ -76,4 +76,14 @@ export const notificationService = {
   deleteNotification: (notificationId) => api.delete(`/notifications/${notificationId}`).then(res => res.data),
 };
 
+/* =========================
+   SAVED SEARCH SERVICES
+========================= */
+export const savedSearchService = {
+  getSavedSearches: () => api.get('/saved-searches').then(res => res.data),
+  createSavedSearch: (data) => api.post('/saved-searches', data).then(res => res.data),
+  updateSavedSearch: (id, data) => api.put(`/saved-searches/${id}`, data).then(res => res.data),
+  deleteSavedSearch: (id) => api.delete(`/saved-searches/${id}`).then(res => res.data),
+};
+
 export default api;
