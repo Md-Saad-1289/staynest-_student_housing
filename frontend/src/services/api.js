@@ -5,7 +5,7 @@ import axios from 'axios';
  * Must point to backend API root (with /api/v1)
  */
 const API_BASE =
-  process.env.REACT_APP_API_URL ||
+  process.env.example.REACT_APP_API_URL ||
   'https://staynest-backend-n2kn.onrender.com/api/v1';
 
 /**
