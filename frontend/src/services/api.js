@@ -1,16 +1,9 @@
 import axios from 'axios';
 
-/**
- * IMPORTANT:
- * Must point to backend API root (with /api/v1)
- */
 const API_BASE =
-  process.env.example.REACT_APP_API_URL ||
+  process.env.REACT_APP_API_URL ||
   'https://staynest-backend-n2kn.onrender.com/api/v1';
 
-/**
- * Axios instance
- */
 const api = axios.create({
   baseURL: API_BASE,
   headers: {
@@ -18,17 +11,10 @@ const api = axios.create({
   },
 });
 
-/**
- * Attach JWT token automatically (if exists)
- */
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
+    if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
   (error) => Promise.reject(error)
@@ -39,19 +25,10 @@ api.interceptors.request.use(
 ========================= */
 export const authService = {
   register: (name, email, mobile, password, role) =>
-    api.post('/auth/register', {
-      name,
-      email,
-      mobile,
-      password,
-      role,
-    }),
+    api.post('/auth/register', { name, email, mobile, password, role }),
 
   login: (email, password) =>
-    api.post('/auth/login', {
-      email,
-      password,
-    }),
+    api.post('/auth/login', { email, password }),
 
   getCurrentUser: () => api.get('/auth/me'),
 };
@@ -129,35 +106,25 @@ export const notificationService = {
 ========================= */
 export const savedSearchService = {
   getSavedSearches: () => api.get('/saved-searches'),
-  createSavedSearch: (data) =>
-    api.post('/saved-searches', data),
-  updateSavedSearch: (id, data) =>
-    api.put(`/saved-searches/${id}`, data),
-  deleteSavedSearch: (id) =>
-    api.delete(`/saved-searches/${id}`),
+  createSavedSearch: (data) => api.post('/saved-searches', data),
+  updateSavedSearch: (id, data) => api.put(`/saved-searches/${id}`, data),
+  deleteSavedSearch: (id) => api.delete(`/saved-searches/${id}`),
 };
 
 /* =========================
    ADMIN SERVICES
 ========================= */
 export const adminService = {
-  getDashboardStats: () =>
-    api.get('/admin/dashboard/stats'),
-  getUnverifiedOwners: () =>
-    api.get('/admin/owners/unverified'),
-  verifyOwner: (userId) =>
-    api.put(`/admin/owners/${userId}/verify`),
-  rejectOwner: (userId, reason) =>
-    api.put(`/admin/owners/${userId}/reject`, { reason }),
-  getUnverifiedListings: () =>
-    api.get('/admin/listings/unverified'),
-  verifyListing: (id) =>
-    api.put(`/admin/listings/${id}/verify`),
+  getDashboardStats: () => api.get('/admin/dashboard/stats'),
+  getUnverifiedOwners: () => api.get('/admin/owners/unverified'),
+  verifyOwner: (userId) => api.put(`/admin/owners/${userId}/verify`),
+  rejectOwner: (userId, reason) => api.put(`/admin/owners/${userId}/reject`, { reason }),
+  getUnverifiedListings: () => api.get('/admin/listings/unverified'),
+  verifyListing: (id) => api.put(`/admin/listings/${id}/verify`),
   getFlags: () => api.get('/admin/flags'),
   resolveFlag: (id, adminNotes) =>
     api.put(`/admin/flags/${id}/resolve`, { adminNotes }),
-  getActions: (params) =>
-    api.get('/admin/actions', { params }),
+  getActions: (params) => api.get('/admin/actions', { params }),
 };
 
 export default api;
