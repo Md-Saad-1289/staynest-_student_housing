@@ -1,4 +1,3 @@
-// src/services/api.js
 import axios from 'axios';
 
 const API_BASE = 'https://staynest-backend-n2kn.onrender.com/api/v1';
@@ -9,7 +8,7 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Automatically attach token to every request
+// Automatically attach token for protected routes
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -65,6 +64,16 @@ export const bookingService = {
   getOwnerBookings: () => api.get('/bookings/owner').then(res => res.data),
   getStudentBookings: () => api.get('/bookings/student').then(res => res.data),
   updateBookingStatus: (id, status) => api.put(`/bookings/${id}/status`, { status }).then(res => res.data),
+};
+
+/* =========================
+   NOTIFICATION SERVICES
+========================= */
+export const notificationService = {
+  getNotifications: (limit = 20) => api.get('/notifications', { params: { limit } }).then(res => res.data),
+  markAsRead: (notificationId) => api.put(`/notifications/${notificationId}/read`).then(res => res.data),
+  markAllAsRead: () => api.put('/notifications/read-all').then(res => res.data),
+  deleteNotification: (notificationId) => api.delete(`/notifications/${notificationId}`).then(res => res.data),
 };
 
 export default api;
