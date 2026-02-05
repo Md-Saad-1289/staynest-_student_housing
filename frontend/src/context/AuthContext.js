@@ -1,13 +1,29 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { authService } from '../services/api';
+import api, { authService } from '../services/api';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  // axios response interceptor: auto logout on 401
+  useEffect(() => {
+    const interceptor = api.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          console.warn('Token expired or invalid. Logging out...');
+          logout();
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => api.interceptors.response.eject(interceptor);
+  }, []);
+
+  // load token & user on app start
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
     if (savedToken) {
@@ -20,16 +36,13 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async (token) => {
     try {
-      if (token) {
-        // ensure axios interceptor will include the token
-        localStorage.setItem('token', token);
-        setToken(token);
-      }
-      const response = await authService.getCurrentUser();
-      setUser(response.data.user);
+      if (!token) return;
+      // token is already in localStorage, axios interceptor will attach it
+      const res = await authService.getCurrentUser();
+      setUser(res.data.user);
     } catch (error) {
-      localStorage.removeItem('token');
-      setToken(null);
+      console.error('Fetching user failed:', error.response?.data || error.message);
+      logout();
     } finally {
       setLoading(false);
     }
@@ -37,11 +50,12 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, mobile, password, role) => {
     try {
-      const response = await authService.register(name, email, mobile, password, role);
-      localStorage.setItem('token', response.data.token);
-      setToken(response.data.token);
-      setUser(response.data.user);
-      return response.data;
+      const res = await authService.register({ name, email, mobile, password, role });
+      const newToken = res.data.token;
+      localStorage.setItem('token', newToken);
+      setToken(newToken);
+      setUser(res.data.user);
+      return res.data;
     } catch (error) {
       throw error.response?.data?.error || 'Registration failed';
     }
@@ -49,11 +63,12 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await authService.login(email, password);
-      localStorage.setItem('token', response.data.token);
-      setToken(response.data.token);
-      setUser(response.data.user);
-      return response.data;
+      const res = await authService.login(email, password);
+      const newToken = res.data.token;
+      localStorage.setItem('token', newToken);
+      setToken(newToken);
+      setUser(res.data.user);
+      return res.data;
     } catch (error) {
       throw error.response?.data?.error || 'Login failed';
     }
@@ -71,10 +86,10 @@ export const AuthProvider = ({ children }) => {
         user,
         token,
         loading,
+        isAuthenticated: !!token,
         register,
         login,
         logout,
-        isAuthenticated: !!token,
       }}
     >
       {children}
