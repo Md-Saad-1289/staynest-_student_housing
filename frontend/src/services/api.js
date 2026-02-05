@@ -23,6 +23,7 @@ export const authService = {
   getCurrentUser: () => api.get('/auth/me'),
 };
 
+
 export const userService = {
   getProfile: () => api.get('/auth/me'),
   updateProfile: (data) => api.put('/auth/profile', data),
