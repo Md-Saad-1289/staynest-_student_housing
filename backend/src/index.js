@@ -20,7 +20,8 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: [
-    "https://nestrostay.onrender.com",  // frontend URL
+    "https://nestrostay.onrender.com", // frontend URL
+    "http://localhost:3000",
   ],
   credentials: true,
 }));
