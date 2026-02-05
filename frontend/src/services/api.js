@@ -17,12 +17,18 @@ api.interceptors.request.use((config) => {
 });
 
 export const authService = {
-register: (name, email, mobile, password, role) =>
-  axios.post('https://staynest-backend-n2kn.onrender.com/api/v1/auth/register', { name, email, mobile, password, role });
+  register: (name, email, mobile, password, role) =>
+    axios.post(
+      'https://staynest-backend-n2kn.onrender.com/api/v1/auth/register',
+      { name, email, mobile, password, role }
+    ),
+
   login: (email, password) =>
     api.post('/auth/login', { email, password }),
+
   getCurrentUser: () => api.get('/auth/me'),
 };
+
 
 
 export const userService = {
