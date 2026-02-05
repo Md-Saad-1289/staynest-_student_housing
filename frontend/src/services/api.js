@@ -1,3 +1,4 @@
+// src/api.js
 import axios from 'axios';
 
 /* =========================
@@ -10,9 +11,9 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-/**
- * Automatically attach JWT token from localStorage
- */
+/* =========================
+   Request Interceptor: Attach JWT token automatically
+========================= */
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -22,31 +23,34 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-/**
- * Automatically handle 401: optional
- */
+/* =========================
+   Response Interceptor: Handle 401 globally
+========================= */
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      console.warn('Unauthorized: Token may be expired or missing');
-      localStorage.removeItem('token'); // force logout
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      console.warn('Unauthorized: Token missing/expired');
+      localStorage.removeItem('token');        // Clear token
+      window.location.href = '/login';         // Redirect to login page
     }
-    return Promise.reject(error);
+    return Promise.reject(err);
   }
 );
 
 /* =========================
-   AUTH SERVICES
+   AUTH SERVICE
 ========================= */
 export const authService = {
   register: (name, email, mobile, password, role) =>
     api.post('/auth/register', { name, email, mobile, password, role }),
 
   login: async (email, password) => {
-    const response = await api.post('/auth/login', { email, password });
-    localStorage.setItem('token', response.data.token); // Save token
-    return response.data;
+    const res = await api.post('/auth/login', { email, password });
+    if (res.data?.token) {
+      localStorage.setItem('token', res.data.token); // Save token
+    }
+    return res.data;
   },
 
   logout: () => localStorage.removeItem('token'),
@@ -55,7 +59,19 @@ export const authService = {
 };
 
 /* =========================
-   USER SERVICES
+   LISTING SERVICE
+========================= */
+export const listingService = {
+  getListings: (params) => api.get('/listings', { params }),
+  getOwnerListings: () => api.get('/listings/owner/my-listings'), // Only for owner role
+  getUserFavorites: () => api.get('/listings/user/favorites'),
+  toggleFavorite: (listingId) => api.post('/listings/user/toggle-favorite', { listingId }),
+  addViewHistory: (listingId) => api.post('/listings/user/view-history', { listingId }),
+  getViewHistory: () => api.get('/listings/user/view-history'),
+};
+
+/* =========================
+   USER SERVICE
 ========================= */
 export const userService = {
   getProfile: () => api.get('/auth/me'),
@@ -63,22 +79,7 @@ export const userService = {
 };
 
 /* =========================
-   LISTING SERVICES
-========================= */
-export const listingService = {
-  getListings: (params) => api.get('/listings', { params }),
-  getListing: (id) => api.get(`/listings/${id}`),
-  createListing: (data) => api.post('/listings', data),
-  updateListing: (id, data) => api.put(`/listings/${id}`, data),
-  getOwnerListings: () => api.get('/listings/owner/my-listings'),
-  toggleFavorite: (listingId) => api.post('/listings/user/toggle-favorite', { listingId }),
-  getUserFavorites: () => api.get('/listings/user/favorites'),
-  addViewHistory: (listingId) => api.post('/listings/user/view-history', { listingId }),
-  getViewHistory: () => api.get('/listings/user/view-history'),
-};
-
-/* =========================
-   BOOKING SERVICES
+   BOOKING SERVICE
 ========================= */
 export const bookingService = {
   createBooking: (data) => api.post('/bookings', data),
@@ -88,7 +89,7 @@ export const bookingService = {
 };
 
 /* =========================
-   REVIEW SERVICES
+   REVIEW SERVICE
 ========================= */
 export const reviewService = {
   createReview: (data) => api.post('/reviews', data),
@@ -97,34 +98,7 @@ export const reviewService = {
 };
 
 /* =========================
-   FLAG SERVICES
-========================= */
-export const flagService = {
-  flagListing: (listingId, reason) => api.post('/flags', { listingId, reason }),
-};
-
-/* =========================
-   NOTIFICATION SERVICES
-========================= */
-export const notificationService = {
-  getNotifications: (limit = 20) => api.get('/notifications', { params: { limit } }),
-  markAsRead: (notificationId) => api.put(`/notifications/${notificationId}/read`),
-  markAllAsRead: () => api.put('/notifications/read-all'),
-  deleteNotification: (notificationId) => api.delete(`/notifications/${notificationId}`),
-};
-
-/* =========================
-   SAVED SEARCH SERVICES
-========================= */
-export const savedSearchService = {
-  getSavedSearches: () => api.get('/saved-searches'),
-  createSavedSearch: (data) => api.post('/saved-searches', data),
-  updateSavedSearch: (id, data) => api.put(`/saved-searches/${id}`, data),
-  deleteSavedSearch: (id) => api.delete(`/saved-searches/${id}`),
-};
-
-/* =========================
-   ADMIN SERVICES
+   ADMIN SERVICE
 ========================= */
 export const adminService = {
   getDashboardStats: () => api.get('/admin/dashboard/stats'),
