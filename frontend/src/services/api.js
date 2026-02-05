@@ -8,7 +8,7 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Attach token automatically
+// Automatically attach token for protected routes
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -87,6 +87,14 @@ export const savedSearchService = {
 };
 
 /* =========================
+   FLAG SERVICES
+========================= */
+export const flagService = {
+  flagListing: (listingId, reason) =>
+    api.post('/flags', { listingId, reason }).then(res => res.data),
+};
+
+/* =========================
    ADMIN SERVICES
 ========================= */
 export const adminService = {
@@ -101,4 +109,5 @@ export const adminService = {
   getActions: (params) => api.get('/admin/actions', { params }).then(res => res.data),
 };
 
+// Default export axios instance
 export default api;
