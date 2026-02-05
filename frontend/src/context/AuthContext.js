@@ -1,4 +1,3 @@
-// src/context/AuthContext.js
 import React, { createContext, useState, useEffect } from 'react';
 import { authService } from '../services/api';
 
@@ -9,22 +8,20 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // On mount: check for token in localStorage
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
     if (savedToken) {
       setToken(savedToken);
-      fetchCurrentUser(savedToken);
+      fetchCurrentUser();
     } else {
       setLoading(false);
     }
   }, []);
 
-  // Fetch current user with token
-  const fetchCurrentUser = async (token) => {
+  const fetchCurrentUser = async () => {
     try {
-      const response = await authService.getCurrentUser(token);
-      setUser(response.data.user);
+      const data = await authService.getCurrentUser();
+      setUser(data.user);
     } catch (error) {
       console.error('Fetch user failed:', error);
       logout();
@@ -33,37 +30,30 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Login
   const login = async (email, password) => {
     try {
-      const response = await authService.login(email, password);
-      const token = response.token;
-
-      localStorage.setItem('token', token);
-      setToken(token);
-      setUser(response.user);
-      return response;
+      const data = await authService.login(email, password);
+      localStorage.setItem('token', data.token);
+      setToken(data.token);
+      setUser(data.user);
+      return data;
     } catch (error) {
       throw error.response?.data?.error || 'Login failed';
     }
   };
 
-  // Register
   const register = async (name, email, mobile, password, role) => {
     try {
-      const response = await authService.register(name, email, mobile, password, role);
-      const token = response.token;
-
-      localStorage.setItem('token', token);
-      setToken(token);
-      setUser(response.user);
-      return response;
+      const data = await authService.register(name, email, mobile, password, role);
+      localStorage.setItem('token', data.token);
+      setToken(data.token);
+      setUser(data.user);
+      return data;
     } catch (error) {
       throw error.response?.data?.error || 'Registration failed';
     }
   };
 
-  // Logout
   const logout = () => {
     localStorage.removeItem('token');
     setToken(null);
