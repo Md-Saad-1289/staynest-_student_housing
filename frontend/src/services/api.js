@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 /**
- * Base API URL
- * Fallback added for safety in production
+ * IMPORTANT:
+ * Must point to backend API root (with /api/v1)
  */
 const API_BASE =
   process.env.REACT_APP_API_URL ||
