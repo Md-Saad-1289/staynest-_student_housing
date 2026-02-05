@@ -86,4 +86,31 @@ export const savedSearchService = {
   deleteSavedSearch: (id) => api.delete(`/saved-searches/${id}`).then(res => res.data),
 };
 
+/* =========================
+   ADMIN SERVICES
+========================= */
+export const adminService = {
+  getDashboardStats: () => api.get('/admin/dashboard/stats').then(res => res.data),
+  getUnverifiedOwners: () => api.get('/admin/owners/unverified').then(res => res.data),
+  verifyOwner: (userId) => api.put(`/admin/owners/${userId}/verify`).then(res => res.data),
+  rejectOwner: (userId, reason) => api.put(`/admin/owners/${userId}/reject`, { reason }).then(res => res.data),
+  getUnverifiedListings: () => api.get('/admin/listings/unverified').then(res => res.data),
+  verifyListing: (id) => api.put(`/admin/listings/${id}/verify`).then(res => res.data),
+  getFlags: () => api.get('/admin/flags').then(res => res.data),
+  resolveFlag: (id, adminNotes) => api.put(`/admin/flags/${id}/resolve`, { adminNotes }).then(res => res.data),
+  getActions: (params) => api.get('/admin/actions', { params }).then(res => res.data),
+};
+
 export default api;
+
+// Export everything for convenience
+export {
+  api,
+  authService,
+  userService,
+  listingService,
+  bookingService,
+  notificationService,
+  savedSearchService,
+  adminService
+};
