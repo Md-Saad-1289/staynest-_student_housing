@@ -8,7 +8,7 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Automatically attach token for protected routes
+// Attach token automatically
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -92,6 +92,15 @@ export const savedSearchService = {
 export const flagService = {
   flagListing: (listingId, reason) =>
     api.post('/flags', { listingId, reason }).then(res => res.data),
+};
+
+/* =========================
+   REVIEW SERVICES
+========================= */
+export const reviewService = {
+  createReview: (data) => api.post('/reviews', data).then(res => res.data),
+  getListingReviews: (listingId) => api.get(`/reviews/listing/${listingId}`).then(res => res.data),
+  replyToReview: (id, reply) => api.put(`/reviews/${id}/reply`, { reply }).then(res => res.data),
 };
 
 /* =========================
