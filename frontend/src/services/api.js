@@ -8,7 +8,7 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Automatically attach token for protected routes
+// Attach token automatically
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -102,15 +102,3 @@ export const adminService = {
 };
 
 export default api;
-
-// Export everything for convenience
-export {
-  api,
-  authService,
-  userService,
-  listingService,
-  bookingService,
-  notificationService,
-  savedSearchService,
-  adminService
-};
