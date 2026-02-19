@@ -1,6 +1,18 @@
 import axios from 'axios';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
+// Normalize API base so frontend always calls the versioned API.
+// If REACT_APP_API_URL is set to a root (e.g. https://api.example.com),
+// we append `/api/v1`. If it already contains `/api/v1` we keep it.
+const RAW_API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_VERSION = '/api/v1';
+const normalizeBase = (raw) => {
+  if (!raw) return `http://localhost:5000${API_VERSION}`;
+  const trimmed = raw.replace(/\/+$/, '');
+  if (trimmed.endsWith(API_VERSION)) return trimmed;
+  return `${trimmed}${API_VERSION}`;
+};
+
+const API_BASE = normalizeBase(RAW_API_BASE);
 
 // Axios instance
 const api = axios.create({

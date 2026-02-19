@@ -68,6 +68,18 @@ app.use('/api/v1/flags', flagRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/saved-searches', savedSearchRoutes);
+// Also mount routes without the /api/v1 prefix to support frontends
+// that use a BASE URL without the versioned path (common in env configs)
+app.use('/auth/login', authLimiter);
+app.use('/auth/register', authLimiter);
+app.use('/auth', authRoutes);
+app.use('/listings', listingRoutes);
+app.use('/bookings', bookingRoutes);
+app.use('/reviews', reviewRoutes);
+app.use('/flags', flagRoutes);
+app.use('/admin', adminRoutes);
+app.use('/notifications', notificationRoutes);
+app.use('/saved-searches', savedSearchRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
