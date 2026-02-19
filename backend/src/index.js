@@ -17,11 +17,37 @@ dotenv.config();
 
 const app = express();
 
+// Simple rate limiting middleware
+const createRateLimiter = (maxRequests = 5, windowMs = 15 * 60 * 1000) => {
+  const requests = new Map();
+  
+  return (req, res, next) => {
+    const ip = req.ip || req.connection.remoteAddress;
+    const now = Date.now();
+    
+    if (!requests.has(ip)) {
+      requests.set(ip, []);
+    }
+    
+    const userRequests = requests.get(ip).filter(time => now - time < windowMs);
+    userRequests.push(now);
+    requests.set(ip, userRequests);
+    
+    if (userRequests.length > maxRequests) {
+      return res.status(429).json({ error: 'Too many requests, please try again later' });
+    }
+    
+    next();
+  };
+};
+
+const authLimiter = createRateLimiter(5, 15 * 60 * 1000); // 5 requests per 15 minutes
+
 // Middleware
 app.use(cors({
   origin: [
-    "https://nestrostay.onrender.com", // frontend URL
-    "http://localhost:3000",
+    "https://nestrostay.onrender.com", // production frontend URL
+    "http://localhost:3000", // development frontend URL
   ],
   credentials: true,
 }));
@@ -31,7 +57,9 @@ app.use(express.json());
 // Connect to MongoDB
 connectDB();
 
-// Routes
+// Routes with rate limiting on auth endpoints
+app.use('/api/v1/auth/login', authLimiter);
+app.use('/api/v1/auth/register', authLimiter);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/listings', listingRoutes);
 app.use('/api/v1/bookings', bookingRoutes);

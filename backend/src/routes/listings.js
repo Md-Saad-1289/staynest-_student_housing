@@ -14,18 +14,17 @@ import { auth, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/', getListings);
-router.get('/:id', getListing);
-router.post('/', auth, authorize('owner'), createListing);
-router.put('/:id', auth, authorize('owner'), updateListing);
+// Specific routes MUST come before /:id route
 router.get('/owner/my-listings', auth, authorize('owner'), getOwnerListings);
-
-// Favorites
 router.post('/user/toggle-favorite', auth, toggleFavoriteListing);
 router.get('/user/favorites', auth, getUserFavorites);
-
-// View history
 router.post('/user/view-history', auth, addViewHistory);
 router.get('/user/view-history', auth, getViewHistory);
+
+// General routes
+router.get('/', getListings);
+router.post('/', auth, authorize('owner'), createListing);
+router.get('/:id', getListing);
+router.put('/:id', auth, authorize('owner'), updateListing);
 
 export default router;

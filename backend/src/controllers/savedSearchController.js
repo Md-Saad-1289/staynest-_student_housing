@@ -38,16 +38,26 @@ export const createSavedSearch = async (req, res) => {
 // Update saved search
 export const updateSavedSearch = async (req, res) => {
   try {
+    const userId = req.user.userId;
     const { id } = req.params;
     const { name, filters, alertsEnabled } = req.body;
 
-    const savedSearch = await SavedSearch.findByIdAndUpdate(
+    const savedSearch = await SavedSearch.findById(id);
+    if (!savedSearch) {
+      return res.status(404).json({ error: 'Search not found' });
+    }
+
+    if (savedSearch.userId.toString() !== userId) {
+      return res.status(403).json({ error: 'Not authorized to update this search' });
+    }
+
+    const updated = await SavedSearch.findByIdAndUpdate(
       id,
       { name, filters, alertsEnabled },
       { new: true }
     );
 
-    res.json({ message: 'Search updated', savedSearch });
+    res.json({ message: 'Search updated', savedSearch: updated });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -56,7 +66,18 @@ export const updateSavedSearch = async (req, res) => {
 // Delete saved search
 export const deleteSavedSearch = async (req, res) => {
   try {
+    const userId = req.user.userId;
     const { id } = req.params;
+
+    const savedSearch = await SavedSearch.findById(id);
+    if (!savedSearch) {
+      return res.status(404).json({ error: 'Search not found' });
+    }
+
+    if (savedSearch.userId.toString() !== userId) {
+      return res.status(403).json({ error: 'Not authorized to delete this search' });
+    }
+
     await SavedSearch.findByIdAndDelete(id);
     res.json({ message: 'Search deleted' });
   } catch (error) {

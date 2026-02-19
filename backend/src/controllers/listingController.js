@@ -103,16 +103,20 @@ const createListing = async (req, res) => {
 // Update listing (owner only)
 const updateListing = async (req, res) => {
   try {
+    const userId = req.user.userId;
     const listing = await Listing.findById(req.params.id);
     if (!listing) {
       return res.status(404).json({ error: 'Listing not found' });
     }
 
-    if (listing.ownerId.toString() !== req.user.userId) {
-      return res.status(403).json({ error: 'Not authorized' });
+    if (listing.ownerId.toString() !== userId) {
+      return res.status(403).json({ error: 'Not authorized to update this listing' });
     }
 
-    Object.assign(listing, req.body);
+    // Prevent updating verified status directly via API
+    const { verified, ...updateData } = req.body;
+    
+    Object.assign(listing, updateData);
     await listing.save();
 
     res.json({
@@ -140,6 +144,10 @@ export {
   createListing,
   updateListing,
   getOwnerListings,
+  toggleFavoriteListing,
+  getUserFavorites,
+  addViewHistory,
+  getViewHistory,
 };
 
 // Toggle favorite listing

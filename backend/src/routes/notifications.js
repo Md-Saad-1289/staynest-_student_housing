@@ -9,9 +9,12 @@ import { auth } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Specific route MUST come before :notificationId route
+router.put('/read-all', auth, markAllAsRead);
+
+// General routes
 router.get('/', auth, getNotifications);
 router.put('/:notificationId/read', auth, markAsRead);
-router.put('/read-all', auth, markAllAsRead);
 router.delete('/:notificationId', auth, deleteNotification);
 
 export default router;

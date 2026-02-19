@@ -22,6 +22,13 @@ const register = async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
+    // Validate role
+    const validRoles = ['student', 'owner', 'admin'];
+    const userRole = role || 'student';
+    if (!validRoles.includes(userRole)) {
+      return res.status(400).json({ error: 'Invalid role. Must be student, owner, or admin' });
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ error: 'Email already registered' });
@@ -32,8 +39,8 @@ const register = async (req, res) => {
       email,
       mobile,
       passwordHash: password,
-      role: role || 'student',
-      isVerified: role !== 'owner',
+      role: userRole,
+      isVerified: userRole !== 'owner',
     });
 
     await newUser.save();
@@ -72,6 +79,10 @@ const login = async (req, res) => {
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ error: 'Server configuration error' });
     }
 
     const token = generateToken(user._id, user.role);

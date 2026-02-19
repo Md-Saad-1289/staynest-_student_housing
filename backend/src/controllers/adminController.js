@@ -79,7 +79,12 @@ const verifyListing = async (req, res) => {
     }
 
     listing.verified = true;
-    listing.badges.push('verified');
+    
+    // Add 'verified' badge only if not already present
+    if (!listing.badges.includes('verified')) {
+      listing.badges.push('verified');
+    }
+    
     await listing.save();
 
     await AuditLog.create({

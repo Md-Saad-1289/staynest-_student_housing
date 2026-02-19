@@ -37,16 +37,43 @@ const createBooking = async (req, res) => {
 // Get booking requests for owner
 const getOwnerBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find()
-      .populate({
-        path: 'listingId',
-        match: { ownerId: req.user.userId },
-      })
-      .populate('studentId', 'name email mobile');
+    const ownerId = req.user.userId;
+    
+    // Use aggregation to efficiently filter bookings for owner's listings
+    const bookings = await Booking.aggregate([
+      {
+        $lookup: {
+          from: 'listings',
+          localField: 'listingId',
+          foreignField: '_id',
+          as: 'listing',
+        },
+      },
+      {
+        $unwind: '$listing',
+      },
+      {
+        $match: {
+          'listing.ownerId': new require('mongoose').Types.ObjectId(ownerId),
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'studentId',
+          foreignField: '_id',
+          as: 'student',
+        },
+      },
+      {
+        $unwind: '$student',
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
 
-    const filteredBookings = bookings.filter((b) => b.listingId);
-
-    res.json({ bookings: filteredBookings });
+    res.json({ bookings });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

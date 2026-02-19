@@ -11,6 +11,10 @@ const auth = (req, res, next) => {
   }
 
   try {
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET is not configured in environment variables');
+    }
+    
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.user = {
@@ -24,6 +28,9 @@ const auth = (req, res, next) => {
 
     next();
   } catch (error) {
+    if (error.message === 'JWT_SECRET is not configured in environment variables') {
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 };

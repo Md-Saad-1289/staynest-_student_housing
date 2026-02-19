@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = 'https://staynest-backend-n2kn.onrender.com/api/v1';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
 
 // Axios instance
 const api = axios.create({
