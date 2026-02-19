@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-export const Footer = () => {
+export const SimpleFooter = () => {
   return (
     <footer className="bg-black text-gray-400 border-t border-gray-800">
       
