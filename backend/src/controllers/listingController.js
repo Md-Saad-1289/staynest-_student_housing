@@ -138,20 +138,8 @@ const getOwnerListings = async (req, res) => {
   }
 };
 
-export {
-  getListings,
-  getListing,
-  createListing,
-  updateListing,
-  getOwnerListings,
-  toggleFavoriteListing,
-  getUserFavorites,
-  addViewHistory,
-  getViewHistory,
-};
-
 // Toggle favorite listing
-export const toggleFavoriteListing = async (req, res) => {
+const toggleFavoriteListing = async (req, res) => {
   try {
     const userId = req.user.userId;
     const { listingId } = req.body;
@@ -175,7 +163,7 @@ export const toggleFavoriteListing = async (req, res) => {
 };
 
 // Get user's favorite listings
-export const getUserFavorites = async (req, res) => {
+const getUserFavorites = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).populate('favorites');
     res.json({ favorites: user?.favorites || [] });
@@ -185,7 +173,7 @@ export const getUserFavorites = async (req, res) => {
 };
 
 // Add listing view to history
-export const addViewHistory = async (req, res) => {
+const addViewHistory = async (req, res) => {
   try {
     const userId = req.user.userId;
     const { listingId } = req.body;
@@ -212,11 +200,24 @@ export const addViewHistory = async (req, res) => {
 };
 
 // Get user's view history
-export const getViewHistory = async (req, res) => {
+const getViewHistory = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).populate('viewHistory.listingId');
     res.json({ viewHistory: user?.viewHistory || [] });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+};
+
+// Single export statement - each function exported exactly once
+export {
+  getListings,
+  getListing,
+  createListing,
+  updateListing,
+  getOwnerListings,
+  toggleFavoriteListing,
+  getUserFavorites,
+  addViewHistory,
+  getViewHistory,
 };
