@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-export const HeroSection = () => {
+export const HeroSearch = () => {
   return (
     <section className="relative h-[85vh] flex items-center justify-center text-white overflow-hidden">
 
