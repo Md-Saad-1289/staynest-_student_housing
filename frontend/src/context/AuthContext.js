@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
   const fetchCurrentUser = async () => {
     try {
       const data = await authService.getCurrentUser();
-      setUser(data.user);
+      setUser(data.data.user);
     } catch (error) {
       console.error('Fetch user failed:', error);
       logout();
@@ -33,9 +33,10 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const data = await authService.login(email, password);
-      localStorage.setItem('token', data.token);
-      setToken(data.token);
-      setUser(data.user);
+      const payload = data.data || {};
+      localStorage.setItem('token', payload.token);
+      setToken(payload.token);
+      setUser(payload.user);
       return data;
     } catch (error) {
       throw error.response?.data?.error || 'Login failed';
@@ -45,9 +46,10 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, mobile, password, role) => {
     try {
       const data = await authService.register(name, email, mobile, password, role);
-      localStorage.setItem('token', data.token);
-      setToken(data.token);
-      setUser(data.user);
+      const payload = data.data || {};
+      localStorage.setItem('token', payload.token);
+      setToken(payload.token);
+      setUser(payload.user);
       return data;
     } catch (error) {
       throw error.response?.data?.error || 'Registration failed';
