@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
-import { connectDB } from './utils/db.js';
+import { connectDB, disconnectDB } from './utils/db.js';
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -44,18 +44,40 @@ const createRateLimiter = (maxRequests = 5, windowMs = 15 * 60 * 1000) => {
 const authLimiter = createRateLimiter(5, 15 * 60 * 1000); // 5 requests per 15 minutes
 
 // Middleware
+// Configure CORS using environment variables so deployed frontend origins are respected
+const FRONTEND_ORIGINS = [];
+if (process.env.FRONTEND_URL_PROD) FRONTEND_ORIGINS.push(process.env.FRONTEND_URL_PROD);
+if (process.env.FRONTEND_URL_DEV) FRONTEND_ORIGINS.push(process.env.FRONTEND_URL_DEV);
+if (process.env.FRONTEND_URL_EXTRA) FRONTEND_ORIGINS.push(process.env.FRONTEND_URL_EXTRA);
+
 app.use(cors({
-  origin: [
-    "https://nestrostay.onrender.com", // production frontend URL
-    "http://localhost:3000", // development frontend URL
-  ],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g., mobile apps, curl)
+    if (!origin) return callback(null, true);
+    if (FRONTEND_ORIGINS.length === 0) return callback(null, true);
+    if (FRONTEND_ORIGINS.includes(origin)) return callback(null, true);
+    return callback(new Error('CORS policy: This origin is not allowed'), false);
+  },
   credentials: true,
+  optionsSuccessStatus: 204,
 }));
 
 app.use(express.json());
 
-// Connect to MongoDB
-connectDB();
+// Start server after DB connection for safer startup
+let server;
+const startServer = async () => {
+  await connectDB();
+  const PORT = process.env.PORT || 5000;
+  server = app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+};
+
+startServer().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});
 
 // Routes with rate limiting on auth endpoints
 app.use('/api/v1/auth/login', authLimiter);
@@ -97,9 +119,29 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Graceful shutdown
+const gracefulShutdown = async (signal) => {
+  try {
+    console.log(`Received ${signal}. Shutting down gracefully...`);
+    if (server && server.close) {
+      server.close(() => console.log('HTTP server closed'));
+    }
+    await disconnectDB();
+    process.exit(0);
+  } catch (err) {
+    console.error('Error during graceful shutdown', err);
+    process.exit(1);
+  }
+};
+
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  gracefulShutdown('uncaughtException');
 });
 
 export default app;

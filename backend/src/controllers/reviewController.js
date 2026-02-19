@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Review from '../models/Review.js';
 import Booking from '../models/Booking.js';
 import Listing from '../models/Listing.js';
@@ -17,6 +18,7 @@ const createReview = async (req, res) => {
       return res.status(400).json({ error: 'All ratings must be between 1 and 5' });
     }
 
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) return res.status(400).json({ error: 'Invalid booking id' });
     const booking = await Booking.findById(bookingId);
     if (!booking) {
       return res.status(404).json({ error: 'Booking not found' });
@@ -72,6 +74,7 @@ const createReview = async (req, res) => {
 // Get reviews for listing
 const getListingReviews = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.listingId)) return res.status(400).json({ error: 'Invalid listing id' });
     const reviews = await Review.find({ listingId: req.params.listingId })
       .populate('studentId', 'name')
       .sort({ createdAt: -1 });
@@ -91,6 +94,7 @@ const replyToReview = async (req, res) => {
       return res.status(400).json({ error: 'Reply text required' });
     }
 
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ error: 'Invalid review id' });
     const review = await Review.findById(req.params.id).populate('listingId');
     if (!review) {
       return res.status(404).json({ error: 'Review not found' });

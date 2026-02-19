@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import SavedSearch from '../models/SavedSearch.js';
 
 // Get saved searches
@@ -42,7 +43,8 @@ export const updateSavedSearch = async (req, res) => {
     const { id } = req.params;
     const { name, filters, alertsEnabled } = req.body;
 
-    const savedSearch = await SavedSearch.findById(id);
+      if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid saved search id' });
+      const savedSearch = await SavedSearch.findById(id);
     if (!savedSearch) {
       return res.status(404).json({ error: 'Search not found' });
     }
@@ -69,7 +71,8 @@ export const deleteSavedSearch = async (req, res) => {
     const userId = req.user.userId;
     const { id } = req.params;
 
-    const savedSearch = await SavedSearch.findById(id);
+      if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid saved search id' });
+      const savedSearch = await SavedSearch.findById(id);
     if (!savedSearch) {
       return res.status(404).json({ error: 'Search not found' });
     }

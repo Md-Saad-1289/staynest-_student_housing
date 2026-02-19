@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import User from '../models/User.js';
 import Listing from '../models/Listing.js';
 import Booking from '../models/Booking.js';
@@ -8,6 +9,7 @@ import AuditLog from '../models/AuditLog.js';
 // Verify owner
 const verifyOwner = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.userId)) return res.status(400).json({ error: 'Invalid user id' });
     const user = await User.findById(req.params.userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -44,6 +46,7 @@ const verifyOwner = async (req, res) => {
 const rejectOwner = async (req, res) => {
   try {
     const { reason } = req.body;
+    if (!mongoose.Types.ObjectId.isValid(req.params.userId)) return res.status(400).json({ error: 'Invalid user id' });
     const user = await User.findById(req.params.userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -73,6 +76,7 @@ const rejectOwner = async (req, res) => {
 // Verify listing
 const verifyListing = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ error: 'Invalid listing id' });
     const listing = await Listing.findById(req.params.id);
     if (!listing) {
       return res.status(404).json({ error: 'Listing not found' });
@@ -181,6 +185,7 @@ const resolveFlag = async (req, res) => {
   try {
     const { adminNotes } = req.body;
 
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ error: 'Invalid flag id' });
     const flag = await Flag.findById(req.params.id);
     if (!flag) {
       return res.status(404).json({ error: 'Flag not found' });

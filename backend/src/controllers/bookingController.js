@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Booking from '../models/Booking.js';
 import Listing from '../models/Listing.js';
 
@@ -8,6 +9,11 @@ const createBooking = async (req, res) => {
 
     if (!listingId || !moveInDate) {
       return res.status(400).json({ error: 'Listing ID and move-in date required' });
+    }
+
+    // Validate ObjectId to avoid CastError when consumers send mock or invalid ids
+    if (!mongoose.Types.ObjectId.isValid(listingId)) {
+      return res.status(400).json({ error: 'Invalid listingId format' });
     }
 
     const listing = await Listing.findById(listingId);
@@ -38,7 +44,10 @@ const createBooking = async (req, res) => {
 const getOwnerBookings = async (req, res) => {
   try {
     const ownerId = req.user.userId;
-    
+    // validate ownerId
+    if (!mongoose.Types.ObjectId.isValid(ownerId)) {
+      return res.status(400).json({ error: 'Invalid owner id' });
+    }
     // Use aggregation to efficiently filter bookings for owner's listings
     const bookings = await Booking.aggregate([
       {
@@ -54,7 +63,7 @@ const getOwnerBookings = async (req, res) => {
       },
       {
         $match: {
-          'listing.ownerId': new require('mongoose').Types.ObjectId(ownerId),
+          'listing.ownerId': mongoose.Types.ObjectId(ownerId),
         },
       },
       {
@@ -86,6 +95,11 @@ const updateBookingStatus = async (req, res) => {
 
     if (!['accepted', 'rejected'].includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    // validate booking id
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid booking id' });
     }
 
     const booking = await Booking.findById(req.params.id).populate('listingId');

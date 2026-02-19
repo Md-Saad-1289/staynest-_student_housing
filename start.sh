@@ -79,8 +79,8 @@ echo ""
 echo -e "${YELLOW}Press Ctrl+C to stop servers${NC}"
 echo ""
 
-# Wait for processes
-wait
+# Register cleanup trap before waiting so Ctrl+C will stop child processes
+trap 'echo "\nStopping servers..."; [ -n "$BACKEND_PID" ] && kill "$BACKEND_PID" 2>/dev/null || true; [ -n "$FRONTEND_PID" ] && kill "$FRONTEND_PID" 2>/dev/null || true; exit 0' SIGINT SIGTERM EXIT
 
-# Cleanup on exit
-trap "kill $BACKEND_PID $FRONTEND_PID 2>/dev/null" EXIT
+# Wait for backgrounded processes
+wait

@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Listing from '../models/Listing.js';
 import Review from '../models/Review.js';
 import User from '../models/User.js';
@@ -44,6 +45,7 @@ const getListings = async (req, res) => {
 // Get single listing
 const getListing = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ error: 'Invalid listing id' });
     const listing = await Listing.findById(req.params.id).populate('ownerId', 'name email mobile isVerified');
     if (!listing) {
       return res.status(404).json({ error: 'Listing not found' });
@@ -104,6 +106,7 @@ const createListing = async (req, res) => {
 const updateListing = async (req, res) => {
   try {
     const userId = req.user.userId;
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ error: 'Invalid listing id' });
     const listing = await Listing.findById(req.params.id);
     if (!listing) {
       return res.status(404).json({ error: 'Listing not found' });
