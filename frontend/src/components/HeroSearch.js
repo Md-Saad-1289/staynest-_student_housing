@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import heroImg from '../assets/images/hero-img.png';
 
 export const FriendlyHero = () => {
   return (
@@ -8,7 +9,7 @@ export const FriendlyHero = () => {
       {/* Background */}
       <div className="absolute inset-0">
         <img
-          src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267"
+          src={heroImg}
           alt="Student Apartment"
           className="w-full h-full object-cover"
         />
