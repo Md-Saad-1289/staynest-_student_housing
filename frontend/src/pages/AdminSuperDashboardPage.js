@@ -367,50 +367,51 @@ export const AdminSuperDashboardPage = () => {
     <DashboardLayout title="Super Admin Dashboard">
       {/* Error Message with Dismiss */}
       {error && (
-        <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg flex items-center justify-between gap-3 border border-red-200 shadow-sm">
-          <div className="flex items-center gap-3">
-            <i className="fas fa-exclamation-circle text-lg"></i>
+        <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 text-red-700 rounded-lg flex items-center justify-between gap-3 border border-red-200 shadow-sm text-xs sm:text-base">
+          <div className="flex items-center gap-2 sm:gap-3 flex-1">
+            <i className="fas fa-exclamation-circle text-lg flex-shrink-0 hidden sm:inline"></i>
             <span className="font-medium">{error}</span>
           </div>
           <button
             onClick={() => setError('')}
-            className="text-red-500 hover:text-red-700 font-bold text-xl leading-none"
+            className="text-red-500 hover:text-red-700 font-bold text-xl leading-none flex-shrink-0"
           >
             ✕
           </button>
         </div>
       )}
 
-      {/* Admin Header */}
-      <div className="mb-8 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-lg px-6 py-8 text-white shadow-lg">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
-              <i className="fas fa-crown text-yellow-300"></i>Super Admin Control Panel
+      {/* Admin Header - Mobile Responsive */}
+      <div className="mb-6 sm:mb-8 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-lg px-3 sm:px-6 py-4 sm:py-8 text-white shadow-lg">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center justify-between">
+          <div className="flex-1">
+            <h1 className="text-xl sm:text-4xl font-bold mb-2 flex items-center gap-2 sm:gap-3">
+              <i className="fas fa-crown text-yellow-300 text-sm sm:text-2xl"></i><span>Super Admin</span>
             </h1>
-            <p className="text-blue-100 text-lg">Manage all platform operations, verify users & listings, control featured content & testimonials</p>
-            <div className="mt-4 flex gap-6">
+            <p className="hidden sm:block text-blue-100 text-base sm:text-lg">Manage all platform operations, verify users & listings, control featured content & testimonials</p>
+            <p className="sm:hidden text-blue-100 text-xs mb-2">Manage platform operations, verify users & listings</p>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-xs sm:text-sm">
               <div className="flex items-center gap-2 text-blue-100">
                 <i className="fas fa-shield-alt text-green-300"></i>
-                <span className="text-sm">Full Platform Control</span>
+                <span>Full Control</span>
               </div>
               <div className="flex items-center gap-2 text-blue-100">
                 <i className="fas fa-check-circle text-green-300"></i>
-                <span className="text-sm">All Features Active</span>
+                <span>All Active</span>
               </div>
             </div>
           </div>
-          <div className="text-right bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-            <p className="text-blue-100 text-sm">Welcome,</p>
-            <p className="text-xl font-bold">Super Admin</p>
-            <p className="text-xs text-green-300 mt-2">✓ All Permissions</p>
+          <div className="w-full sm:w-auto text-center sm:text-right bg-white/10 backdrop-blur-sm rounded-lg p-2 sm:p-4 border border-white/20 text-xs sm:text-base">
+            <p className="text-blue-100">Welcome</p>
+            <p className="font-bold">Super Admin</p>
+            <p className="text-green-300 mt-1">✓ All Permissions</p>
           </div>
         </div>
       </div>
 
-      {/* Navigation Tabs - Professional Style */}
-      <div className="mb-8 bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="flex border-b border-gray-200 overflow-x-auto">
+      {/* Navigation Tabs - Mobile Responsive */}
+      <div className="mb-6 sm:mb-8 bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="flex border-b border-gray-200 overflow-x-auto scrollbar-hide">
           {[
             { id: 'overview', label: 'Dashboard', icon: 'fas fa-chart-line' },
             { id: 'featured', label: 'Featured Listings', icon: 'fas fa-star' },
@@ -420,14 +421,15 @@ export const AdminSuperDashboardPage = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 px-6 py-4 font-semibold transition-all whitespace-nowrap flex items-center justify-center gap-2 border-b-2 ${
+              className={`flex-1 px-2 sm:px-6 py-2 sm:py-4 font-semibold text-xs sm:text-base transition-all whitespace-nowrap flex items-center justify-center gap-1 sm:gap-2 border-b-2 ${
                 activeTab === tab.id
                   ? getTabClasses(tab.id)
                   : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
-              <i className={tab.icon}></i>
-              <span>{tab.label}</span>
+              <i className={`${tab.icon} hidden sm:inline`}></i>
+              <span className="hidden xs:inline">{tab.label}</span>
+              <span className="sm:hidden text-xs">{tab.label.split(' ')[0]}</span>
             </button>
           ))}
         </div>
@@ -446,7 +448,7 @@ export const AdminSuperDashboardPage = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
             <StatCard
               icon="fas fa-users"
               label="Total Users"
@@ -554,8 +556,8 @@ export const AdminSuperDashboardPage = () => {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-              <p className="text-blue-900 text-sm font-medium">Total Verified Listings</p>
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-3 sm:p-4 rounded">
+              <p className="text-blue-900 text-xs sm:text-sm font-medium">Total Verified</p>
               <p className="text-2xl font-bold text-blue-600">{allListings.length}</p>
             </div>
             <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">

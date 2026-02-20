@@ -9,28 +9,31 @@ import { adminService } from '../services/api';
 /**
  * AdminDashboardModernPage: Production-ready Admin Dashboard
  * 
+ * Props:
+ * - tab (optional): Set initial active tab (e.g., 'overview', 'users', 'listings', 'featured', 'testimonials', 'flags', 'logs')
+ * 
  * Features:
- * - View all users (students & owners) with filters
- * - Verify or reject owner accounts
- * - Approve, reject, or delete any listing
- * - View all bookings and reviews
- * - Moderate reviews and flags
- * - Resolve reported listings
- * - Access system-wide stats (users, listings, bookings)
+ * - View platform overview with dashboard stats (overview)
+ * - Manage users - verify owners, view students (users)
+ * - Manage listings - verify and feature listings (listings, featured)
+ * - Manage testimonials - create, edit, approve testimonials (testimonials)
+ * - Moderate reports - resolve flags and issues (flags)
+ * - View audit logs - system activity tracking (logs)
  * 
  * Privileges:
- * - ONLY admins allowed to verify owners
- * - ONLY admins allowed to mark listings as verified
- * - ONLY admins allowed to delete any listing or user
+ * - ONLY admins allowed to perform actions
  * 
  * Access Control:
  * - Admins have full system access
  * - This UI enforces role-based visibility
  */
-export const AdminDashboardModernPage = () => {
+export const AdminDashboardModernPage = ({ tab }) => {
   const [stats, setStats] = useState(null);
   const [unverifiedOwners, setUnverifiedOwners] = useState([]);
   const [unverifiedListings, setUnverifiedListings] = useState([]);
+  const [allListings, setAllListings] = useState([]);
+  const [featuredListings, setFeaturedListings] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
   const [flags, setFlags] = useState([]);
   const [actions, setActions] = useState([]);
   const [actionsPage, setActionsPage] = useState(1);
@@ -39,19 +42,28 @@ export const AdminDashboardModernPage = () => {
   const [actionsSearch, setActionsSearch] = useState('');
   const [actionFilter, setActionFilter] = useState('');
   const [actionTargetFilter, setActionTargetFilter] = useState('');
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterVerified, setFilterVerified] = useState('');
+  const [activeTab, setActiveTab] = useState(tab || 'overview');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [confirmModal, setConfirmModal] = useState({ open: false });
   const [ownerModal, setOwnerModal] = useState({ open: false, owner: null });
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Update activeTab when tab prop changes (from route navigation)
+  useEffect(() => {
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [tab]);
+
   const fetchAdminData = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
 
-      if (activeTab === 'dashboard') {
+      if (activeTab === 'overview') {
         const statsRes = await adminService.getDashboardStats();
         setStats(statsRes.data.stats);
 
@@ -62,7 +74,7 @@ export const AdminDashboardModernPage = () => {
         setActionsTotal(actionsRes.data.meta?.total ?? actionsRes.data.total ?? 0);
       }
 
-      if (activeTab === 'owners') {
+      if (activeTab === 'users') {
         const ownersRes = await adminService.getUnverifiedOwners();
         setUnverifiedOwners(ownersRes.data.owners || []);
       }
@@ -72,9 +84,31 @@ export const AdminDashboardModernPage = () => {
         setUnverifiedListings(listingsRes.data.listings || []);
       }
 
+      if (activeTab === 'featured') {
+        const [featuredRes, allRes] = await Promise.all([
+          adminService.getFeaturedListings().catch(() => ({ data: { listings: [] } })),
+          adminService.getAllListings({ verified: 'true' }).catch(() => ({ data: { listings: [] } })),
+        ]);
+        setFeaturedListings(featuredRes.data.listings || []);
+        setAllListings(allRes.data.listings || []);
+      }
+
+      if (activeTab === 'testimonials') {
+        const testimonialsRes = await adminService.getAllTestimonials()
+          .catch(() => ({ data: { testimonials: [] } }));
+        setTestimonials(testimonialsRes.data.testimonials || []);
+      }
+
       if (activeTab === 'flags') {
         const flagsRes = await adminService.getFlags();
         setFlags(flagsRes.data.flags || []);
+      }
+
+      if (activeTab === 'logs') {
+        // Fetch audit logs
+        const logsRes = await adminService.getActions({ page: 1, limit: 100 }).catch(() => ({ data: { logs: [] } }));
+        setActions(logsRes.data.logs || []);
+        setActionsTotal(logsRes.data.meta?.total ?? logsRes.data.total ?? 0);
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to load data');
@@ -82,7 +116,7 @@ export const AdminDashboardModernPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, actionsPage, actionsLimit, actionFilter, actionTargetFilter, refreshKey]);
+  }, [activeTab, actionsPage, actionsLimit, actionFilter, actionTargetFilter, refreshKey, searchQuery, filterVerified]);
 
   // Utility: synthesize small trend array for sparklines (non-random deterministic)
   const synthesizeTrend = (base, points = 8) => {
@@ -495,7 +529,7 @@ export const AdminDashboardModernPage = () => {
     },
   ];
 
-  if (loading && activeTab !== 'dashboard') {
+  if (loading && activeTab !== 'overview') {
     return (
       <DashboardLayout title="Admin Dashboard">
         <div className="flex items-center justify-center h-96">
@@ -518,7 +552,7 @@ export const AdminDashboardModernPage = () => {
       )}
 
       {/* Dashboard Tab */}
-      {activeTab === 'dashboard' && stats && (
+      {activeTab === 'overview' && stats && (
         <>
           {/* Enhanced System Overview Section */}
           <div className="mb-8 p-6 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-xl text-white shadow-lg">
@@ -578,7 +612,7 @@ export const AdminDashboardModernPage = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             <button
-              onClick={() => setActiveTab('owners')}
+              onClick={() => setActiveTab('users')}
               className="bg-white p-6 rounded-xl border border-gray-200 hover:border-blue-400 hover:shadow-xl hover:scale-105 transition-all duration-300 text-left group"
             >
               <div className="flex items-center justify-between mb-3">
@@ -913,7 +947,7 @@ export const AdminDashboardModernPage = () => {
       )}
 
       {/* Owners Tab */}
-      {activeTab === 'owners' && (
+      {activeTab === 'users' && (
         <div>
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -999,11 +1033,167 @@ export const AdminDashboardModernPage = () => {
         </div>
       )}
 
+      {/* Featured Listings Tab */}
+      {activeTab === 'featured' && (
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  <i className="fas fa-star text-yellow-500 mr-2"></i>
+                  Featured Listings Management
+                </h2>
+                <p className="text-gray-600">Featured listings appear on the homepage. Toggle featured status for any verified listing.</p>
+              </div>
+              <div className="text-right bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg p-4 border border-yellow-200">
+                <p className="text-gray-600 text-sm">Currently Featured</p>
+                <p className="text-3xl font-bold text-yellow-600">{featuredListings.length}</p>
+              </div>
+            </div>
+          </div>
+
+          {allListings.length === 0 ? (
+            <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
+              <i className="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
+              <p className="text-gray-600 font-medium">No verified listings available</p>
+            </div>
+          ) : (
+            <DataTable columns={[
+              { key: '_id', label: 'ID', render: (row) => <span className="text-xs font-mono text-gray-600">{row._id.substring(0, 8)}...</span> },
+              { key: 'title', label: 'Title' },
+              { key: 'address', label: 'Address', render: (row) => <span className="text-sm text-gray-600">{row.address?.substring(0, 30)}...</span> },
+              { key: 'isFeatured', label: 'Status', render: (row) => <StatusBadge status={row.isFeatured ? 'featured' : 'not-featured'} /> },
+              {
+                key: 'actions',
+                label: 'Actions',
+                render: (row) => (
+                  <button
+                    onClick={async () => {
+                      try {
+                        await adminService.toggleFeaturedListing(row._id);
+                        alert(row.isFeatured ? '✓ Removed from featured' : '✓ Added to featured');
+                        setRefreshKey((k) => k + 1);
+                      } catch (err) {
+                        alert('Failed to update: ' + (err.response?.data?.error || err.message));
+                      }
+                    }}
+                    className={`px-3 py-1 text-xs rounded font-medium transition-colors ${
+                      row.isFeatured
+                        ? 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100'
+                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    {row.isFeatured ? (
+                      <><i className="fas fa-star mr-1"></i>Unfeature</>
+                    ) : (
+                      <><i className="fas fa-star-o mr-1"></i>Feature</>
+                    )}
+                  </button>
+                ),
+              },
+            ]} data={allListings} />
+          )}
+        </div>
+      )}
+
+      {/* Testimonials Tab */}
+      {activeTab === 'testimonials' && (
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <i className="fas fa-comment-dots text-purple-600 mr-2"></i>
+              Manage Testimonials
+            </h2>
+            <p className="text-gray-600">Control student testimonials displayed on the homepage. Create, edit, approve, and feature testimonials.</p>
+          </div>
+
+          {testimonials.length === 0 ? (
+            <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
+              <i className="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
+              <p className="text-gray-600 font-medium">No testimonials yet</p>
+            </div>
+          ) : (
+            <DataTable columns={[
+              { key: '_id', label: 'ID', render: (row) => <span className="text-xs font-mono text-gray-600">{row._id.substring(0, 8)}...</span> },
+              { key: 'name', label: 'Student Name' },
+              { key: 'tag', label: 'Tag (School)' },
+              { key: 'text', label: 'Text', render: (row) => <span className="text-sm text-gray-600 truncate">{row.text}</span> },
+              { key: 'approved', label: 'Approved', render: (row) => <StatusBadge status={row.approved ? 'approved' : 'pending'} /> },
+              { key: 'isFeatured', label: 'Featured', render: (row) => row.isFeatured ? <i className="fas fa-check text-green-600"></i> : '-' },
+              {
+                key: 'actions',
+                label: 'Actions',
+                render: (row) => (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        try {
+                          await adminService.toggleApproval(row._id);
+                          alert(row.approved ? '✓ Unapproved' : '✓ Approved');
+                          setRefreshKey((k) => k + 1);
+                        } catch (err) {
+                          alert('Failed: ' + (err.response?.data?.error || err.message));
+                        }
+                      }}
+                      className="text-xs px-2 py-1 rounded bg-blue-50 text-blue-600 hover:bg-blue-100"
+                    >
+                      {row.approved ? 'Unapprove' : 'Approve'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Delete this testimonial?')) {
+                          adminService.deleteTestimonial(row._id).then(() => {
+                            alert('✓ Deleted');
+                            setRefreshKey((k) => k + 1);
+                          }).catch(err => alert('Failed: ' + (err.response?.data?.error || err.message)));
+                        }
+                      }}
+                      className="text-xs px-2 py-1 rounded bg-red-50 text-red-600 hover:bg-red-100"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ),
+              },
+            ]} data={testimonials} />
+          )}
+        </div>
+      )}
+
+      {/* Audit Logs Tab */}
+      {activeTab === 'logs' && (
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <i className="fas fa-shield-alt text-blue-600 mr-2"></i>
+              Audit Logs
+            </h2>
+            <p className="text-gray-600">View all system activity and admin actions. Track who did what and when.</p>
+          </div>
+
+          {actions.length === 0 ? (
+            <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
+              <i className="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
+              <p className="text-gray-600 font-medium">No activities logged</p>
+            </div>
+          ) : (
+            <DataTable columns={[
+              { key: '_id', label: 'ID', render: (row) => <span className="text-xs font-mono text-gray-600">{row._id.substring(0, 8)}...</span> },
+              { key: 'action', label: 'Action' },
+              { key: 'targetType', label: 'Target Type', render: (row) => <span className="text-sm text-gray-600 capitalize">{row.targetType}</span> },
+              { key: 'adminId', label: 'Admin', render: (row) => <span className="text-xs font-mono text-gray-600">{row.adminId.substring(0, 8)}...</span> },
+              { key: 'timestamp', label: 'Timestamp', render: (row) => new Date(row.timestamp || row.createdAt).toLocaleString() },
+              { key: 'details', label: 'Details', render: (row) => <span className="text-xs text-gray-600 truncate">{row.details || 'N/A'}</span> },
+            ]} data={actions} />
+          )}
+        </div>
+      )}
+
       {/* Tab Navigation */}
-      {activeTab !== 'dashboard' && (
+      {activeTab !== 'overview' && (
         <div className="mt-6">
           <button
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => setActiveTab('overview')}
             className="text-blue-600 hover:text-blue-700 flex items-center gap-1 font-medium transition-colors"
           >
             <i className="fas fa-arrow-left"></i> Back to Dashboard

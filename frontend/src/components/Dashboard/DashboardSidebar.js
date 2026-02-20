@@ -5,9 +5,9 @@ import { AuthContext } from '../../context/AuthContext';
 const MENU_ITEMS = {
   student: [
     { icon: 'fas fa-home', label: 'Dashboard', path: '/dashboard/student', section: 'Main' },
-    { icon: 'fas fa-calendar-check', label: 'My Bookings', path: '/my-bookings', section: 'Main' },
-    { icon: 'fas fa-star', label: 'My Reviews', path: '/student/reviews', section: 'Activity' },
-    { icon: 'fas fa-heart', label: 'Saved Listings', path: '/saved-listings', section: 'Activity' },
+    { icon: 'fas fa-calendar-check', label: 'My Bookings', path: '/dashboard/student', section: 'Main' },
+    { icon: 'fas fa-star', label: 'My Reviews', path: '/dashboard/student', section: 'Activity' },
+    { icon: 'fas fa-heart', label: 'Saved Listings', path: '/dashboard/student', section: 'Activity' },
     { icon: 'fas fa-search', label: 'Find Housing', path: '/listings', section: 'Explore' },
   ],
   owner: [
@@ -18,13 +18,13 @@ const MENU_ITEMS = {
     { icon: 'fas fa-plus-circle', label: 'Create Listing', path: '/dashboard/owner/create-listing', section: 'Actions' },
   ],
   admin: [
-    { icon: 'fas fa-crown', label: 'Super Admin Panel', path: '/dashboard/admin', section: 'Main', badge: 'premium' },
-    { icon: 'fas fa-chart-pie', label: 'Overview', path: '/dashboard/admin', section: 'Overview' },
-    { icon: 'fas fa-users', label: 'User Management', path: '/dashboard/admin', badge: 'verification', section: 'Management' },
-    { icon: 'fas fa-home', label: 'Listing Management', path: '/dashboard/admin', badge: 'pending', section: 'Management' },
-    { icon: 'fas fa-star', label: 'Featured Listings', path: '/dashboard/admin', section: 'Management' },
-    { icon: 'fas fa-comment-dots', label: 'Testimonials', path: '/dashboard/admin', section: 'Content' },
-    { icon: 'fas fa-flag', label: 'Flags & Reports', path: '/dashboard/admin', badge: 'flags', section: 'Moderation' },
+    { icon: 'fas fa-crown', label: 'Super Admin', path: '/dashboard/admin', section: 'Main', badge: 'premium' },
+    { icon: 'fas fa-chart-pie', label: 'Overview', path: '/dashboard/admin/overview', section: 'Overview' },
+    { icon: 'fas fa-users', label: 'User Management', path: '/dashboard/admin/users', badge: 'verification', section: 'Management' },
+    { icon: 'fas fa-home', label: 'Listing Management', path: '/dashboard/admin/listings', badge: 'pending', section: 'Management' },
+    { icon: 'fas fa-star', label: 'Featured Listings', path: '/dashboard/admin/featured', section: 'Management' },
+    { icon: 'fas fa-comment-dots', label: 'Testimonials', path: '/dashboard/admin/testimonials', section: 'Content' },
+    { icon: 'fas fa-flag', label: 'Flags & Reports', path: '/dashboard/admin/flags', badge: 'flags', section: 'Moderation' },
     { icon: 'fas fa-shield-alt', label: 'Audit Logs', path: '/dashboard/admin/logs', section: 'Security' },
   ],
 };

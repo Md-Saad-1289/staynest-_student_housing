@@ -88,6 +88,70 @@ function App() {
             }
           />
 
+          {/* Admin Sub-Routes */}
+          <Route
+            path="/dashboard/admin/overview"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboardModernPage tab="overview" />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/admin/users"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboardModernPage tab="users" />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/admin/listings"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboardModernPage tab="listings" />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/admin/featured"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboardModernPage tab="featured" />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/admin/testimonials"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboardModernPage tab="testimonials" />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/admin/flags"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboardModernPage tab="flags" />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/admin/logs"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboardModernPage tab="logs" />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Backwards-compatible redirects from legacy routes */}
           <Route path="/student/dashboard" element={<Navigate to="/dashboard/student" replace />} />
           <Route path="/owner/dashboard" element={<Navigate to="/dashboard/owner" replace />} />
