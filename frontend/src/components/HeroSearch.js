@@ -61,3 +61,5 @@ export const FriendlyHero = () => {
     </section>
   );
 };
+
+export const HeroSearch = FriendlyHero;
