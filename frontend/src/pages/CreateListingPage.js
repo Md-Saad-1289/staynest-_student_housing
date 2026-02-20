@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { listingService } from '../services/api';
 
 export const CreateListingPage = () => {
+  const { id } = useParams();
+  const isEditMode = !!id;
   const [step, setStep] = useState(1);
+  const [loadingData, setLoadingData] = useState(isEditMode);
   
   // Basic Info
   const [title, setTitle] = useState('');
@@ -43,6 +46,60 @@ export const CreateListingPage = () => {
   const [error, setError] = useState('');
 
   const navigate = useNavigate();
+
+  // Load existing listing data if editing
+  useEffect(() => {
+    if (isEditMode) {
+      const loadListing = async () => {
+        try {
+          setLoadingData(true);
+          const response = await listingService.getListing(id);
+          const listing = response.data || response;
+          
+          setTitle(listing.title || '');
+          setDescription(listing.description || '');
+          setAddress(listing.address || '');
+          setCity(listing.city || '');
+          setType(listing.type || '');
+          setRent(listing.rent?.toString() || '');
+          setDeposit(listing.deposit?.toString() || '');
+          setUtilities(listing.utilities?.toString() || '');
+          setGenderAllowed(listing.genderAllowed || 'both');
+          setRooms(listing.rooms?.toString() || '1');
+          setCapacity(listing.capacity?.toString() || '1');
+          setFurnished(listing.furnished || 'semi');
+          
+          if (listing.facilities) {
+            setAmenities({
+              wifi: listing.facilities.wifi || false,
+              ac: listing.facilities.ac || false,
+              parking: listing.facilities.parking || false,
+              laundry: listing.facilities.laundry || false,
+              kitchen: listing.facilities.kitchen || false,
+              balcony: listing.facilities.balcony || false,
+              security24: listing.facilities.security24 || false,
+              gatekeeper: listing.facilities.gatekeeper || false,
+            });
+          }
+          
+          if (listing.photos && listing.photos.length > 0) {
+            setPhotoUrl(listing.photos[0] || '');
+            setAdditionalPhotos([
+              listing.photos[1] || '',
+              listing.photos[2] || '',
+              listing.photos[3] || '',
+            ]);
+          }
+        } catch (err) {
+          setError('Failed to load listing data');
+          console.error('Load listing error:', err);
+        } finally {
+          setLoadingData(false);
+        }
+      };
+      loadListing();
+    }
+  }, [id, isEditMode]);
   
   const amenityOptions = [
     { id: 'wifi', label: 'WiFi', icon: 'fa-wifi' },
@@ -127,10 +184,16 @@ export const CreateListingPage = () => {
 
     try {
       setLoading(true);
-      await listingService.createListing(payload);
+      if (isEditMode) {
+        await listingService.updateListing(id, payload);
+        alert('✓ Listing updated successfully');
+      } else {
+        await listingService.createListing(payload);
+        alert('✓ Listing created successfully');
+      }
       navigate('/dashboard/owner');
     } catch (err) {
-      setError(err?.response?.data?.error || 'Failed to create listing');
+      setError(err?.response?.data?.error || `Failed to ${isEditMode ? 'update' : 'create'} listing`);
     } finally {
       setLoading(false);
     }
@@ -139,16 +202,29 @@ export const CreateListingPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-3">
-            <i className="fas fa-home text-blue-600"></i> List Your Property
-          </h1>
-          <p className="text-gray-600 text-lg">Complete {step} of 4 steps to create your listing</p>
-        </div>
+        {/* Loading State */}
+        {loadingData && (
+          <div className="text-center py-12">
+            <div className="inline-block">
+              <i className="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
+              <p className="text-gray-600 mt-4">Loading listing data...</p>
+            </div>
+          </div>
+        )}
 
-        {/* Progress Bar */}
-        <div className="mb-8">
+        {!loadingData && (
+          <>
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-3">
+                <i className={`fas ${isEditMode ? 'fa-edit' : 'fa-plus'} text-blue-600`}></i>
+                {isEditMode ? 'Edit Your Property' : 'List Your Property'}
+              </h1>
+              <p className="text-gray-600 text-lg">Complete {step} of 4 steps to {isEditMode ? 'update' : 'create'} your listing</p>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
             {[1, 2, 3, 4].map((num) => (
               <div key={num} className="flex flex-col items-center flex-1">
@@ -535,6 +611,8 @@ export const CreateListingPage = () => {
             <p className="text-sm text-gray-700"><strong>Competitive Price</strong> gets more inquiries</p>
           </div>
         </div>
+        </>
+        )}
       </div>
     </div>
   );

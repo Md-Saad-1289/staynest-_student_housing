@@ -10,6 +10,7 @@ import {
   addViewHistory,
   getViewHistory,
   getFeaturedListingsPublic,
+  deleteListing,
 } from '../controllers/listingController.js';
 import { auth, authorize } from '../middleware/auth.js';
 
@@ -30,5 +31,6 @@ router.get('/', getListings);
 router.post('/', auth, authorize('owner'), createListing);
 router.get('/:id', getListing);
 router.put('/:id', auth, authorize('owner'), updateListing);
+router.delete('/:id', auth, deleteListing);
 
 export default router;

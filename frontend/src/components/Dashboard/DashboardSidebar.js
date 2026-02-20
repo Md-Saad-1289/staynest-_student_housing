@@ -1,20 +1,20 @@
 import React, { useContext } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 
 const MENU_ITEMS = {
   student: [
     { icon: 'fas fa-home', label: 'Dashboard', path: '/dashboard/student', section: 'Main' },
-    { icon: 'fas fa-calendar-check', label: 'My Bookings', path: '/dashboard/student', section: 'Main' },
-    { icon: 'fas fa-star', label: 'My Reviews', path: '/dashboard/student', section: 'Activity' },
-    { icon: 'fas fa-heart', label: 'Saved Listings', path: '/dashboard/student', section: 'Activity' },
+    { icon: 'fas fa-calendar-check', label: 'My Bookings', path: '/dashboard/student/bookings', section: 'Main' },
+    { icon: 'fas fa-star', label: 'My Reviews', path: '/dashboard/student/reviews', section: 'Activity' },
+    { icon: 'fas fa-heart', label: 'Saved Listings', path: '/dashboard/student/saved', section: 'Activity' },
     { icon: 'fas fa-search', label: 'Find Housing', path: '/listings', section: 'Explore' },
   ],
   owner: [
     { icon: 'fas fa-chart-line', label: 'Dashboard', path: '/dashboard/owner', section: 'Overview' },
-    { icon: 'fas fa-home', label: 'My Listings', path: '/dashboard/owner', section: 'Management' },
-    { icon: 'fas fa-inbox', label: 'Booking Requests', path: '/dashboard/owner', badge: 'notifications', section: 'Management' },
-    { icon: 'fas fa-comments', label: 'Reviews & Ratings', path: '/dashboard/owner', section: 'Management' },
+    { icon: 'fas fa-home', label: 'My Listings', path: '/dashboard/owner/listings', section: 'Management' },
+    { icon: 'fas fa-inbox', label: 'Booking Requests', path: '/dashboard/owner/bookings', badge: 'notifications', section: 'Management' },
+    { icon: 'fas fa-comments', label: 'Reviews & Ratings', path: '/dashboard/owner/reviews', section: 'Management' },
     { icon: 'fas fa-plus-circle', label: 'Create Listing', path: '/dashboard/owner/create-listing', section: 'Actions' },
   ],
   admin: [

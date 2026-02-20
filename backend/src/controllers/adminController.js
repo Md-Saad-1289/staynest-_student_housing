@@ -255,6 +255,46 @@ const toggleFeaturedListing = async (req, res) => {
   }
 };
 
+// Delete listing (admin only)
+const deleteAdminListing = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid listing id' });
+    }
+
+    const listing = await Listing.findById(req.params.id);
+    if (!listing) {
+      return res.status(404).json({ error: 'Listing not found' });
+    }
+
+    const { reason } = req.body;
+
+    // Delete associated reviews and bookings
+    await Review.deleteMany({ listingId: req.params.id });
+    await Booking.deleteMany({ listingId: req.params.id });
+
+    // Create audit log before deletion
+    await AuditLog.create({
+      adminId: req.user.userId,
+      action: 'delete_listing',
+      targetType: 'listing',
+      targetId: listing._id,
+      reason: reason || 'Deleted by admin',
+      meta: { title: listing.title, ownerId: listing.ownerId },
+    });
+
+    // Delete the listing
+    await Listing.findByIdAndDelete(req.params.id);
+
+    res.json({
+      message: 'Listing deleted successfully',
+      deletedId: req.params.id,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Get all listings for admin management
 const getAllListingsForAdmin = async (req, res) => {
   try {
@@ -328,6 +368,7 @@ export {
   resolveFlag,
   getFeaturedListings,
   toggleFeaturedListing,
+  deleteAdminListing,
   getAllListingsForAdmin,
   getAdminActions,
 };

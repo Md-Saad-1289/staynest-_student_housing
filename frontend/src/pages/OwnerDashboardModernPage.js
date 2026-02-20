@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { DashboardLayout } from '../components/Dashboard/DashboardLayout';
 import { StatCard } from '../components/Dashboard/StatCard';
 import { DataTable } from '../components/Dashboard/DataTable';
@@ -25,17 +25,25 @@ import { listingService, bookingService, reviewService } from '../services/api';
  * - Owners CANNOT access admin controls
  * - UI strictly limits actions to owner's own data
  */
-export const OwnerDashboardModernPage = () => {
+export const OwnerDashboardModernPage = ({ tab: tabProp }) => {
+  const { tab } = useParams();
   const navigate = useNavigate();
 
   const [listings, setListings] = useState([]);
   const [bookingRequests, setBookingRequests] = useState([]);
   const [reviews, setReviews] = useState([]);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(tab || tabProp || 'overview');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [confirmModal, setConfirmModal] = useState({ open: false });
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Update activeTab when route param changes
+  useEffect(() => {
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [tab]);
 
   const fetchOwnerData = useCallback(async () => {
     try {
@@ -187,11 +195,12 @@ export const OwnerDashboardModernPage = () => {
           >
             <i className="fas fa-eye"></i> View
           </a>
-          <button
+          <a
+            href={`/dashboard/owner/edit-listing/${row._id}`}
             className="px-3 py-1 text-xs bg-green-50 text-green-600 hover:bg-green-100 rounded font-medium transition-colors flex items-center gap-1"
           >
             <i className="fas fa-edit"></i> Edit
-          </button>
+          </a>
           <button
             onClick={() => handleDeleteListing(row._id, row.title)}
             className="px-3 py-1 text-xs bg-red-50 text-red-600 hover:bg-red-100 rounded font-medium transition-colors flex items-center gap-1"
@@ -403,7 +412,10 @@ export const OwnerDashboardModernPage = () => {
           {/* Quick Links */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <button
-              onClick={() => setActiveTab('listings')}
+              onClick={() => {
+                setActiveTab('listings');
+                navigate('/dashboard/owner/listings');
+              }}
               className="bg-white p-6 rounded-lg border border-gray-200 hover:border-blue-500 hover:shadow-lg transition text-left"
             >
               <i className="fas fa-home text-blue-600 text-3xl mb-3"></i>
@@ -411,7 +423,10 @@ export const OwnerDashboardModernPage = () => {
               <p className="text-sm text-gray-600">{listings.length} properties</p>
             </button>
             <button
-              onClick={() => setActiveTab('bookings')}
+              onClick={() => {
+                setActiveTab('bookings');
+                navigate('/dashboard/owner/bookings');
+              }}
               className="bg-white p-6 rounded-lg border border-gray-200 hover:border-blue-500 hover:shadow-lg transition text-left"
             >
               <i className="fas fa-inbox text-orange-600 text-3xl mb-3"></i>
@@ -419,7 +434,10 @@ export const OwnerDashboardModernPage = () => {
               <p className="text-sm text-gray-600">{stats.pendingBookings} pending</p>
             </button>
             <button
-              onClick={() => setActiveTab('reviews')}
+              onClick={() => {
+                setActiveTab('reviews');
+                navigate('/dashboard/owner/reviews');
+              }}
               className="bg-white p-6 rounded-lg border border-gray-200 hover:border-blue-500 hover:shadow-lg transition text-left"
             >
               <i className="fas fa-comments text-green-600 text-3xl mb-3"></i>

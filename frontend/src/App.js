@@ -62,6 +62,15 @@ function App() {
           />
 
           <Route
+            path="/dashboard/student/:tab"
+            element={
+              <ProtectedRoute requiredRole="student">
+                <StudentDashboardModernPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/dashboard/owner"
             element={
               <ProtectedRoute requiredRole="owner">
@@ -71,7 +80,25 @@ function App() {
           />
 
           <Route
+            path="/dashboard/owner/:tab"
+            element={
+              <ProtectedRoute requiredRole="owner">
+                <OwnerDashboardModernPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/dashboard/owner/create-listing"
+            element={
+              <ProtectedRoute requiredRole="owner">
+                <CreateListingPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/owner/edit-listing/:id"
             element={
               <ProtectedRoute requiredRole="owner">
                 <CreateListingPage />

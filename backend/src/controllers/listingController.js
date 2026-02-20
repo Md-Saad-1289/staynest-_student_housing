@@ -224,6 +224,38 @@ const getFeaturedListingsPublic = async (req, res) => {
   }
 };
 
+// Delete listing (owner can delete own listing, admin can delete any)
+const deleteListing = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid listing id' });
+    }
+
+    const listing = await Listing.findById(req.params.id);
+    if (!listing) {
+      return res.status(404).json({ error: 'Listing not found' });
+    }
+
+    // Check authorization: owner can delete own, admin can delete any
+    const isOwner = listing.ownerId.toString() === req.user.userId;
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ error: 'Not authorized to delete this listing' });
+    }
+
+    // Delete the listing
+    await Listing.findByIdAndDelete(req.params.id);
+
+    // Also delete associated reviews
+    await Review.deleteMany({ listingId: req.params.id });
+
+    res.json({ message: 'Listing deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Single export statement - each function exported exactly once
 export {
   getListings,
@@ -236,4 +268,5 @@ export {
   addViewHistory,
   getViewHistory,
   getFeaturedListingsPublic,
+  deleteListing,
 };

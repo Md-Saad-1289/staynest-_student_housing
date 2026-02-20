@@ -10,6 +10,7 @@ import {
   resolveFlag,
   getFeaturedListings,
   toggleFeaturedListing,
+  deleteAdminListing,
   getAllListingsForAdmin,
   getAdminActions,
 } from '../controllers/adminController.js';
@@ -28,6 +29,7 @@ router.get('/listings/all', getAllListingsForAdmin);
 router.put('/listings/:id/verify', verifyListing);
 router.get('/listings/featured', getFeaturedListings);
 router.put('/listings/:id/toggle-featured', toggleFeaturedListing);
+router.delete('/listings/:id', deleteAdminListing);
 router.get('/flags', getFlags);
 router.put('/flags/:id/resolve', resolveFlag);
 router.get('/actions', getAdminActions);
