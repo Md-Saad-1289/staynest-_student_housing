@@ -135,6 +135,7 @@ export const adminService = {
   getUnverifiedListings: () => api.get('/admin/listings/unverified').then(res => res),
   getAllListings: (params) => api.get('/admin/listings/all', { params }).then(res => res),
   verifyListing: (id) => api.put(`/admin/listings/${id}/verify`).then(res => res),
+  deleteListing: (id, reason) => api.delete(`/admin/listings/${id}`, { data: { reason } }).then(res => res),
   getFeaturedListings: () => api.get('/admin/listings/featured').then(res => res),
   toggleFeaturedListing: (id) => api.put(`/admin/listings/${id}/toggle-featured`).then(res => res),
   getFlags: () => api.get('/admin/flags').then(res => res),

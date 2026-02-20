@@ -53,6 +53,20 @@ export const AdminDashboardModernPage = ({ tab }) => {
   const [testimonialModal, setTestimonialModal] = useState({ open: false, mode: 'create', testimonial: null });
   const [testimonialForm, setTestimonialForm] = useState({ name: '', tag: '', rating: 5, text: '', isFeatured: false, approved: false });
   const [isSubmittingTestimonial, setIsSubmittingTestimonial] = useState(false);
+  const [testimonialFormErrors, setTestimonialFormErrors] = useState({});
+
+  const validateTestimonialForm = () => {
+    const errors = {};
+    if (!testimonialForm.name.trim()) errors.name = 'Name is required';
+    if (!testimonialForm.tag.trim()) errors.tag = 'Tag is required';
+    if (!testimonialForm.text.trim()) errors.text = 'Testimonial text is required';
+    if (testimonialForm.text.trim().length < 10) errors.text = 'Text must be at least 10 characters';
+    if (testimonialForm.text.trim().length > 500) errors.text = 'Text must not exceed 500 characters';
+    if (isNaN(testimonialForm.rating) || testimonialForm.rating < 1 || testimonialForm.rating > 5) errors.rating = 'Rating must be 1-5';
+    return errors;
+  };
+
+  const isFormValid = () => Object.keys(validateTestimonialForm()).length === 0;
 
   // Update activeTab when tab prop changes (from route navigation)
   useEffect(() => {
@@ -317,6 +331,30 @@ export const AdminDashboardModernPage = ({ tab }) => {
     });
   };
 
+  // Handle listing deletion
+  const handleDeleteListing = (listingId, listingTitle = 'this listing') => {
+    const reason = prompt(`Why are you deleting "${listingTitle}"?\n\n(This reason will be logged for audit purposes)`);
+    if (reason === null) return; // User cancelled
+
+    setConfirmModal({
+      open: true,
+      title: 'Delete Listing?',
+      message: `You are about to permanently delete the listing "${listingTitle}". This action cannot be undone.\n\nReason: ${reason || '(no reason provided)'}`,
+      confirmText: 'Delete Permanently',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await adminService.deleteListing(listingId, reason);
+          alert('✓ Listing deleted successfully');
+          setRefreshKey((k) => k + 1);
+          setConfirmModal({ open: false });
+        } catch (err) {
+          alert('Failed to delete listing: ' + (err.response?.data?.error || err.message));
+        }
+      },
+    });
+  };
+
   // Handle flag resolution
   const handleResolveFlag = (flagId) => {
     const notes = prompt('Add admin notes (optional):');
@@ -341,11 +379,17 @@ export const AdminDashboardModernPage = ({ tab }) => {
 
   // Testimonial create/update
   const submitTestimonial = async () => {
+    const errors = validateTestimonialForm();
+    if (Object.keys(errors).length > 0) {
+      setTestimonialFormErrors(errors);
+      return;
+    }
+
     const payload = {
-      name: testimonialForm.name,
-      tag: testimonialForm.tag,
+      name: testimonialForm.name.trim(),
+      tag: testimonialForm.tag.trim(),
       rating: Number(testimonialForm.rating) || 5,
-      text: testimonialForm.text,
+      text: testimonialForm.text.trim(),
       isFeatured: !!testimonialForm.isFeatured,
       approved: !!testimonialForm.approved,
     };
@@ -354,12 +398,13 @@ export const AdminDashboardModernPage = ({ tab }) => {
       setIsSubmittingTestimonial(true);
       if (testimonialModal.mode === 'create') {
         await adminService.createTestimonial(payload);
-        alert('Testimonial created');
+        alert('✓ Testimonial created successfully');
       } else if (testimonialModal.mode === 'edit' && testimonialModal.testimonial) {
         await adminService.updateTestimonial(testimonialModal.testimonial._id, payload);
-        alert('Testimonial updated');
+        alert('✓ Testimonial updated successfully');
       }
       setTestimonialModal({ open: false, mode: 'create', testimonial: null });
+      setTestimonialFormErrors({});
       setRefreshKey((k) => k + 1);
     } catch (err) {
       alert('Failed: ' + (err.response?.data?.error || err.message));
@@ -493,12 +538,20 @@ export const AdminDashboardModernPage = ({ tab }) => {
       key: 'actions',
       label: 'Actions',
       render: (row) => (
-        <button
-          onClick={() => handleVerifyListing(row._id)}
-          className="px-3 py-1 text-xs bg-green-50 text-green-600 hover:bg-green-100 rounded font-medium transition-colors flex items-center gap-1"
-        >
-          <i className="fas fa-check-circle"></i> Approve
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleVerifyListing(row._id)}
+            className="px-3 py-1 text-xs bg-green-50 text-green-600 hover:bg-green-100 rounded font-medium transition-colors flex items-center gap-1"
+          >
+            <i className="fas fa-check-circle"></i> Approve
+          </button>
+          <button
+            onClick={() => handleDeleteListing(row._id, row.title)}
+            className="px-3 py-1 text-xs bg-red-50 text-red-600 hover:bg-red-100 rounded font-medium transition-colors flex items-center gap-1"
+          >
+            <i className="fas fa-trash"></i> Delete
+          </button>
+        </div>
       ),
     },
   ];
@@ -1099,28 +1152,36 @@ export const AdminDashboardModernPage = ({ tab }) => {
                 key: 'actions',
                 label: 'Actions',
                 render: (row) => (
-                  <button
-                    onClick={async () => {
-                      try {
-                        await adminService.toggleFeaturedListing(row._id);
-                        alert(row.isFeatured ? '✓ Removed from featured' : '✓ Added to featured');
-                        setRefreshKey((k) => k + 1);
-                      } catch (err) {
-                        alert('Failed to update: ' + (err.response?.data?.error || err.message));
-                      }
-                    }}
-                    className={`px-3 py-1 text-xs rounded font-medium transition-colors ${
-                      row.isFeatured
-                        ? 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100'
-                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    {row.isFeatured ? (
-                      <><i className="fas fa-star mr-1"></i>Unfeature</>
-                    ) : (
-                      <><i className="fas fa-star-o mr-1"></i>Feature</>
-                    )}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={async () => {
+                        try {
+                          await adminService.toggleFeaturedListing(row._id);
+                          alert(row.isFeatured ? '✓ Removed from featured' : '✓ Added to featured');
+                          setRefreshKey((k) => k + 1);
+                        } catch (err) {
+                          alert('Failed to update: ' + (err.response?.data?.error || err.message));
+                        }
+                      }}
+                      className={`px-3 py-1 text-xs rounded font-medium transition-colors ${
+                        row.isFeatured
+                          ? 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100'
+                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      {row.isFeatured ? (
+                        <><i className="fas fa-star mr-1"></i>Unfeature</>
+                      ) : (
+                        <><i className="fas fa-star-o mr-1"></i>Feature</>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteListing(row._id, row.title)}
+                      className="px-3 py-1 text-xs bg-red-50 text-red-600 hover:bg-red-100 rounded font-medium transition-colors flex items-center gap-1"
+                    >
+                      <i className="fas fa-trash"></i> Delete
+                    </button>
+                  </div>
                 ),
               },
             ]} data={allListings} />
@@ -1280,46 +1341,162 @@ export const AdminDashboardModernPage = ({ tab }) => {
       {/* Confirm Modal */}
       {/* Testimonial Modal */}
       {testimonialModal.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black opacity-40" onClick={() => setTestimonialModal({ open: false, mode: 'create', testimonial: null })} />
-          <div className="bg-white rounded-lg shadow-lg z-60 max-w-2xl w-full p-6 relative">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-bold">{testimonialModal.mode === 'create' ? 'Create Testimonial' : 'Edit Testimonial'}</h3>
-              <button onClick={() => setTestimonialModal({ open: false, mode: 'create', testimonial: null })} className="text-gray-500">✕</button>
+          <div className="bg-white rounded-lg shadow-2xl z-60 max-w-2xl w-full p-8 relative">
+            {/* Header */}
+            <div className="flex justify-between items-start mb-6 pb-4 border-b border-gray-200">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  <i className={`fas ${testimonialModal.mode === 'create' ? 'fa-plus-circle' : 'fa-edit'} text-purple-600 mr-2`}></i>
+                  {testimonialModal.mode === 'create' ? 'Create New Testimonial' : 'Edit Testimonial'}
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  {testimonialModal.mode === 'create' ? 'Add a new student testimonial to the platform' : 'Update testimonial details'}
+                </p>
+              </div>
+              <button onClick={() => setTestimonialModal({ open: false, mode: 'create', testimonial: null })} className="text-gray-400 hover:text-gray-600 text-2xl">✕</button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5 max-h-96 overflow-y-auto pr-2">
+              {/* Name Field */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">Student Name</label>
-                <input value={testimonialForm.name} onChange={(e) => setTestimonialForm({ ...testimonialForm, name: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 outline-none" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Tag (School / Tag)</label>
-                <input value={testimonialForm.tag} onChange={(e) => setTestimonialForm({ ...testimonialForm, tag: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 outline-none" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Rating (1-5)</label>
-                <input type="number" min="1" max="5" value={testimonialForm.rating} onChange={(e) => setTestimonialForm({ ...testimonialForm, rating: Number(e.target.value) })} className="mt-1 w-32 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 outline-none" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Text</label>
-                <textarea value={testimonialForm.text} onChange={(e) => setTestimonialForm({ ...testimonialForm, text: e.target.value })} rows={4} className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 outline-none" />
-              </div>
-              <div className="flex items-center gap-4">
-                <label className="inline-flex items-center gap-2">
-                  <input type="checkbox" checked={testimonialForm.isFeatured} onChange={(e) => setTestimonialForm({ ...testimonialForm, isFeatured: e.target.checked })} />
-                  <span className="text-sm text-gray-700">Featured</span>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <i className="fas fa-user text-purple-600 mr-1"></i> Student Name *
                 </label>
-                <label className="inline-flex items-center gap-2">
-                  <input type="checkbox" checked={testimonialForm.approved} onChange={(e) => setTestimonialForm({ ...testimonialForm, approved: e.target.checked })} />
-                  <span className="text-sm text-gray-700">Approved</span>
-                </label>
+                <input 
+                  value={testimonialForm.name} 
+                  onChange={(e) => {
+                    setTestimonialForm({ ...testimonialForm, name: e.target.value });
+                    if (testimonialFormErrors.name) setTestimonialFormErrors({ ...testimonialFormErrors, name: '' });
+                  }} 
+                  placeholder="e.g., Aisha Rahman"
+                  className={`w-full border-2 rounded-lg px-4 py-2 focus:outline-none transition ${testimonialFormErrors.name ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-gray-300 focus:ring-2 focus:ring-purple-500'}`} 
+                />
+                {testimonialFormErrors.name && <p className="text-red-600 text-xs mt-1"><i className="fas fa-exclamation-circle mr-1"></i>{testimonialFormErrors.name}</p>}
               </div>
 
-              <div className="flex items-center justify-end gap-3">
-                <button onClick={() => setTestimonialModal({ open: false, mode: 'create', testimonial: null })} className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">Cancel</button>
-                <button disabled={isSubmittingTestimonial} onClick={submitTestimonial} className="px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700">
-                  {isSubmittingTestimonial ? 'Saving...' : (testimonialModal.mode === 'create' ? 'Create' : 'Save')}
+              {/* Tag Field */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <i className="fas fa-tag text-purple-600 mr-1"></i> Tag (School/University) *
+                </label>
+                <input 
+                  value={testimonialForm.tag} 
+                  onChange={(e) => {
+                    setTestimonialForm({ ...testimonialForm, tag: e.target.value });
+                    if (testimonialFormErrors.tag) setTestimonialFormErrors({ ...testimonialFormErrors, tag: '' });
+                  }} 
+                  placeholder="e.g., BUET, DU, NSU"
+                  className={`w-full border-2 rounded-lg px-4 py-2 focus:outline-none transition ${testimonialFormErrors.tag ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-gray-300 focus:ring-2 focus:ring-purple-500'}`} 
+                />
+                {testimonialFormErrors.tag && <p className="text-red-600 text-xs mt-1"><i className="fas fa-exclamation-circle mr-1"></i>{testimonialFormErrors.tag}</p>}
+              </div>
+
+              {/* Rating Field */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <i className="fas fa-star text-yellow-500 mr-1"></i> Rating (1-5 stars) *
+                </label>
+                <div className="flex items-center gap-3">
+                  <input 
+                    type="number" 
+                    min="1" 
+                    max="5" 
+                    value={testimonialForm.rating} 
+                    onChange={(e) => {
+                      setTestimonialForm({ ...testimonialForm, rating: Number(e.target.value) });
+                      if (testimonialFormErrors.rating) setTestimonialFormErrors({ ...testimonialFormErrors, rating: '' });
+                    }} 
+                    className={`w-20 border-2 rounded-lg px-4 py-2 focus:outline-none transition ${testimonialFormErrors.rating ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-gray-300 focus:ring-2 focus:ring-purple-500'}`} 
+                  />
+                  <div className="text-sm text-gray-600">
+                    {[...Array(5)].map((_, i) => (
+                      <i key={i} className={`fas fa-star text-sm ${i < testimonialForm.rating ? 'text-yellow-400' : 'text-gray-300'}`}></i>
+                    ))}
+                  </div>
+                </div>
+                {testimonialFormErrors.rating && <p className="text-red-600 text-xs mt-1"><i className="fas fa-exclamation-circle mr-1"></i>{testimonialFormErrors.rating}</p>}
+              </div>
+
+              {/* Text/Testimonial Field */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <i className="fas fa-comment text-purple-600 mr-1"></i> Testimonial Text *
+                </label>
+                <textarea 
+                  value={testimonialForm.text} 
+                  onChange={(e) => {
+                    setTestimonialForm({ ...testimonialForm, text: e.target.value });
+                    if (testimonialFormErrors.text) setTestimonialFormErrors({ ...testimonialFormErrors, text: '' });
+                  }} 
+                  rows={4} 
+                  placeholder="What did the student like about this housing?"
+                  maxLength="500"
+                  className={`w-full border-2 rounded-lg px-4 py-2 focus:outline-none transition resize-none ${testimonialFormErrors.text ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-gray-300 focus:ring-2 focus:ring-purple-500'}`} 
+                />
+                <div className="flex justify-between items-center mt-1">
+                  {testimonialFormErrors.text ? (
+                    <p className="text-red-600 text-xs"><i className="fas fa-exclamation-circle mr-1"></i>{testimonialFormErrors.text}</p>
+                  ) : (
+                    <p className="text-gray-500 text-xs">Minimum 10 characters</p>
+                  )}
+                  <span className={`text-xs font-medium ${testimonialForm.text.length >= 450 ? 'text-red-600' : 'text-gray-500'}`}>
+                    {testimonialForm.text.length}/500
+                  </span>
+                </div>
+              </div>
+
+              {/* Status Checkboxes */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3 border border-gray-200">
+                <p className="text-sm font-semibold text-gray-700">
+                  <i className="fas fa-sliders-h text-purple-600 mr-2"></i> Visibility & Status
+                </p>
+                <label className="inline-flex items-center gap-3 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={testimonialForm.approved}
+                    onChange={(e) => setTestimonialForm({ ...testimonialForm, approved: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-300 focus:ring-2 focus:ring-purple-500"
+                  />
+                  <span className="text-sm text-gray-700">
+                    <strong>Approved</strong> - Display on homepage
+                  </span>
+                </label>
+                <label className="inline-flex items-center gap-3 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={testimonialForm.isFeatured}
+                    onChange={(e) => setTestimonialForm({ ...testimonialForm, isFeatured: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-300 focus:ring-2 focus:ring-purple-500"
+                  />
+                  <span className="text-sm text-gray-700">
+                    <strong>Featured</strong> - Show in featured section
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex items-center justify-between gap-3 mt-6 pt-4 border-t border-gray-200">
+              <p className="text-xs text-gray-500">* Fields are required</p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => {
+                    setTestimonialModal({ open: false, mode: 'create', testimonial: null });
+                    setTestimonialFormErrors({});
+                  }} 
+                  className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  disabled={isSubmittingTestimonial || !isFormValid()} 
+                  onClick={submitTestimonial} 
+                  className={`px-6 py-2 rounded-lg text-white font-medium flex items-center gap-2 transition-colors ${isSubmittingTestimonial || !isFormValid() ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'}`}
+                >
+                  <i className={`fas ${isSubmittingTestimonial ? 'fa-spinner fa-spin' : (testimonialModal.mode === 'create' ? 'fa-save' : 'fa-check')}`}></i>
+                  {isSubmittingTestimonial ? 'Saving...' : (testimonialModal.mode === 'create' ? 'Create Testimonial' : 'Save Changes')}
                 </button>
               </div>
             </div>
