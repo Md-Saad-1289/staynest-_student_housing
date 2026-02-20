@@ -121,6 +121,27 @@ export const OwnerDashboardModernPage = () => {
     }
   };
 
+  // Handle listing deletion
+  const handleDeleteListing = (listingId, listingTitle) => {
+    setConfirmModal({
+      open: true,
+      title: 'Delete Listing?',
+      message: `You are about to permanently delete the listing "${listingTitle}". This action cannot be undone. Any pending bookings will also be affected.`,
+      confirmText: 'Delete Permanently',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await listingService.deleteListing(listingId);
+          alert('✓ Listing deleted successfully');
+          setRefreshKey((k) => k + 1);
+          setConfirmModal({ open: false });
+        } catch (err) {
+          alert('Failed to delete listing: ' + (err.response?.data?.error || err.message));
+        }
+      },
+    });
+  };
+
   // Listings table columns
   const listingsColumns = [
     {
@@ -170,6 +191,12 @@ export const OwnerDashboardModernPage = () => {
             className="px-3 py-1 text-xs bg-green-50 text-green-600 hover:bg-green-100 rounded font-medium transition-colors flex items-center gap-1"
           >
             <i className="fas fa-edit"></i> Edit
+          </button>
+          <button
+            onClick={() => handleDeleteListing(row._id, row.title)}
+            className="px-3 py-1 text-xs bg-red-50 text-red-600 hover:bg-red-100 rounded font-medium transition-colors flex items-center gap-1"
+          >
+            <i className="fas fa-trash"></i> Delete
           </button>
         </div>
       ),

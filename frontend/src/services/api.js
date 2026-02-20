@@ -61,6 +61,7 @@ export const listingService = {
   getListing: (id) => api.get(`/listings/${id}`).then(res => res),
   createListing: (data) => api.post('/listings', data).then(res => res),
   updateListing: (id, data) => api.put(`/listings/${id}`, data).then(res => res),
+  deleteListing: (id) => api.delete(`/listings/${id}`).then(res => res),
   getOwnerListings: () => api.get('/listings/owner/my-listings').then(res => res),
   getFeaturedListings: () => api.get('/listings/featured').then(res => res),
   toggleFavorite: (listingId) => api.post('/listings/user/toggle-favorite', { listingId }).then(res => res),

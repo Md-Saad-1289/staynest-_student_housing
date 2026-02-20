@@ -32,7 +32,10 @@ export const AdminDashboardModernPage = ({ tab }) => {
   const [unverifiedOwners, setUnverifiedOwners] = useState([]);
   const [unverifiedListings, setUnverifiedListings] = useState([]);
   const [allListings, setAllListings] = useState([]);
+  const [allListingsComplete, setAllListingsComplete] = useState([]);
   const [featuredListings, setFeaturedListings] = useState([]);
+  const [listingsSearchQuery, setListingsSearchQuery] = useState('');
+  const [listingsStatusFilter, setListingsStatusFilter] = useState('');
   const [testimonials, setTestimonials] = useState([]);
   const [flags, setFlags] = useState([]);
   const [actions, setActions] = useState([]);
@@ -101,6 +104,11 @@ export const AdminDashboardModernPage = ({ tab }) => {
         setUnverifiedListings(listingsRes.data.listings || []);
       }
 
+      if (activeTab === 'all-listings') {
+        const allRes = await adminService.getAllListings().catch(() => ({ data: { listings: [] } }));
+        setAllListingsComplete(allRes.data.listings || []);
+      }
+
       if (activeTab === 'featured') {
         const [featuredRes, allRes] = await Promise.all([
           adminService.getFeaturedListings().catch(() => ({ data: { listings: [] } })),
@@ -133,7 +141,22 @@ export const AdminDashboardModernPage = ({ tab }) => {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, actionsPage, actionsLimit, actionFilter, actionTargetFilter, refreshKey, searchQuery, filterVerified]);
+  }, [activeTab, actionsPage, actionsLimit, actionFilter, actionTargetFilter, refreshKey, searchQuery, filterVerified, listingsSearchQuery, listingsStatusFilter]);
+
+  // Filter and search allListingsComplete for all-listings tab
+  const filteredAllListings = allListingsComplete.filter(listing => {
+    const matchesSearch = !listingsSearchQuery || 
+      listing.title?.toLowerCase().includes(listingsSearchQuery.toLowerCase()) ||
+      listing.city?.toLowerCase().includes(listingsSearchQuery.toLowerCase()) ||
+      listing.ownerId?.name?.toLowerCase().includes(listingsSearchQuery.toLowerCase());
+    
+    const matchesStatus = !listingsStatusFilter ||
+      (listingsStatusFilter === 'verified' && listing.verified) ||
+      (listingsStatusFilter === 'unverified' && !listing.verified) ||
+      (listingsStatusFilter === 'featured' && listing.isFeatured);
+    
+    return matchesSearch && matchesStatus;
+  });
 
   // Utility: synthesize small trend array for sparklines (non-random deterministic)
   const synthesizeTrend = (base, points = 8) => {
@@ -695,7 +718,7 @@ export const AdminDashboardModernPage = ({ tab }) => {
             <h3 className="text-xl font-bold text-gray-900 mb-1">Quick Actions</h3>
             <p className="text-sm text-gray-600 mb-4">Common admin tasks and pending reviews</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
             <button
               onClick={() => setActiveTab('users')}
               className="bg-white p-6 rounded-xl border border-gray-200 hover:border-blue-400 hover:shadow-xl hover:scale-105 transition-all duration-300 text-left group"
@@ -717,6 +740,17 @@ export const AdminDashboardModernPage = ({ tab }) => {
               </div>
               <h3 className="font-bold text-gray-900 mb-1">Approve Listings</h3>
               <p className="text-sm text-gray-600">Review and approve property listings</p>
+            </button>
+            <button
+              onClick={() => setActiveTab('all-listings')}
+              className="bg-white p-6 rounded-xl border border-gray-200 hover:border-purple-400 hover:shadow-xl hover:scale-105 transition-all duration-300 text-left group"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <i className="fas fa-layer-group text-purple-600 text-3xl group-hover:scale-110 transition-transform"></i>
+                <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-bold">{allListingsComplete.length}</span>
+              </div>
+              <h3 className="font-bold text-gray-900 mb-1">Manage All Listings</h3>
+              <p className="text-sm text-gray-600">Delete any listing system-wide</p>
             </button>
             <button
               onClick={() => setActiveTab('flags')}
@@ -1185,6 +1219,133 @@ export const AdminDashboardModernPage = ({ tab }) => {
                 ),
               },
             ]} data={allListings} />
+          )}
+        </div>
+      )}
+
+      {/* All Listings Management Tab */}
+      {activeTab === 'all-listings' && (
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  <i className="fas fa-list text-blue-600 mr-2"></i>
+                  All Listings Management
+                </h2>
+                <p className="text-gray-600">View and delete any listing on the platform. Admins have full control to manage all properties.</p>
+              </div>
+              <div className="text-right bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+                <p className="text-gray-600 text-sm">Total Listings</p>
+                <p className="text-3xl font-bold text-blue-600">{allListingsComplete.length}</p>
+              </div>
+            </div>
+
+            {/* Search and Filter */}
+            <div className="flex items-center gap-3 mb-4">
+              <input 
+                type="text"
+                placeholder="Search listings by title, city, or owner..."
+                value={listingsSearchQuery}
+                onChange={(e) => setListingsSearchQuery(e.target.value)}
+                className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+              <select 
+                value={listingsStatusFilter}
+                onChange={(e) => setListingsStatusFilter(e.target.value)}
+                className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option value="">All Status</option>
+                <option value="verified">Verified Only</option>
+                <option value="unverified">Unverified Only</option>
+                <option value="featured">Featured Only</option>
+              </select>
+              <button
+                onClick={() => setRefreshKey((k) => k + 1)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 font-semibold"
+              >
+                <i className="fas fa-sync"></i> Refresh
+              </button>
+            </div>
+
+            {/* Results count */}
+            <p className="text-sm text-gray-600 mb-4">
+              Showing <strong>{filteredAllListings.length}</strong> of <strong>{allListingsComplete.length}</strong> listings
+            </p>
+          </div>
+
+          {filteredAllListings.length === 0 ? (
+            <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
+              <i className="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
+              <p className="text-gray-600 font-medium">{listingsSearchQuery || listingsStatusFilter ? 'No listings match your filters' : 'No listings available'}</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="text-left p-3 font-semibold text-gray-600">Listing</th>
+                    <th className="text-left p-3 font-semibold text-gray-600">Owner</th>
+                    <th className="text-left p-3 font-semibold text-gray-600">Location</th>
+                    <th className="text-left p-3 font-semibold text-gray-600">Rent</th>
+                    <th className="text-left p-3 font-semibold text-gray-600">Status</th>
+                    <th className="text-left p-3 font-semibold text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAllListings.map((listing) => (
+                    <tr key={listing._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                      <td className="p-3">
+                        <div className="flex items-start gap-2">
+                          <i className="fas fa-home text-blue-600 mt-1 flex-shrink-0"></i>
+                          <div>
+                            <p className="font-medium text-gray-900">{listing.title}</p>
+                            <p className="text-xs text-gray-500">{listing.address?.substring(0, 40)}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <p className="font-medium text-gray-900">{listing.ownerId?.name || 'Unknown'}</p>
+                        <p className="text-xs text-gray-500">{listing.ownerId?.email || 'N/A'}</p>
+                      </td>
+                      <td className="p-3">
+                        <span className="inline-flex items-center gap-1 text-gray-700">
+                          <i className="fas fa-map-marker-alt text-red-600"></i>
+                          {listing.city}
+                        </span>
+                      </td>
+                      <td className="p-3 font-semibold text-gray-900">৳{listing.rent?.toLocaleString()}</td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-1">
+                          {listing.verified ? (
+                            <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded text-xs font-medium">
+                              <i className="fas fa-check-circle"></i> Verified
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2 py-1 rounded text-xs font-medium">
+                              <i className="fas fa-exclamation-circle"></i> Unverified
+                            </span>
+                          )}
+                          {listing.isFeatured && (
+                            <span className="inline-flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2 py-1 rounded text-xs font-medium">
+                              <i className="fas fa-star"></i> Featured
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <button
+                          onClick={() => handleDeleteListing(listing._id, listing.title)}
+                          className="px-3 py-1.5 text-xs bg-red-50 text-red-600 hover:bg-red-100 rounded font-medium transition-colors inline-flex items-center gap-1"
+                        >
+                          <i className="fas fa-trash"></i> Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}

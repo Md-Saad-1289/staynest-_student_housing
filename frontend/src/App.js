@@ -126,6 +126,15 @@ function App() {
           />
 
           <Route
+            path="/dashboard/admin/all-listings"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboardModernPage tab="all-listings" />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/dashboard/admin/testimonials"
             element={
               <ProtectedRoute requiredRole="admin">
