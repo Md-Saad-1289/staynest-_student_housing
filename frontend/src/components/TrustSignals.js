@@ -1,48 +1,67 @@
-import React from 'react';
+import React from "react";
 
-const Item = ({ title, subtitle, icon }) => (
-  <div className="flex items-center gap-4 bg-white p-4 rounded-lg border border-gray-100 hover:border-blue-300 transition">
-    <div className="flex-shrink-0 text-3xl text-blue-600">
+const TrustItem = ({ title, subtitle, icon }) => (
+  <div className="group flex items-start gap-4 p-5 rounded-2xl bg-white/70 backdrop-blur-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+    
+    {/* Icon */}
+    <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white text-lg shadow-md group-hover:scale-110 transition">
       <i className={`fas ${icon}`}></i>
     </div>
+
+    {/* Text */}
     <div>
-      <div className="font-semibold text-gray-900">{title}</div>
-      <div className="text-xs text-gray-600">{subtitle}</div>
+      <h4 className="font-semibold text-gray-900 mb-1">
+        {title}
+      </h4>
+      <p className="text-sm text-gray-600 leading-relaxed">
+        {subtitle}
+      </p>
     </div>
   </div>
 );
 
 export const TrustSignals = () => {
   return (
-    <section className="py-8">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="bg-gradient-to-r from-blue-50 to-sky-50 rounded-xl p-6 border border-blue-100">
-          <h3 className="text-lg font-bold mb-6 flex items-center gap-2"><i className="fas fa-shield-alt text-green-600"></i> Why Choose NestroStay?</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Item
-              title="Verified Owners"
-              subtitle="ID-verified & trusted"
-              icon="fa-badge-check"
-            />
+    <section className="relative py-16 bg-gradient-to-b from-white to-sky-50">
+      <div className="max-w-7xl mx-auto px-6">
 
-            <Item
-              title="Real Reviews"
-              subtitle="Authentic student feedback"
-              icon="fa-star"
-            />
+        {/* Heading */}
+        <div className="text-center mb-12">
+          <h3 className="text-2xl md:text-3xl font-bold text-gray-900">
+            Why Students Trust StayNest
+          </h3>
+          <p className="text-gray-600 mt-3">
+            Safe, transparent, and built for real student needs.
+          </p>
+        </div>
 
-            <Item
-              title="Female-Friendly"
-              subtitle="Women-safe options"
-              icon="fa-venus"
-            />
+        {/* Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
 
-            <Item
-              title="Zero Brokerage"
-              subtitle="Transparent pricing"
-              icon="fa-hands-holding-dollar"
-            />
-          </div>
+          <TrustItem
+            title="Verified Owners"
+            subtitle="Every owner is ID-verified before listing."
+            icon="fa-check-circle"
+          />
+
+          <TrustItem
+            title="Real Reviews"
+            subtitle="Authentic feedback from real students."
+            icon="fa-star"
+          />
+
+          <TrustItem
+            title="Female-Friendly Options"
+            subtitle="Safer choices for female students."
+            icon="fa-shield-alt"
+          />
+
+          <TrustItem
+            title="Zero Brokerage"
+            subtitle="No hidden charges. Transparent pricing."
+            icon="fa-hand-holding-usd"
+          />
+
         </div>
       </div>
     </section>
