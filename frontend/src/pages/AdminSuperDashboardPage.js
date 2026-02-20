@@ -23,6 +23,17 @@ export const AdminSuperDashboardPage = () => {
   const [newTestimonial, setNewTestimonial] = useState({ name: '', tag: '', text: '', rating: 5, approved: false });
   const [editingTestimonial, setEditingTestimonial] = useState(null);
 
+  // Tab color mapping
+  const getTabClasses = (tabId) => {
+    const colorMap = {
+      overview: 'border-blue-600 text-blue-600 bg-blue-50',
+      featured: 'border-yellow-600 text-yellow-600 bg-yellow-50',
+      listings: 'border-green-600 text-green-600 bg-green-50',
+      testimonials: 'border-purple-600 text-purple-600 bg-purple-50',
+    };
+    return colorMap[tabId] || colorMap.overview;
+  };
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -365,17 +376,17 @@ export const AdminSuperDashboardPage = () => {
       <div className="mb-8 bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="flex border-b border-gray-200 overflow-x-auto">
           {[
-            { id: 'overview', label: 'Dashboard', icon: 'fas fa-chart-line', color: 'blue' },
-            { id: 'featured', label: 'Featured Listings', icon: 'fas fa-star', color: 'yellow' },
-            { id: 'listings', label: 'All Listings', icon: 'fas fa-list', color: 'green' },
-            { id: 'testimonials', label: 'What Students Say', icon: 'fas fa-comment-dots', color: 'purple' },
+            { id: 'overview', label: 'Dashboard', icon: 'fas fa-chart-line' },
+            { id: 'featured', label: 'Featured Listings', icon: 'fas fa-star' },
+            { id: 'listings', label: 'All Listings', icon: 'fas fa-list' },
+            { id: 'testimonials', label: 'What Students Say', icon: 'fas fa-comment-dots' },
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 px-6 py-4 font-semibold transition-all whitespace-nowrap flex items-center justify-center gap-2 border-b-2 ${
                 activeTab === tab.id
-                  ? `border-${tab.color}-600 text-${tab.color}-600 bg-${tab.color}-50`
+                  ? getTabClasses(tab.id)
                   : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >

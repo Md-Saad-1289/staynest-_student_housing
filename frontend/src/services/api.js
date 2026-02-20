@@ -76,6 +76,7 @@ export const bookingService = {
   createBooking: (data) => api.post('/bookings', data).then(res => res),
   getOwnerBookings: () => api.get('/bookings/owner').then(res => res),
   getStudentBookings: () => api.get('/bookings/student').then(res => res),
+  getBookings: (params) => api.get('/bookings', { params }).then(res => res),
   updateBookingStatus: (id, status) => api.put(`/bookings/${id}/status`, { status }).then(res => res),
 };
 

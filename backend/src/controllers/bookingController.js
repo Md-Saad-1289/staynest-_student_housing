@@ -136,9 +136,38 @@ const getStudentBookings = async (req, res) => {
   }
 };
 
+// Get bookings for a listing (public - for displaying approved bookings)
+const getListingBookings = async (req, res) => {
+  try {
+    const { listingId, status } = req.query;
+
+    if (!listingId) {
+      return res.status(400).json({ error: 'Listing ID required' });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(listingId)) {
+      return res.status(400).json({ error: 'Invalid listing ID format' });
+    }
+
+    const query = { listingId };
+    if (status) {
+      query.status = status;
+    }
+
+    const bookings = await Booking.find(query)
+      .populate('studentId', 'name email')
+      .sort({ createdAt: -1 });
+
+    res.json({ bookings });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export {
   createBooking,
   getOwnerBookings,
   updateBookingStatus,
   getStudentBookings,
+  getListingBookings,
 };
