@@ -37,37 +37,48 @@ export const AdminSuperDashboardPage = () => {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      setError('');
       
       if (activeTab === 'overview') {
-        const statsRes = await adminService.getDashboardStats();
+        // Fetch all data for overview tab
+        const [statsRes, ownersRes, listingsRes, flagsRes] = await Promise.all([
+          adminService.getDashboardStats().catch(() => ({ data: { stats: {} } })),
+          adminService.getUnverifiedOwners().catch(() => ({ data: { owners: [] } })),
+          adminService.getUnverifiedListings().catch(() => ({ data: { listings: [] } })),
+          adminService.getFlags().catch(() => ({ data: { flags: [] } })),
+        ]);
+        
         setStats(statsRes.data.stats);
-        
-        const ownersRes = await adminService.getUnverifiedOwners();
         setUnverifiedOwners(ownersRes.data.owners || []);
-        
-        const listingsRes = await adminService.getUnverifiedListings();
         setUnverifiedListings(listingsRes.data.listings || []);
-        
-        const flagsRes = await adminService.getFlags();
         setFlags(flagsRes.data.flags || []);
       } else if (activeTab === 'featured') {
-        const featuredRes = await adminService.getFeaturedListings();
-        setFeaturedListings(featuredRes.data.listings || []);
+        // Fetch featured and all verified listings
+        const [featuredRes, allRes] = await Promise.all([
+          adminService.getFeaturedListings().catch(() => ({ data: { listings: [] } })),
+          adminService.getAllListings({ verified: 'true' }).catch(() => ({ data: { listings: [] } })),
+        ]);
         
-        const allRes = await adminService.getAllListings({ verified: 'true' });
+        setFeaturedListings(featuredRes.data.listings || []);
         setAllListings(allRes.data.listings || []);
       } else if (activeTab === 'listings') {
+        // Fetch listings with filters
         const allRes = await adminService.getAllListings({ 
           search: searchQuery,
           verified: filterVerified || undefined
-        });
+        }).catch(() => ({ data: { listings: [] } }));
+        
         setAllListings(allRes.data.listings || []);
       } else if (activeTab === 'testimonials') {
-        const testimonialsRes = await adminService.getAllTestimonials();
+        // Fetch all testimonials
+        const testimonialsRes = await adminService.getAllTestimonials()
+          .catch(() => ({ data: { testimonials: [] } }));
+        
         setTestimonials(testimonialsRes.data.testimonials || []);
       }
     } catch (err) {
-      setError('Failed to load data: ' + (err.response?.data?.error || err.message));
+      setError('Failed to load data: ' + (err.message || 'Unknown error'));
+      console.error('Data fetch error:', err);
     } finally {
       setLoading(false);
     }
@@ -80,30 +91,30 @@ export const AdminSuperDashboardPage = () => {
   const handleVerifyOwner = async (userId) => {
     try {
       await adminService.verifyOwner(userId);
-      alert('Owner verified successfully!');
+      alert('✓ Owner verified successfully!');
       fetchData();
     } catch (err) {
-      alert('Failed to verify owner: ' + (err.response?.data?.error || err.message));
+      setError('Failed to verify owner: ' + (err.response?.data?.error || err.message));
     }
   };
 
   const handleVerifyListing = async (listingId) => {
     try {
       await adminService.verifyListing(listingId);
-      alert('Listing verified successfully!');
+      alert('✓ Listing verified successfully!');
       fetchData();
     } catch (err) {
-      alert('Failed to verify listing: ' + (err.response?.data?.error || err.message));
+      setError('Failed to verify listing: ' + (err.response?.data?.error || err.message));
     }
   };
 
   const handleToggleFeatured = async (listingId, currentStatus) => {
     try {
       await adminService.toggleFeaturedListing(listingId);
-      alert(`Listing ${currentStatus ? 'removed from' : 'added to'} featured list!`);
+      alert(`✓ Listing ${currentStatus ? 'removed from' : 'added to'} featured list!`);
       fetchData();
     } catch (err) {
-      alert('Failed to update featured status: ' + (err.response?.data?.error || err.message));
+      setError('Failed to update featured status: ' + (err.response?.data?.error || err.message));
     }
   };
 
@@ -112,42 +123,44 @@ export const AdminSuperDashboardPage = () => {
     if (notes !== null) {
       try {
         await adminService.resolveFlag(flagId, notes);
-        alert('Flag resolved!');
+        alert('✓ Flag resolved!');
         fetchData();
       } catch (err) {
-        alert('Failed to resolve flag: ' + (err.response?.data?.error || err.message));
+        setError('Failed to resolve flag: ' + (err.response?.data?.error || err.message));
       }
     }
   };
 
-  // Testimonial handlers
+  // Testimonial handlers with improved error handling
   const handleCreateTestimonial = async () => {
     try {
       if (!newTestimonial.name || !newTestimonial.tag || !newTestimonial.text) {
-        alert('Please fill all required fields');
+        setError('Please fill all required fields');
         return;
       }
       await adminService.createTestimonial(newTestimonial);
-      alert('Testimonial created successfully!');
+      alert('✓ Testimonial created successfully!');
       setNewTestimonial({ name: '', tag: '', text: '', rating: 5, approved: false });
+      setError('');
       fetchData();
     } catch (err) {
-      alert('Failed to create testimonial: ' + (err.response?.data?.error || err.message));
+      setError('Failed to create testimonial: ' + (err.response?.data?.error || err.message));
     }
   };
 
   const handleUpdateTestimonial = async () => {
     try {
       if (!editingTestimonial.name || !editingTestimonial.tag || !editingTestimonial.text) {
-        alert('Please fill all required fields');
+        setError('Please fill all required fields');
         return;
       }
       await adminService.updateTestimonial(editingTestimonial._id, editingTestimonial);
-      alert('Testimonial updated successfully!');
+      alert('✓ Testimonial updated successfully!');
       setEditingTestimonial(null);
+      setError('');
       fetchData();
     } catch (err) {
-      alert('Failed to update testimonial: ' + (err.response?.data?.error || err.message));
+      setError('Failed to update testimonial: ' + (err.response?.data?.error || err.message));
     }
   };
 
@@ -155,10 +168,11 @@ export const AdminSuperDashboardPage = () => {
     if (window.confirm('Are you sure you want to delete this testimonial?')) {
       try {
         await adminService.deleteTestimonial(id);
-        alert('Testimonial deleted!');
+        alert('✓ Testimonial deleted!');
+        setError('');
         fetchData();
       } catch (err) {
-        alert('Failed to delete testimonial: ' + (err.response?.data?.error || err.message));
+        setError('Failed to delete testimonial: ' + (err.response?.data?.error || err.message));
       }
     }
   };
@@ -166,20 +180,22 @@ export const AdminSuperDashboardPage = () => {
   const handleToggleApproval = async (id, currentStatus) => {
     try {
       await adminService.toggleApproval(id);
-      alert(`Testimonial ${currentStatus ? 'unapproved' : 'approved'}!`);
+      alert(`✓ Testimonial ${currentStatus ? 'unapproved' : 'approved'}!`);
+      setError('');
       fetchData();
     } catch (err) {
-      alert('Failed to toggle approval: ' + (err.response?.data?.error || err.message));
+      setError('Failed to toggle approval: ' + (err.response?.data?.error || err.message));
     }
   };
 
   const handleToggleTestimonialFeatured = async (id, currentStatus) => {
     try {
       await adminService.toggleFeatured(id);
-      alert(`Testimonial ${currentStatus ? 'removed from' : 'added to'} featured!`);
+      alert(`✓ Testimonial ${currentStatus ? 'removed from' : 'added to'} featured!`);
+      setError('');
       fetchData();
     } catch (err) {
-      alert('Failed to toggle featured: ' + (err.response?.data?.error || err.message));
+      setError('Failed to toggle featured: ' + (err.response?.data?.error || err.message));
     }
   };
 
@@ -349,25 +365,45 @@ export const AdminSuperDashboardPage = () => {
 
   return (
     <DashboardLayout title="Super Admin Dashboard">
+      {/* Error Message with Dismiss */}
       {error && (
-        <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg flex items-center gap-3 border border-red-300">
-          <i className="fas fa-exclamation-triangle"></i>
-          <span>{error}</span>
+        <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg flex items-center justify-between gap-3 border border-red-200 shadow-sm">
+          <div className="flex items-center gap-3">
+            <i className="fas fa-exclamation-circle text-lg"></i>
+            <span className="font-medium">{error}</span>
+          </div>
+          <button
+            onClick={() => setError('')}
+            className="text-red-500 hover:text-red-700 font-bold text-xl leading-none"
+          >
+            ✕
+          </button>
         </div>
       )}
 
       {/* Admin Header */}
-      <div className="mb-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg px-6 py-6 text-white">
+      <div className="mb-8 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-lg px-6 py-8 text-white shadow-lg">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">
-              <i className="fas fa-crown mr-2"></i>Super Admin Control Panel
+            <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
+              <i className="fas fa-crown text-yellow-300"></i>Super Admin Control Panel
             </h1>
-            <p className="text-blue-100">Manage all platform operations, verify users & listings, control featured content</p>
+            <p className="text-blue-100 text-lg">Manage all platform operations, verify users & listings, control featured content & testimonials</p>
+            <div className="mt-4 flex gap-6">
+              <div className="flex items-center gap-2 text-blue-100">
+                <i className="fas fa-shield-alt text-green-300"></i>
+                <span className="text-sm">Full Platform Control</span>
+              </div>
+              <div className="flex items-center gap-2 text-blue-100">
+                <i className="fas fa-check-circle text-green-300"></i>
+                <span className="text-sm">All Features Active</span>
+              </div>
+            </div>
           </div>
-          <div className="text-right text-blue-100">
-            <p className="text-sm">Welcome back,</p>
-            <p className="text-lg font-semibold">Super Admin</p>
+          <div className="text-right bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+            <p className="text-blue-100 text-sm">Welcome,</p>
+            <p className="text-xl font-bold">Super Admin</p>
+            <p className="text-xs text-green-300 mt-2">✓ All Permissions</p>
           </div>
         </div>
       </div>
