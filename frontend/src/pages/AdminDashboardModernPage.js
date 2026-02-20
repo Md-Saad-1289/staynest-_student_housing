@@ -50,6 +50,9 @@ export const AdminDashboardModernPage = ({ tab }) => {
   const [confirmModal, setConfirmModal] = useState({ open: false });
   const [ownerModal, setOwnerModal] = useState({ open: false, owner: null });
   const [refreshKey, setRefreshKey] = useState(0);
+  const [testimonialModal, setTestimonialModal] = useState({ open: false, mode: 'create', testimonial: null });
+  const [testimonialForm, setTestimonialForm] = useState({ name: '', tag: '', rating: 5, text: '', isFeatured: false, approved: false });
+  const [isSubmittingTestimonial, setIsSubmittingTestimonial] = useState(false);
 
   // Update activeTab when tab prop changes (from route navigation)
   useEffect(() => {
@@ -334,6 +337,35 @@ export const AdminDashboardModernPage = ({ tab }) => {
         }
       },
     });
+  };
+
+  // Testimonial create/update
+  const submitTestimonial = async () => {
+    const payload = {
+      name: testimonialForm.name,
+      tag: testimonialForm.tag,
+      rating: Number(testimonialForm.rating) || 5,
+      text: testimonialForm.text,
+      isFeatured: !!testimonialForm.isFeatured,
+      approved: !!testimonialForm.approved,
+    };
+
+    try {
+      setIsSubmittingTestimonial(true);
+      if (testimonialModal.mode === 'create') {
+        await adminService.createTestimonial(payload);
+        alert('Testimonial created');
+      } else if (testimonialModal.mode === 'edit' && testimonialModal.testimonial) {
+        await adminService.updateTestimonial(testimonialModal.testimonial._id, payload);
+        alert('Testimonial updated');
+      }
+      setTestimonialModal({ open: false, mode: 'create', testimonial: null });
+      setRefreshKey((k) => k + 1);
+    } catch (err) {
+      alert('Failed: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsSubmittingTestimonial(false);
+    }
   };
 
   // Owners table columns
@@ -1100,11 +1132,32 @@ export const AdminDashboardModernPage = ({ tab }) => {
       {activeTab === 'testimonials' && (
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              <i className="fas fa-comment-dots text-purple-600 mr-2"></i>
-              Manage Testimonials
-            </h2>
-            <p className="text-gray-600">Control student testimonials displayed on the homepage. Create, edit, approve, and feature testimonials.</p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  <i className="fas fa-comment-dots text-purple-600 mr-2"></i>
+                  Manage Testimonials
+                </h2>
+                <p className="text-gray-600">Control student testimonials displayed on the homepage. Create, edit, approve, and feature testimonials.</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    setTestimonialForm({ name: '', tag: '', rating: 5, text: '', isFeatured: false, approved: false });
+                    setTestimonialModal({ open: true, mode: 'create', testimonial: null });
+                  }}
+                  className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+                >
+                  <i className="fas fa-plus"></i> Create Testimonial
+                </button>
+                <button
+                  onClick={() => setRefreshKey((k) => k + 1)}
+                  className="text-sm bg-gray-100 px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+                >
+                  <i className="fas fa-sync"></i> Refresh
+                </button>
+              </div>
+            </div>
           </div>
 
           {testimonials.length === 0 ? (
@@ -1126,10 +1179,19 @@ export const AdminDashboardModernPage = ({ tab }) => {
                 render: (row) => (
                   <div className="flex gap-2">
                     <button
+                      onClick={() => {
+                        setTestimonialForm({ name: row.name || '', tag: row.tag || '', rating: row.rating || 5, text: row.text || '', isFeatured: !!row.isFeatured, approved: !!row.approved });
+                        setTestimonialModal({ open: true, mode: 'edit', testimonial: row });
+                      }}
+                      className="text-xs px-2 py-1 rounded bg-gray-50 text-gray-700 hover:bg-gray-100"
+                    >
+                      Edit
+                    </button>
+
+                    <button
                       onClick={async () => {
                         try {
                           await adminService.toggleApproval(row._id);
-                          alert(row.approved ? '✓ Unapproved' : '✓ Approved');
                           setRefreshKey((k) => k + 1);
                         } catch (err) {
                           alert('Failed: ' + (err.response?.data?.error || err.message));
@@ -1139,6 +1201,20 @@ export const AdminDashboardModernPage = ({ tab }) => {
                     >
                       {row.approved ? 'Unapprove' : 'Approve'}
                     </button>
+
+                    <button
+                      onClick={async () => {
+                        try {
+                          await adminService.toggleFeatured(row._id);
+                          setRefreshKey((k) => k + 1);
+                        } catch (err) {
+                          alert('Failed: ' + (err.response?.data?.error || err.message));
+                        }
+                      }}
+                      className={`text-xs px-2 py-1 rounded ${row.isFeatured ? 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'}`}>
+                      {row.isFeatured ? 'Unfeature' : 'Feature'}
+                    </button>
+
                     <button
                       onClick={() => {
                         if (window.confirm('Delete this testimonial?')) {
@@ -1202,6 +1278,54 @@ export const AdminDashboardModernPage = ({ tab }) => {
       )}
 
       {/* Confirm Modal */}
+      {/* Testimonial Modal */}
+      {testimonialModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black opacity-40" onClick={() => setTestimonialModal({ open: false, mode: 'create', testimonial: null })} />
+          <div className="bg-white rounded-lg shadow-lg z-60 max-w-2xl w-full p-6 relative">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-xl font-bold">{testimonialModal.mode === 'create' ? 'Create Testimonial' : 'Edit Testimonial'}</h3>
+              <button onClick={() => setTestimonialModal({ open: false, mode: 'create', testimonial: null })} className="text-gray-500">✕</button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Student Name</label>
+                <input value={testimonialForm.name} onChange={(e) => setTestimonialForm({ ...testimonialForm, name: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Tag (School / Tag)</label>
+                <input value={testimonialForm.tag} onChange={(e) => setTestimonialForm({ ...testimonialForm, tag: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Rating (1-5)</label>
+                <input type="number" min="1" max="5" value={testimonialForm.rating} onChange={(e) => setTestimonialForm({ ...testimonialForm, rating: Number(e.target.value) })} className="mt-1 w-32 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Text</label>
+                <textarea value={testimonialForm.text} onChange={(e) => setTestimonialForm({ ...testimonialForm, text: e.target.value })} rows={4} className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 outline-none" />
+              </div>
+              <div className="flex items-center gap-4">
+                <label className="inline-flex items-center gap-2">
+                  <input type="checkbox" checked={testimonialForm.isFeatured} onChange={(e) => setTestimonialForm({ ...testimonialForm, isFeatured: e.target.checked })} />
+                  <span className="text-sm text-gray-700">Featured</span>
+                </label>
+                <label className="inline-flex items-center gap-2">
+                  <input type="checkbox" checked={testimonialForm.approved} onChange={(e) => setTestimonialForm({ ...testimonialForm, approved: e.target.checked })} />
+                  <span className="text-sm text-gray-700">Approved</span>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-3">
+                <button onClick={() => setTestimonialModal({ open: false, mode: 'create', testimonial: null })} className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">Cancel</button>
+                <button disabled={isSubmittingTestimonial} onClick={submitTestimonial} className="px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700">
+                  {isSubmittingTestimonial ? 'Saving...' : (testimonialModal.mode === 'create' ? 'Create' : 'Save')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <ConfirmModal
         isOpen={confirmModal.open}
         title={confirmModal.title}
