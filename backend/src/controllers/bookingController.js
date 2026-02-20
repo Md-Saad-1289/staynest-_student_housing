@@ -63,7 +63,7 @@ const getOwnerBookings = async (req, res) => {
       },
       {
         $match: {
-          'listing.ownerId': mongoose.Types.ObjectId(ownerId),
+          'listing.ownerId': new mongoose.Types.ObjectId(ownerId),
         },
       },
       {

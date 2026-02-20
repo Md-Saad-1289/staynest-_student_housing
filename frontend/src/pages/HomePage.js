@@ -20,7 +20,6 @@ export const HomePage = () => {
       <main>
         <HeroSearch onSearch={handleSearch} />
 
-        <TrustSignals />
 
         <FeaturedListingsPreview />
 
