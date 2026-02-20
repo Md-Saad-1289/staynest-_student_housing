@@ -50,16 +50,28 @@ const createReview = async (req, res) => {
 
     await review.save();
 
-    // Update listing average rating
+    // Update listing average rating and total ratings
     const allReviews = await Review.find({ listingId: booking.listingId });
-    const avgRating =
-      allReviews.reduce((sum, r) => {
-        const ratingSum = Object.values(r.ratings).reduce((s, val) => s + val, 0);
-        return sum + ratingSum / 6;
-      }, 0) / allReviews.length;
+    
+    if (allReviews.length > 0) {
+      // Calculate average for each category
+      const categories = ['food', 'cleanliness', 'safety', 'owner', 'facilities', 'study'];
+      const categoryAverages = {};
+      
+      categories.forEach(category => {
+        const sum = allReviews.reduce((total, r) => total + (r.ratings?.[category] || 0), 0);
+        categoryAverages[category] = parseFloat((sum / allReviews.length).toFixed(1));
+      });
+      
+      const overallAverage = Object.values(categoryAverages).reduce((a, b) => a + b, 0) / categories.length;
 
-    listing.totalRatings = allReviews.length;
-    listing.averageRating = Math.round(avgRating * 10) / 10;
+      listing.totalRatings = allReviews.length;
+      listing.averageRating = parseFloat(overallAverage.toFixed(1));
+    } else {
+      listing.totalRatings = 0;
+      listing.averageRating = 0;
+    }
+    
     await listing.save();
 
     res.status(201).json({

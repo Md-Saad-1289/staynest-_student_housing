@@ -212,6 +212,18 @@ const getViewHistory = async (req, res) => {
   }
 };
 
+// Get featured listings (public endpoint)
+const getFeaturedListingsPublic = async (req, res) => {
+  try {
+    const listings = await Listing.find({ isFeatured: true, verified: true })
+      .populate('ownerId', 'name email')
+      .sort({ createdAt: -1 });
+    res.json({ listings });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Single export statement - each function exported exactly once
 export {
   getListings,
@@ -223,4 +235,5 @@ export {
   getUserFavorites,
   addViewHistory,
   getViewHistory,
+  getFeaturedListingsPublic,
 };

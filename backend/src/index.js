@@ -12,6 +12,7 @@ import flagRoutes from './routes/flags.js';
 import adminRoutes from './routes/admin.js';
 import notificationRoutes from './routes/notifications.js';
 import savedSearchRoutes from './routes/savedSearches.js';
+import testimonialRoutes from './routes/testimonials.js';
 
 dotenv.config();
 
@@ -90,6 +91,7 @@ app.use('/api/v1/flags', flagRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/saved-searches', savedSearchRoutes);
+app.use('/api/v1/testimonials', testimonialRoutes);
 // Also mount routes without the /api/v1 prefix to support frontends
 // that use a BASE URL without the versioned path (common in env configs)
 app.use('/auth/login', authLimiter);
@@ -102,6 +104,7 @@ app.use('/flags', flagRoutes);
 app.use('/admin', adminRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/saved-searches', savedSearchRoutes);
+app.use('/testimonials', testimonialRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

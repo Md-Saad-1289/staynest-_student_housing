@@ -9,10 +9,14 @@ import {
   getUserFavorites,
   addViewHistory,
   getViewHistory,
+  getFeaturedListingsPublic,
 } from '../controllers/listingController.js';
 import { auth, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Public routes
+router.get('/featured', getFeaturedListingsPublic);
 
 // Specific routes MUST come before /:id route
 router.get('/owner/my-listings', auth, authorize('owner'), getOwnerListings);

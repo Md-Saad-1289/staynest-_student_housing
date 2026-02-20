@@ -52,15 +52,13 @@ export const ReviewModal = ({ booking, listing, onSubmit, onClose }) => {
 
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append('bookingId', booking._id);
-      formData.append('ratings', JSON.stringify(ratings));
-      formData.append('textReview', textReview);
-      photos.forEach((photo, idx) => {
-        formData.append(`photo_${idx}`, photo);
-      });
+      const reviewData = {
+        bookingId: booking._id,
+        ratings,
+        textReview,
+      };
 
-      await onSubmit(formData);
+      await onSubmit(reviewData);
       onClose();
     } catch (err) {
       setError(err || 'Failed to submit review');

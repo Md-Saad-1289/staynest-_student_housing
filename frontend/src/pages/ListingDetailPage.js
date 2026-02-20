@@ -58,24 +58,28 @@ const MOCK_LISTING = {
   },
 };
 
-const MOCK_REVIEWS = [
-  {
-    _id: 'rev1',
-    studentId: { name: 'Aisha Rahman' },
-    textReview: 'Great mess! Clean environment, helpful owner, and good food. Highly recommended for female students.',
-    ratings: { food: 4, cleanliness: 5, safety: 5, owner: 4, facilities: 4, study: 4 },
-    ownerReply: 'Thank you Aisha! We hope you have a great experience with us.',
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-  },
-  {
-    _id: 'rev2',
-    studentId: { name: 'Riya Das' },
-    textReview: 'Good location, affordable rent. WiFi could be faster but overall satisfied.',
-    ratings: { food: 4, cleanliness: 4, safety: 4, owner: 5, facilities: 4, study: 4 },
-    ownerReply: null,
-    createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-  },
-];
+
+
+// Helper function to calculate average ratings from reviews
+const calculateRatings = (reviewsList) => {
+  if (reviewsList.length === 0) return null;
+
+  const categories = ['food', 'cleanliness', 'safety', 'owner', 'facilities', 'study'];
+  const ratings = {};
+
+  categories.forEach(category => {
+    const sum = reviewsList.reduce((acc, review) => {
+      return acc + (review.ratings?.[category] || 0);
+    }, 0);
+    ratings[category] = parseFloat((sum / reviewsList.length).toFixed(1));
+  });
+
+  // Calculate overall average
+  const overallSum = Object.values(ratings).reduce((a, b) => a + b, 0);
+  const averageRating = parseFloat((overallSum / categories.length).toFixed(1));
+
+  return { ratings, averageRating };
+};
 
 export const ListingDetailPage = () => {
   const { id } = useParams();
@@ -94,7 +98,7 @@ export const ListingDetailPage = () => {
         const response = await listingService.getListing(id);
         const listingData = response.data.listing || MOCK_LISTING;
         setListing(listingData);
-        setReviews(response.data.reviews || MOCK_REVIEWS);
+        setReviews(response.data.reviews || []);
 
         // Add to recently viewed (localStorage)
         const stored = localStorage.getItem('recentlyViewed') || '[]';
@@ -122,7 +126,7 @@ export const ListingDetailPage = () => {
         }
       } catch (err) {
         setListing(MOCK_LISTING);
-        setReviews(MOCK_REVIEWS);
+        setReviews([]);
       } finally {
         setLoading(false);
       }
@@ -157,7 +161,7 @@ export const ListingDetailPage = () => {
   }
 
   const currentListing = listing || MOCK_LISTING;
-  const currentReviews = reviews && reviews.length > 0 ? reviews : MOCK_REVIEWS;
+  const currentReviews = reviews || [];
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32 lg:pb-8">
@@ -264,45 +268,54 @@ export const ListingDetailPage = () => {
 
           {/* Reviews & Ratings */}
           <div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2"><i className="fas fa-star text-yellow-500"></i> Reviews & Ratings</h2>
-              <div className="flex items-center gap-3 bg-yellow-50 px-4 py-3 rounded-lg border border-yellow-200">
-                <span className="text-3xl font-bold text-yellow-600">{currentListing.averageRating}</span>
-                <div>
-                  <div className="text-sm text-yellow-600">★★★★★</div>
-                  <p className="text-xs text-yellow-600 flex items-center gap-1"><i className="fas fa-comment"></i> {currentReviews.length} reviews</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Rating Breakdown */}
-            {currentListing.ratings && (
-              <div className="mb-6 space-y-2">
-                {Object.entries(currentListing.ratings).map(([category, score]) => (
-                  <div key={category} className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 capitalize w-28">{category}</span>
-                    <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-yellow-400 h-2 rounded-full"
-                        style={{ width: `${(score / 5) * 100}%` }}
-                      />
+            {(() => {
+              const calculatedData = calculateRatings(currentReviews);
+              return (
+                <>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2"><i className="fas fa-star text-yellow-500"></i> Reviews & Ratings</h2>
+                    <div className="flex items-center gap-3 bg-yellow-50 px-4 py-3 rounded-lg border border-yellow-200">
+                      <span className="text-3xl font-bold text-yellow-600">
+                        {calculatedData ? calculatedData.averageRating : currentListing.averageRating || '—'}
+                      </span>
+                      <div>
+                        <div className="text-sm text-yellow-600">★★★★★</div>
+                        <p className="text-xs text-yellow-600 flex items-center gap-1"><i className="fas fa-comment"></i> {currentReviews.length} reviews</p>
+                      </div>
                     </div>
-                    <span className="text-sm font-semibold text-gray-900 w-8">{score}</span>
                   </div>
-                ))}
-              </div>
-            )}
 
-            {/* Reviews List */}
-            <div className="space-y-6">
-              {currentReviews.length === 0 ? (
-                <p className="text-gray-600 text-sm">No reviews yet. Be the first to review!</p>
-              ) : (
-                currentReviews.slice(0, 3).map((review) => (
-                  <ReviewCard key={review._id} review={review} />
-                ))
-              )}
-            </div>
+                  {/* Rating Breakdown */}
+                  {calculatedData && (
+                    <div className="mb-6 space-y-2">
+                      {Object.entries(calculatedData.ratings).map(([category, score]) => (
+                        <div key={category} className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 capitalize w-28">{category}</span>
+                          <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-yellow-400 h-2 rounded-full"
+                              style={{ width: `${(score / 5) * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-semibold text-gray-900 w-8">{score.toFixed(1)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Reviews List */}
+                  <div className="space-y-6">
+                    {currentReviews.length === 0 ? (
+                      <p className="text-gray-600 text-sm">No reviews yet. Be the first to review!</p>
+                    ) : (
+                      currentReviews.slice(0, 3).map((review) => (
+                        <ReviewCard key={review._id} review={review} />
+                      ))
+                    )}
+                  </div>
+                </>
+              );
+            })()}
           </div>
 
           {/* Report Listing */}

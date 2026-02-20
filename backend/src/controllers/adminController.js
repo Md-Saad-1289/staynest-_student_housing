@@ -213,6 +213,86 @@ const resolveFlag = async (req, res) => {
   }
 };
 
+// Get featured listings
+const getFeaturedListings = async (req, res) => {
+  try {
+    const listings = await Listing.find({ isFeatured: true, verified: true })
+      .populate('ownerId', 'name email')
+      .sort({ createdAt: -1 });
+    res.json({ listings });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Toggle featured status
+const toggleFeaturedListing = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ error: 'Invalid listing id' });
+    const listing = await Listing.findById(req.params.id);
+    if (!listing) {
+      return res.status(404).json({ error: 'Listing not found' });
+    }
+
+    listing.isFeatured = !listing.isFeatured;
+    await listing.save();
+
+    await AuditLog.create({
+      adminId: req.user.userId,
+      action: listing.isFeatured ? 'feature_listing' : 'unfeature_listing',
+      targetType: 'listing',
+      targetId: listing._id,
+      reason: `Listing ${listing.isFeatured ? 'featured' : 'unfeatured'}`,
+      meta: { title: listing.title },
+    });
+
+    res.json({
+      message: `Listing ${listing.isFeatured ? 'featured' : 'unfeatured'} successfully`,
+      listing,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get all listings for admin management
+const getAllListingsForAdmin = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = '', verified } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const filter = {};
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { address: { $regex: search, $options: 'i' } },
+      ];
+    }
+    if (verified !== undefined) {
+      filter.verified = verified === 'true';
+    }
+
+    const listings = await Listing.find(filter)
+      .populate('ownerId', 'name email isVerified')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Listing.countDocuments(filter);
+
+    res.json({
+      listings,
+      pagination: {
+        total,
+        page: parseInt(page),
+        pages: Math.ceil(total / parseInt(limit)),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Get recent admin actions (audit logs) with pagination and optional action filter
 const getAdminActions = async (req, res) => {
   try {
@@ -246,5 +326,8 @@ export {
   getUnverifiedListings,
   getFlags,
   resolveFlag,
+  getFeaturedListings,
+  toggleFeaturedListing,
+  getAllListingsForAdmin,
   getAdminActions,
 };

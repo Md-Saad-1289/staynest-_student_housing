@@ -62,6 +62,7 @@ export const listingService = {
   createListing: (data) => api.post('/listings', data).then(res => res),
   updateListing: (id, data) => api.put(`/listings/${id}`, data).then(res => res),
   getOwnerListings: () => api.get('/listings/owner/my-listings').then(res => res),
+  getFeaturedListings: () => api.get('/listings/featured').then(res => res),
   toggleFavorite: (listingId) => api.post('/listings/user/toggle-favorite', { listingId }).then(res => res),
   getUserFavorites: () => api.get('/listings/user/favorites').then(res => res),
   addViewHistory: (listingId) => api.post('/listings/user/view-history', { listingId }).then(res => res),
@@ -116,6 +117,13 @@ export const reviewService = {
 };
 
 /* =========================
+   TESTIMONIAL SERVICES
+========================= */
+export const testimonialService = {
+  getTestimonials: () => api.get('/testimonials').then(res => res),
+};
+
+/* =========================
    ADMIN SERVICES
 ========================= */
 export const adminService = {
@@ -124,10 +132,20 @@ export const adminService = {
   verifyOwner: (userId) => api.put(`/admin/owners/${userId}/verify`).then(res => res),
   rejectOwner: (userId, reason) => api.put(`/admin/owners/${userId}/reject`, { reason }).then(res => res),
   getUnverifiedListings: () => api.get('/admin/listings/unverified').then(res => res),
+  getAllListings: (params) => api.get('/admin/listings/all', { params }).then(res => res),
   verifyListing: (id) => api.put(`/admin/listings/${id}/verify`).then(res => res),
+  getFeaturedListings: () => api.get('/admin/listings/featured').then(res => res),
+  toggleFeaturedListing: (id) => api.put(`/admin/listings/${id}/toggle-featured`).then(res => res),
   getFlags: () => api.get('/admin/flags').then(res => res),
   resolveFlag: (id, adminNotes) => api.put(`/admin/flags/${id}/resolve`, { adminNotes }).then(res => res),
   getActions: (params) => api.get('/admin/actions', { params }).then(res => res),
+  // Testimonials
+  getAllTestimonials: () => api.get('/testimonials/admin/all').then(res => res),
+  createTestimonial: (data) => api.post('/testimonials', data).then(res => res),
+  updateTestimonial: (id, data) => api.put(`/testimonials/${id}`, data).then(res => res),
+  deleteTestimonial: (id) => api.delete(`/testimonials/${id}`).then(res => res),
+  toggleApproval: (id) => api.put(`/testimonials/${id}/approve`).then(res => res),
+  toggleFeatured: (id) => api.put(`/testimonials/${id}/feature`).then(res => res),
 };
 
 // Default export axios instance

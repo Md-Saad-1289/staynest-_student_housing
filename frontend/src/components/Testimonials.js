@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { testimonialService } from '../services/api';
 
 const Testimonial = ({ text, name, tag, rating }) => (
   <div className="bg-white rounded-lg p-6 shadow-md border border-gray-100 hover:shadow-lg transition">
@@ -21,10 +22,44 @@ const Testimonial = ({ text, name, tag, rating }) => (
 );
 
 export const Testimonials = () => {
-  const data = [
-    { name: 'Aisha Rahman', tag: 'BUET Student', rating: 5, text: 'Clean rooms and helpful owner — felt safe and welcomed.' },
-    { name: 'Rafi Ahmed', tag: 'DU Student', rating: 4, text: 'Affordable rent near my campus, zero brokerage.' },
-  ];
+  const [testimonials, setTestimonials] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        const res = await testimonialService.getTestimonials();
+        const approved = res.data.testimonials || [];
+        // Show featured first, then others
+        const sorted = approved.sort((a, b) => {
+          if (a.featured === b.featured) return 0;
+          return a.featured ? -1 : 1;
+        });
+        setTestimonials(sorted.slice(0, 6)); // Show max 6
+      } catch (err) {
+        console.log('Error fetching testimonials:', err);
+        // Fallback to default testimonials
+        setTestimonials([
+          { name: 'Aisha Rahman', tag: 'BUET Student', rating: 5, text: 'Clean rooms and helpful owner — felt safe and welcomed.' },
+          { name: 'Rafi Ahmed', tag: 'DU Student', rating: 4, text: 'Affordable rent near my campus, zero brokerage.' },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchTestimonials();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="py-12 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <i className="fas fa-spinner fa-spin text-3xl text-blue-600"></i>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-12 bg-gray-50">
@@ -32,7 +67,7 @@ export const Testimonials = () => {
         <h2 className="text-3xl font-bold mb-2 flex items-center gap-2"><i className="fas fa-comment-dots text-blue-600"></i> What Students Say</h2>
         <p className="text-gray-600 mb-8">Real reviews from NestroStay users</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {data.map((t, i) => (
+          {testimonials.map((t, i) => (
             <Testimonial key={i} {...t} />
           ))}
         </div>

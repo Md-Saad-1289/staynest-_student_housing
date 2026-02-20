@@ -8,6 +8,9 @@ import {
   getUnverifiedListings,
   getFlags,
   resolveFlag,
+  getFeaturedListings,
+  toggleFeaturedListing,
+  getAllListingsForAdmin,
   getAdminActions,
 } from '../controllers/adminController.js';
 import { auth, authorize } from '../middleware/auth.js';
@@ -21,7 +24,10 @@ router.get('/owners/unverified', getUnverifiedOwners);
 router.put('/owners/:userId/verify', verifyOwner);
 router.put('/owners/:userId/reject', rejectOwner);
 router.get('/listings/unverified', getUnverifiedListings);
+router.get('/listings/all', getAllListingsForAdmin);
 router.put('/listings/:id/verify', verifyListing);
+router.get('/listings/featured', getFeaturedListings);
+router.put('/listings/:id/toggle-featured', toggleFeaturedListing);
 router.get('/flags', getFlags);
 router.put('/flags/:id/resolve', resolveFlag);
 router.get('/actions', getAdminActions);
