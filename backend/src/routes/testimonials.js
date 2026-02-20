@@ -15,13 +15,12 @@ const router = express.Router();
 // Public route
 router.get('/', getTestimonials);
 
-// Admin routes
-router.use(auth, authorize('admin'));
-router.get('/admin/all', getAllTestimonials);
-router.post('/', createTestimonial);
-router.put('/:id', updateTestimonial);
-router.delete('/:id', deleteTestimonial);
-router.put('/:id/approve', toggleApproval);
-router.put('/:id/feature', toggleFeatured);
+// Admin routes - must come before /:id routes
+router.get('/admin/all', auth, authorize('admin'), getAllTestimonials);
+router.post('/', auth, authorize('admin'), createTestimonial);
+router.put('/:id/approve', auth, authorize('admin'), toggleApproval);
+router.put('/:id/feature', auth, authorize('admin'), toggleFeatured);
+router.put('/:id', auth, authorize('admin'), updateTestimonial);
+router.delete('/:id', auth, authorize('admin'), deleteTestimonial);
 
 export default router;
