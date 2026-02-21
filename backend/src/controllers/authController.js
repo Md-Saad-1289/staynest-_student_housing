@@ -126,8 +126,6 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
-export { register, login, getCurrentUser };
-
 // Update profile
 const updateProfile = async (req, res) => {
   try {
