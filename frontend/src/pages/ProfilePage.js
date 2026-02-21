@@ -205,7 +205,7 @@ export function ProfilePage() {
                                 setSaving(false)
                                 return
                               }
-                              if (formData.mobile) {
+                              if (formData.mobile && formData.mobile.trim()) {
                                 const digits = formData.mobile.replace(/[^0-9]/g, '')
                                 if (digits.length < 8) {
                                   setMessage('Phone number must have at least 8 digits')
@@ -235,8 +235,8 @@ export function ProfilePage() {
                                 emailNotifications: formData.emailNotifications !== false,
                                 smsNotifications: formData.smsNotifications !== false,
                                 pushNotifications: formData.pushNotifications !== false,
-                                budgetMin: formData.budgetMin ? parseInt(formData.budgetMin) : null,
-                                budgetMax: formData.budgetMax ? parseInt(formData.budgetMax) : null,
+                                budgetMin: formData.budgetMin ? parseFloat(formData.budgetMin) : null,
+                                budgetMax: formData.budgetMax ? parseFloat(formData.budgetMax) : null,
                                 roommatePreferences: formData.roommatePreferences || '',
                                 gender: formData.gender || '',
                                 emergencyContactName: formData.emergencyContactName || '',
@@ -303,6 +303,123 @@ export function ProfilePage() {
                   )}
                   {bio && (
                     <InfoRow label="Bio" value={bio} />
+                  )}
+
+                  {/* Academic Information Section */}
+                  {(user.dateOfBirth || user.studentId || user.major || user.academicYear) && (
+                    <div className="border-t pt-4 mt-4">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Academic Information</h4>
+                      <div className="space-y-2">
+                        {user.dateOfBirth && (
+                          <InfoRow label="Date of Birth" value={new Date(user.dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} />
+                        )}
+                        {user.studentId && (
+                          <InfoRow label="Student ID" value={user.studentId} />
+                        )}
+                        {user.major && (
+                          <InfoRow label="Major/Field" value={user.major} />
+                        )}
+                        {user.academicYear && (
+                          <InfoRow label="Academic Year" value={user.academicYear} />
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Address Information Section */}
+                  {(user.addressStreet || user.addressCity || user.addressZipCode || user.addressCountry) && (
+                    <div className="border-t pt-4 mt-4">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Address Information</h4>
+                      <div className="space-y-2">
+                        {user.addressStreet && (
+                          <InfoRow label="Street Address" value={user.addressStreet} />
+                        )}
+                        {user.addressCity && (
+                          <InfoRow label="City" value={user.addressCity} />
+                        )}
+                        {user.addressZipCode && (
+                          <InfoRow label="Zip Code" value={user.addressZipCode} />
+                        )}
+                        {user.addressCountry && (
+                          <InfoRow label="Country" value={user.addressCountry} />
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* User Preferences & Budget Section */}
+                  {(user.gender || user.budgetMin || user.budgetMax || user.roommatePreferences) && (
+                    <div className="border-t pt-4 mt-4">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Preferences & Budget</h4>
+                      <div className="space-y-2">
+                        {user.gender && (
+                          <InfoRow label="Gender" value={user.gender} />
+                        )}
+                        {(user.budgetMin && user.budgetMax) && (
+                          <InfoRow label="Budget Range" value={`৳${user.budgetMin} - ৳${user.budgetMax}`} />
+                        )}
+                        {user.roommatePreferences && (
+                          <div className="py-3">
+                            <div className="text-sm text-gray-500 mb-1">Roommate Preferences</div>
+                            <div className="text-sm text-gray-800">{user.roommatePreferences}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Contact Preferences Section */}
+                  {(user.emailNotifications !== undefined || user.smsNotifications !== undefined || user.pushNotifications !== undefined) && (
+                    <div className="border-t pt-4 mt-4">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Contact Preferences</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-500">Email Notifications</span>
+                          <Badge color={user.emailNotifications ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-700"}>{user.emailNotifications ? 'Enabled' : 'Disabled'}</Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-500">SMS Notifications</span>
+                          <Badge color={user.smsNotifications ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-700"}>{user.smsNotifications ? 'Enabled' : 'Disabled'}</Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-500">Push Notifications</span>
+                          <Badge color={user.pushNotifications ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-700"}>{user.pushNotifications ? 'Enabled' : 'Disabled'}</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Emergency Contact Section */}
+                  {(user.emergencyContactName || user.emergencyContactPhone) && (
+                    <div className="border-t pt-4 mt-4">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Emergency Contact</h4>
+                      <div className="space-y-2">
+                        {user.emergencyContactName && (
+                          <InfoRow label="Contact Name" value={user.emergencyContactName} />
+                        )}
+                        {user.emergencyContactPhone && (
+                          <InfoRow label="Contact Phone" value={user.emergencyContactPhone} />
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Social Links Section */}
+                  {(user.linkedin || user.twitter || user.website) && (
+                    <div className="border-t pt-4 mt-4">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Social Links</h4>
+                      <div className="space-y-2">
+                        {user.linkedin && (
+                          <InfoRow label="LinkedIn" value={<a href={user.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View Profile</a>} />
+                        )}
+                        {user.twitter && (
+                          <InfoRow label="Twitter" value={<a href={user.twitter} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View Profile</a>} />
+                        )}
+                        {user.website && (
+                          <InfoRow label="Website" value={<a href={user.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Visit</a>} />
+                        )}
+                      </div>
+                    </div>
                   )}
                 </>
               ) : (
