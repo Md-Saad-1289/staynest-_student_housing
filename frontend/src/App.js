@@ -18,6 +18,7 @@ import { StudentDashboardModernPage } from './pages/StudentDashboardModernPage';
 import { OwnerDashboardModernPage } from './pages/OwnerDashboardModernPage';
 import { AdminDashboardModernPage } from './pages/AdminDashboardModernPage';
 import { UserProfilePage } from './pages/UserProfilePage';
+import { ProfilePage } from './pages/ProfilePage';
 
 import './index.css';
 
@@ -47,6 +48,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <UserProfilePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile/modern"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             }
           />
