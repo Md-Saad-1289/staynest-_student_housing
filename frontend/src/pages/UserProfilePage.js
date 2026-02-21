@@ -276,18 +276,164 @@ export const UserProfilePage = () => {
               </div>
             </div>
 
-            {/* Verification Status */}
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg border border-green-200 mb-8">
-              <p className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
-                <i className={`fas fa-${profile?.isVerified ? 'check-circle' : 'clock'} text-green-600`}></i>
-                {profile?.isVerified ? 'Account Verified' : 'Verification Pending'}
-              </p>
-              <p className="text-xs text-green-700">
-                {profile?.isVerified
-                  ? `Verified on ${new Date(profile?.verifiedAt).toLocaleDateString()}`
-                  : 'Your account is pending verification. Please upload your NID or passport.'}
-              </p>
-            </div>
+            {/* Extended Profile Fields */}
+            {editing ? (
+              <div className="mb-6 grid grid-cols-1 gap-4">
+                <textarea
+                  value={formData.bio}
+                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                  placeholder="Short bio"
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none"
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input
+                    value={formData.university}
+                    onChange={(e) => setFormData({ ...formData, university: e.target.value })}
+                    placeholder="University"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                  />
+                  <input
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="Location"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <input
+                    value={formData.linkedin}
+                    onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
+                    placeholder="LinkedIn URL"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                  />
+                  <input
+                    value={formData.twitter}
+                    onChange={(e) => setFormData({ ...formData, twitter: e.target.value })}
+                    placeholder="Twitter URL"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                  />
+                  <input
+                    value={formData.website}
+                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                    placeholder="Website"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <input
+                    value={formData.major}
+                    onChange={(e) => setFormData({ ...formData, major: e.target.value })}
+                    placeholder="Major"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                  />
+                  <input
+                    value={formData.studentId}
+                    onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
+                    placeholder="Student ID"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                  />
+                  <input
+                    value={formData.academicYear}
+                    onChange={(e) => setFormData({ ...formData, academicYear: e.target.value })}
+                    placeholder="Academic Year"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input
+                    type="date"
+                    value={formData.dateOfBirth}
+                    onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                  />
+                  <input
+                    value={formData.roommatePreferences}
+                    onChange={(e) => setFormData({ ...formData, roommatePreferences: e.target.value })}
+                    placeholder="Roommate preferences"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <input
+                    value={formData.addressStreet}
+                    onChange={(e) => setFormData({ ...formData, addressStreet: e.target.value })}
+                    placeholder="Street Address"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                  />
+                  <input
+                    value={formData.addressCity}
+                    onChange={(e) => setFormData({ ...formData, addressCity: e.target.value })}
+                    placeholder="City"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                  />
+                  <input
+                    value={formData.addressZipCode}
+                    onChange={(e) => setFormData({ ...formData, addressZipCode: e.target.value })}
+                    placeholder="ZIP / Postal Code"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <input
+                    value={formData.addressCountry}
+                    onChange={(e) => setFormData({ ...formData, addressCountry: e.target.value })}
+                    placeholder="Country"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                  />
+                  <input
+                    value={formData.budgetMin}
+                    onChange={(e) => setFormData({ ...formData, budgetMin: e.target.value })}
+                    placeholder="Budget Min"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                  />
+                  <input
+                    value={formData.budgetMax}
+                    onChange={(e) => setFormData({ ...formData, budgetMax: e.target.value })}
+                    placeholder="Budget Max"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                  />
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={!!formData.emailNotifications} onChange={(e) => setFormData({ ...formData, emailNotifications: e.target.checked })} /> Email notifications</label>
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={!!formData.smsNotifications} onChange={(e) => setFormData({ ...formData, smsNotifications: e.target.checked })} /> SMS</label>
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={!!formData.pushNotifications} onChange={(e) => setFormData({ ...formData, pushNotifications: e.target.checked })} /> Push</label>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input
+                    value={formData.emergencyContactName}
+                    onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })}
+                    placeholder="Emergency contact name"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                  />
+                  <input
+                    value={formData.emergencyContactPhone}
+                    onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })}
+                    placeholder="Emergency contact phone"
+                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg border border-green-200 mb-8">
+                <p className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
+                  <i className={`fas fa-${profile?.isVerified ? 'check-circle' : 'clock'} text-green-600`}></i>
+                  {profile?.isVerified ? 'Account Verified' : 'Verification Pending'}
+                </p>
+                <p className="text-xs text-green-700">
+                  {profile?.isVerified
+                    ? `Verified on ${new Date(profile?.verifiedAt).toLocaleDateString()}`
+                    : 'Your account is pending verification. Please upload your NID or passport.'}
+                </p>
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className="flex gap-4">
@@ -303,7 +449,7 @@ export const UserProfilePage = () => {
                   <button
                     onClick={() => {
                       setEditing(false);
-                      setFormData(profile);
+                      setFormData(initFormData(profile || {}));
                       setAvatarPreview(profile?.profileImage);
                     }}
                     className="flex-1 bg-gray-400 text-white py-3 rounded-lg font-bold hover:bg-gray-500 transition flex items-center justify-center gap-2"
