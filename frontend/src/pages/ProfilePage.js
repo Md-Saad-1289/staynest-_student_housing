@@ -22,6 +22,7 @@ export function ProfilePage() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showDebug, setShowDebug] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -98,7 +99,6 @@ export function ProfilePage() {
   const lastLogin = user.lastLogin || ''
   const completion = user.completion || 0
   const avatar = user.profileImage || user.avatar || 'https://images.unsplash.com/photo-1545996124-3a4f8b0a3a8b?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=8b6f3e1b3c'
-  const [showDebug, setShowDebug] = useState(false)
 
   return (
     <div className="min-h-screen bg-gray-50 text-slate-800 p-6 md:p-12 font-sans">
