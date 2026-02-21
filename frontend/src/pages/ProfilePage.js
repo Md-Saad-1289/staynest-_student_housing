@@ -48,29 +48,48 @@ export function ProfilePage() {
 
   /* ================= INIT FORM ================= */
 
-  const initFormData = (u) => ({
-    name: u.name || "",
-    mobile: u.mobile || "",
-    bio: u.bio || "",
-    university: u.university || "",
-    location: u.location || "",
-    linkedin: u.linkedin || "",
-    twitter: u.twitter || "",
-    website: u.website || "",
-    budgetMin: u.budgetMin || "",
-    budgetMax: u.budgetMax || "",
-    gender: u.gender || "",
+  const initFormData = (u = {}) => ({
+    name: u.name ?? "",
+    mobile: u.mobile ?? "",
+    bio: u.bio ?? "",
+    university: u.university ?? "",
+    location: u.location ?? "",
+    linkedin: u.linkedin ?? "",
+    twitter: u.twitter ?? "",
+    website: u.website ?? "",
+    budgetMin: typeof u.budgetMin === 'number' ? String(u.budgetMin) : (u.budgetMin ?? ""),
+    budgetMax: typeof u.budgetMax === 'number' ? String(u.budgetMax) : (u.budgetMax ?? ""),
+    gender: u.gender ?? "",
+    // Academic
+    dateOfBirth: u.dateOfBirth ? new Date(u.dateOfBirth).toISOString().slice(0, 10) : "",
+    studentId: u.studentId ?? "",
+    major: u.major ?? "",
+    academicYear: u.academicYear ?? "",
+    // Address
+    addressStreet: u.addressStreet ?? "",
+    addressCity: u.addressCity ?? "",
+    addressZipCode: u.addressZipCode ?? "",
+    addressCountry: u.addressCountry ?? "",
+    // Notifications & preferences
+    emailNotifications: typeof u.emailNotifications !== 'undefined' ? !!u.emailNotifications : true,
+    smsNotifications: typeof u.smsNotifications !== 'undefined' ? !!u.smsNotifications : true,
+    pushNotifications: typeof u.pushNotifications !== 'undefined' ? !!u.pushNotifications : true,
+    roommatePreferences: u.roommatePreferences ?? "",
+    // Emergency contact
+    emergencyContactName: u.emergencyContactName ?? "",
+    emergencyContactPhone: u.emergencyContactPhone ?? "",
   });
 
   const startEditing = () => {
-    setFormData(initFormData(profile));
+    setFormData(initFormData(profile || {}));
     setEditing(true);
     setMessage("");
   };
 
   const cancelEditing = () => {
     setEditing(false);
-    setFormData({});
+    // reset to profile values to avoid uncontrolled inputs
+    setFormData(initFormData(profile || {}));
     setMessage("");
   };
 
@@ -90,16 +109,34 @@ export function ProfilePage() {
 
     try {
       setSaving(true);
-
+      // Build payload defensively: convert numbers and booleans, keep empty as '' so
+      // backend can decide whether to update or skip the field.
       const payload = {
-        ...formData,
         name: formData.name.trim(),
-        budgetMin: formData.budgetMin
-          ? parseFloat(formData.budgetMin)
-          : null,
-        budgetMax: formData.budgetMax
-          ? parseFloat(formData.budgetMax)
-          : null,
+        mobile: formData.mobile || undefined,
+        bio: formData.bio || undefined,
+        university: formData.university || undefined,
+        location: formData.location || undefined,
+        linkedin: formData.linkedin || undefined,
+        twitter: formData.twitter || undefined,
+        website: formData.website || undefined,
+        dateOfBirth: formData.dateOfBirth || undefined,
+        studentId: formData.studentId || undefined,
+        major: formData.major || undefined,
+        academicYear: formData.academicYear || undefined,
+        addressStreet: formData.addressStreet || undefined,
+        addressCity: formData.addressCity || undefined,
+        addressZipCode: formData.addressZipCode || undefined,
+        addressCountry: formData.addressCountry || undefined,
+        emailNotifications: !!formData.emailNotifications,
+        smsNotifications: !!formData.smsNotifications,
+        pushNotifications: !!formData.pushNotifications,
+        roommatePreferences: formData.roommatePreferences || undefined,
+        emergencyContactName: formData.emergencyContactName || undefined,
+        emergencyContactPhone: formData.emergencyContactPhone || undefined,
+        gender: formData.gender || undefined,
+        budgetMin: formData.budgetMin !== '' && formData.budgetMin != null ? formData.budgetMin : undefined,
+        budgetMax: formData.budgetMax !== '' && formData.budgetMax != null ? formData.budgetMax : undefined,
       };
 
       const res = await userService.updateProfile(payload);
@@ -168,9 +205,24 @@ export function ProfilePage() {
             <div><strong>Email:</strong> {user.email}</div>
             <div><strong>Phone:</strong> {user.mobile}</div>
             <div><strong>University:</strong> {user.university}</div>
+            <div><strong>Major:</strong> {user.major}</div>
+            <div><strong>Academic Year:</strong> {user.academicYear}</div>
             <div><strong>Location:</strong> {user.location}</div>
+            <div><strong>Address:</strong> {user.addressStreet || ''}{user.addressCity ? ', ' + user.addressCity : ''}{user.addressZipCode ? ', ' + user.addressZipCode : ''}{user.addressCountry ? ', ' + user.addressCountry : ''}</div>
             <div><strong>Bio:</strong> {user.bio}</div>
-            <div><strong>Budget:</strong> {user.budgetMin} - {user.budgetMax}</div>
+            <div><strong>Social:</strong> {user.linkedin || user.twitter || user.website ? (
+              <div className="space-y-1">
+                {user.linkedin && <div>LinkedIn: <a className="text-blue-600" href={user.linkedin}>{user.linkedin}</a></div>}
+                {user.twitter && <div>Twitter: <a className="text-blue-600" href={user.twitter}>{user.twitter}</a></div>}
+                {user.website && <div>Website: <a className="text-blue-600" href={user.website}>{user.website}</a></div>}
+              </div>
+            ) : '—'}</div>
+            <div><strong>Budget:</strong> {user.budgetMin ?? '—'} - {user.budgetMax ?? '—'}</div>
+            <div><strong>Roommate Preferences:</strong> {user.roommatePreferences ?? '—'}</div>
+            <div><strong>Gender:</strong> {user.gender ?? '—'}</div>
+            <div><strong>Notifications:</strong> Email: {user.emailNotifications ? 'Yes' : 'No'}, SMS: {user.smsNotifications ? 'Yes' : 'No'}, Push: {user.pushNotifications ? 'Yes' : 'No'}</div>
+            <div><strong>Emergency Contact:</strong> {user.emergencyContactName ? `${user.emergencyContactName} (${user.emergencyContactPhone || '—'})` : '—'}</div>
+            <div><strong>Date of Birth:</strong> {user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : '—'}</div>
           </div>
         ) : (
           /* EDIT MODE */
@@ -199,6 +251,50 @@ export function ProfilePage() {
               placeholder="University"
               className="border p-2 rounded"
             />
+            <input
+              value={formData.major}
+              onChange={(e) => setFormData({ ...formData, major: e.target.value })}
+              placeholder="Major"
+              className="border p-2 rounded"
+            />
+            <input
+              value={formData.academicYear}
+              onChange={(e) => setFormData({ ...formData, academicYear: e.target.value })}
+              placeholder="Academic Year"
+              className="border p-2 rounded"
+            />
+            <input
+              type="date"
+              value={formData.dateOfBirth}
+              onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+              className="border p-2 rounded"
+            />
+            <input
+              value={formData.addressStreet}
+              onChange={(e) => setFormData({ ...formData, addressStreet: e.target.value })}
+              placeholder="Street Address"
+              className="border p-2 rounded"
+            />
+            <div className="grid grid-cols-3 gap-2">
+              <input
+                value={formData.addressCity}
+                onChange={(e) => setFormData({ ...formData, addressCity: e.target.value })}
+                placeholder="City"
+                className="border p-2 rounded"
+              />
+              <input
+                value={formData.addressZipCode}
+                onChange={(e) => setFormData({ ...formData, addressZipCode: e.target.value })}
+                placeholder="ZIP / Postal Code"
+                className="border p-2 rounded"
+              />
+              <input
+                value={formData.addressCountry}
+                onChange={(e) => setFormData({ ...formData, addressCountry: e.target.value })}
+                placeholder="Country"
+                className="border p-2 rounded"
+              />
+            </div>
             <textarea
               value={formData.bio}
               onChange={(e) =>
@@ -207,6 +303,71 @@ export function ProfilePage() {
               placeholder="Bio"
               className="border p-2 rounded"
             />
+            <div className="grid grid-cols-3 gap-2">
+              <input
+                value={formData.linkedin}
+                onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
+                placeholder="LinkedIn URL"
+                className="border p-2 rounded"
+              />
+              <input
+                value={formData.twitter}
+                onChange={(e) => setFormData({ ...formData, twitter: e.target.value })}
+                placeholder="Twitter URL"
+                className="border p-2 rounded"
+              />
+              <input
+                value={formData.website}
+                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                placeholder="Website"
+                className="border p-2 rounded"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <input
+                value={formData.budgetMin}
+                onChange={(e) => setFormData({ ...formData, budgetMin: e.target.value })}
+                placeholder="Budget Min"
+                className="border p-2 rounded"
+              />
+              <input
+                value={formData.budgetMax}
+                onChange={(e) => setFormData({ ...formData, budgetMax: e.target.value })}
+                placeholder="Budget Max"
+                className="border p-2 rounded"
+              />
+              <input
+                value={formData.gender}
+                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                placeholder="Gender"
+                className="border p-2 rounded"
+              />
+            </div>
+            <input
+              value={formData.roommatePreferences}
+              onChange={(e) => setFormData({ ...formData, roommatePreferences: e.target.value })}
+              placeholder="Roommate preferences"
+              className="border p-2 rounded"
+            />
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2"><input type="checkbox" checked={!!formData.emailNotifications} onChange={(e) => setFormData({ ...formData, emailNotifications: e.target.checked })} /> Email</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={!!formData.smsNotifications} onChange={(e) => setFormData({ ...formData, smsNotifications: e.target.checked })} /> SMS</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={!!formData.pushNotifications} onChange={(e) => setFormData({ ...formData, pushNotifications: e.target.checked })} /> Push</label>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                value={formData.emergencyContactName}
+                onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })}
+                placeholder="Emergency contact name"
+                className="border p-2 rounded"
+              />
+              <input
+                value={formData.emergencyContactPhone}
+                onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })}
+                placeholder="Emergency contact phone"
+                className="border p-2 rounded"
+              />
+            </div>
           </div>
         )}
 
