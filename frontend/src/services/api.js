@@ -43,6 +43,7 @@ export const authService = {
   logout: () => localStorage.removeItem('token'),
 
   getCurrentUser: () => api.get('/auth/me').then(res => res),
+  changePassword: (currentPassword, newPassword) => api.put('/auth/password', { currentPassword, newPassword }).then(res => res),
 };
 
 /* =========================

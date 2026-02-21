@@ -27,6 +27,9 @@ export function ProfilePage() {
     const [formData, setFormData] = useState({})
     const [saving, setSaving] = useState(false)
     const [message, setMessage] = useState('')
+    const [showChangePassword, setShowChangePassword] = useState(false)
+    const [pwdForm, setPwdForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    const [changingPwd, setChangingPwd] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -44,7 +47,7 @@ export function ProfilePage() {
             console.debug('authService.getCurrentUser fallback failed', e)
           }
         }
-        if (mounted) setProfile(data)
+        if (mounted && data) setProfile(data)
       } catch (err) {
         console.error('Failed to load profile:', err)
         // If unauthorized, force logout and redirect to login
@@ -61,10 +64,15 @@ export function ProfilePage() {
       }
     }
 
-    // Prefer context user if available (already fetched by AuthProvider)
+    // If we already have context user, show it immediately, then try
+    // to fetch the full profile to enrich missing fields (so login/register updates reflect instantly).
     if (authUser) {
-      setProfile(authUser)
-      setLoading(false)
+      if (mounted) {
+        setProfile(authUser)
+        setLoading(false)
+      }
+      // fetch full profile in background to populate additional fields
+      fetchProfile()
     } else {
       fetchProfile()
     }
@@ -117,7 +125,7 @@ export function ProfilePage() {
               <div className="flex flex-col md:flex-row md:items-center md:gap-6">
                 <div className="flex-none -mt-20 md:mt-0">
                   <div className="w-36 h-36 rounded-full ring-6 ring-white overflow-hidden shadow-2xl">
-                    <img src={avatar} alt="avatar" className="w-full h-full object-cover" />
+                    <img src={(editing && formData.profileImage) ? formData.profileImage : avatar} alt="avatar" className="w-full h-full object-cover" />
                   </div>
                 </div>
 
@@ -225,6 +233,39 @@ export function ProfilePage() {
                 <>
                   <div className="grid grid-cols-1 gap-3">
                     <div>
+                      <label className="block text-xs text-gray-500 mb-1">Avatar</label>
+                      <input type="file" accept="image/*" onChange={async (e) => {
+                        const file = e.target.files && e.target.files[0]
+                        if (!file) return
+                        try {
+                          const dataUrl = await (new Promise((resolve, reject) => {
+                            const reader = new FileReader()
+                            reader.onload = () => resolve(reader.result)
+                            reader.onerror = reject
+                            reader.readAsDataURL(file)
+                          }))
+
+                          // create image to crop center-square
+                          const img = document.createElement('img')
+                          img.src = dataUrl
+                          await new Promise((res) => { img.onload = res })
+                          const size = Math.min(img.naturalWidth, img.naturalHeight)
+                          const sx = (img.naturalWidth - size) / 2
+                          const sy = (img.naturalHeight - size) / 2
+                          const canvas = document.createElement('canvas')
+                          const target = 400
+                          canvas.width = target
+                          canvas.height = target
+                          const ctx = canvas.getContext('2d')
+                          ctx.drawImage(img, sx, sy, size, size, 0, 0, target, target)
+                          const cropped = canvas.toDataURL('image/jpeg', 0.9)
+                          setFormData(fd => ({ ...fd, profileImage: cropped }))
+                        } catch (err) {
+                          console.error('Avatar processing failed', err)
+                        }
+                      }} className="w-full text-sm" />
+                    </div>
+                    <div>
                       <label className="block text-xs text-gray-500 mb-1">Full name</label>
                       <input value={formData.name || ''} onChange={(e) => setFormData(fd => ({ ...fd, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" />
                     </div>
@@ -243,6 +284,14 @@ export function ProfilePage() {
                     <div>
                       <label className="block text-xs text-gray-500 mb-1">Bio</label>
                       <textarea value={formData.bio || ''} onChange={(e) => setFormData(fd => ({ ...fd, bio: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" rows={3} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Social links (optional)</label>
+                      <div className="grid grid-cols-1 gap-2">
+                        <input value={formData.linkedin || ''} onChange={(e) => setFormData(fd => ({ ...fd, linkedin: e.target.value }))} placeholder="LinkedIn URL" className="w-full border rounded px-3 py-2 text-sm" />
+                        <input value={formData.twitter || ''} onChange={(e) => setFormData(fd => ({ ...fd, twitter: e.target.value }))} placeholder="Twitter URL" className="w-full border rounded px-3 py-2 text-sm" />
+                        <input value={formData.website || ''} onChange={(e) => setFormData(fd => ({ ...fd, website: e.target.value }))} placeholder="Website" className="w-full border rounded px-3 py-2 text-sm" />
+                      </div>
                     </div>
                   </div>
                 </>
@@ -283,6 +332,36 @@ export function ProfilePage() {
               <div className="flex items-center justify-between py-2">
                 <div className="text-sm text-gray-500">Last login</div>
                 <div className="text-sm font-medium text-slate-800">{lastLogin}</div>
+              </div>
+              <div className="pt-3">
+                <button onClick={() => setShowChangePassword(s => !s)} className="px-3 py-2 rounded-md border border-gray-200 bg-white text-sm">{showChangePassword ? 'Hide password form' : 'Change password'}</button>
+                {showChangePassword && (
+                  <div className="mt-3 space-y-2">
+                    <input type="password" placeholder="Current password" value={pwdForm.currentPassword} onChange={(e) => setPwdForm(p => ({ ...p, currentPassword: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" />
+                    <input type="password" placeholder="New password" value={pwdForm.newPassword} onChange={(e) => setPwdForm(p => ({ ...p, newPassword: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" />
+                    <input type="password" placeholder="Confirm new password" value={pwdForm.confirmPassword} onChange={(e) => setPwdForm(p => ({ ...p, confirmPassword: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" />
+                    <div className="flex items-center gap-2">
+                      <button onClick={async () => {
+                        if (!pwdForm.currentPassword || !pwdForm.newPassword) { setMessage('Please fill passwords'); return }
+                        if (pwdForm.newPassword !== pwdForm.confirmPassword) { setMessage('New passwords do not match'); return }
+                        try {
+                          setChangingPwd(true)
+                          const res = await authService.changePassword(pwdForm.currentPassword, pwdForm.newPassword)
+                          setMessage(res?.data?.message || 'Password changed')
+                          setPwdForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+                          setShowChangePassword(false)
+                        } catch (err) {
+                          console.error('Password change failed', err)
+                          setMessage(err?.response?.data?.message || 'Password change failed')
+                        } finally {
+                          setChangingPwd(false)
+                          setTimeout(() => setMessage(''), 4000)
+                        }
+                      }} className="px-3 py-2 rounded-md bg-indigo-600 text-white">{changingPwd ? 'Changing...' : 'Change password'}</button>
+                      <button onClick={() => { setPwdForm({ currentPassword: '', newPassword: '', confirmPassword: '' }); setShowChangePassword(false) }} className="px-3 py-2 rounded-md border border-gray-200 bg-white">Cancel</button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

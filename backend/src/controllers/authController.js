@@ -164,4 +164,33 @@ const updateProfile = async (req, res) => {
   }
 };
 
-export { register, login, getCurrentUser, updateProfile };
+// Change password
+const changePassword = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current and new password required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    }
+
+    const user = await User.findById(userId).select('+passwordHash');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const valid = await user.comparePassword(currentPassword);
+    if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
+
+    user.passwordHash = newPassword;
+    await user.save();
+
+    res.json({ message: 'Password changed' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export { register, login, getCurrentUser, updateProfile, changePassword };
