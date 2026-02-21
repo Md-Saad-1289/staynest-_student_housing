@@ -259,10 +259,10 @@ export const StudentDashboardModernPage = ({ tab: tabProp }) => {
                   </div>
                 </div>
                 <button
-                  onClick={() => navigate('/profile/modern')}
+                  onClick={() => navigate('/profile')}
                   className="px-6 py-2 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center gap-2"
                 >
-                  <i className="fas fa-edit"></i> Edit Profile
+                  <i className="fas fa-user"></i> Go Profile
                 </button>
               </div>
             </div>

@@ -422,16 +422,78 @@ export const UserProfilePage = () => {
                 </div>
               </div>
             ) : (
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg border border-green-200 mb-8">
-                <p className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
-                  <i className={`fas fa-${profile?.isVerified ? 'check-circle' : 'clock'} text-green-600`}></i>
-                  {profile?.isVerified ? 'Account Verified' : 'Verification Pending'}
-                </p>
-                <p className="text-xs text-green-700">
-                  {profile?.isVerified
-                    ? `Verified on ${new Date(profile?.verifiedAt).toLocaleDateString()}`
-                    : 'Your account is pending verification. Please upload your NID or passport.'}
-                </p>
+              <div className="mb-6 space-y-4">
+                {/* Bio */}
+                {profile?.bio && (
+                  <div className="text-gray-800">
+                    <h4 className="font-semibold text-gray-700">About</h4>
+                    <p className="mt-1">{profile.bio}</p>
+                  </div>
+                )}
+
+                {/* Academic & Work */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+                  {profile?.university && <div><strong>University:</strong> {profile.university}</div>}
+                  {profile?.major && <div><strong>Major:</strong> {profile.major}</div>}
+                  {profile?.academicYear && <div><strong>Academic Year:</strong> {profile.academicYear}</div>}
+                  {profile?.studentId && <div><strong>Student ID:</strong> {profile.studentId}</div>}
+                  {profile?.dateOfBirth && <div><strong>DOB:</strong> {new Date(profile.dateOfBirth).toLocaleDateString()}</div>}
+                </div>
+
+                {/* Socials */}
+                {(profile?.linkedin || profile?.twitter || profile?.website) && (
+                  <div>
+                    <h4 className="font-semibold text-gray-700">Social</h4>
+                    <div className="mt-1 text-sm text-blue-600 space-y-1">
+                      {profile.linkedin && <div>LinkedIn: <a href={profile.linkedin} target="_blank" rel="noreferrer">{profile.linkedin}</a></div>}
+                      {profile.twitter && <div>Twitter: <a href={profile.twitter} target="_blank" rel="noreferrer">{profile.twitter}</a></div>}
+                      {profile.website && <div>Website: <a href={profile.website} target="_blank" rel="noreferrer">{profile.website}</a></div>}
+                    </div>
+                  </div>
+                )}
+
+                {/* Address */}
+                {(profile?.addressStreet || profile?.addressCity || profile?.addressZipCode || profile?.addressCountry) && (
+                  <div>
+                    <h4 className="font-semibold text-gray-700">Address</h4>
+                    <p className="mt-1 text-sm text-gray-700">
+                      {profile.addressStreet ? profile.addressStreet + ', ' : ''}
+                      {profile.addressCity ? profile.addressCity + ', ' : ''}
+                      {profile.addressZipCode ? profile.addressZipCode + ', ' : ''}
+                      {profile.addressCountry || ''}
+                    </p>
+                  </div>
+                )}
+
+                {/* Preferences & Budget */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+                  <div><strong>Budget:</strong> {profile.budgetMin ?? '—'} - {profile.budgetMax ?? '—'}</div>
+                  <div><strong>Roommate Preferences:</strong> {profile.roommatePreferences ?? '—'}</div>
+                </div>
+
+                {/* Gender & Notifications */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+                  <div><strong>Gender:</strong> {profile.gender ?? '—'}</div>
+                  <div><strong>Notifications:</strong> Email: {profile.emailNotifications ? 'Yes' : 'No'}, SMS: {profile.smsNotifications ? 'Yes' : 'No'}, Push: {profile.pushNotifications ? 'Yes' : 'No'}</div>
+                </div>
+
+                {/* Emergency Contact */}
+                <div className="text-sm text-gray-700">
+                  <strong>Emergency Contact:</strong> {profile.emergencyContactName ? `${profile.emergencyContactName} (${profile.emergencyContactPhone || '—'})` : '—'}
+                </div>
+
+                {/* Verification */}
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200 text-sm">
+                  <p className="font-semibold text-green-900 flex items-center gap-2">
+                    <i className={`fas fa-${profile?.isVerified ? 'check-circle' : 'clock'} text-green-600`}></i>
+                    {profile?.isVerified ? 'Account Verified' : 'Verification Pending'}
+                  </p>
+                  <p className="text-xs text-green-700 mt-1">
+                    {profile?.isVerified
+                      ? `Verified on ${new Date(profile?.verifiedAt).toLocaleDateString()}`
+                      : 'Your account is pending verification. Please upload your NID or passport.'}
+                  </p>
+                </div>
               </div>
             )}
 
