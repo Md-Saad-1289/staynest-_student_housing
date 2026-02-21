@@ -161,7 +161,7 @@ export function ProfilePage() {
                   <div className="flex items-center gap-3">
                       {!editing ? (
                         <>
-                          <button onClick={() => { setEditing(true); setFormData({ name: fullName, mobile: phone, bio, university, location }); setMessage('') }} className="flex items-center gap-2 px-4 py-2 rounded-md bg-gradient-to-br from-sky-600 to-blue-600 text-white shadow hover:opacity-95 transition">Edit profile</button>
+                          <button onClick={() => { setEditing(true); setFormData({ name: fullName, mobile: phone, bio, university, location, linkedin: user.linkedin || '', twitter: user.twitter || '', website: user.website || '' }); setMessage('') }} className="flex items-center gap-2 px-4 py-2 rounded-md bg-gradient-to-br from-sky-600 to-blue-600 text-white shadow hover:opacity-95 transition">Edit profile</button>
                           <button className="px-3 py-2 rounded-md border border-gray-200 bg-white text-sm">Settings</button>
                         </>
                       ) : (
@@ -169,15 +169,43 @@ export function ProfilePage() {
                           <button onClick={async () => {
                             try {
                               setSaving(true)
-                              const payload = { name: formData.name, mobile: formData.mobile, profileImage: formData.profileImage, bio: formData.bio, university: formData.university, location: formData.location }
+                              // Validate required fields
+                              if (!formData.name || !formData.name.trim()) {
+                                setMessage('Full name is required')
+                                setSaving(false)
+                                return
+                              }
+                              if (formData.mobile) {
+                                const digits = formData.mobile.replace(/[^0-9]/g, '')
+                                if (digits.length < 8) {
+                                  setMessage('Phone number must have at least 8 digits')
+                                  setSaving(false)
+                                  return
+                                }
+                              }
+                              const payload = { 
+                                name: formData.name.trim(), 
+                                mobile: formData.mobile || '', 
+                                profileImage: formData.profileImage, 
+                                bio: formData.bio || '', 
+                                university: formData.university || '', 
+                                location: formData.location || '',
+                                linkedin: formData.linkedin || '',
+                                twitter: formData.twitter || '',
+                                website: formData.website || ''
+                              }
                               const res = await userService.updateProfile(payload)
                               const updated = res?.data?.user || res?.data || null
-                              if (updated) setProfile(updated)
+                              if (updated) {
+                                setProfile(updated)
+                                setFormData({})
+                              }
                               setMessage('Profile saved')
                               setEditing(false)
                             } catch (err) {
                               console.error('Save failed', err)
-                              setMessage('Failed to save profile')
+                              const errorMsg = err?.response?.data?.error || err?.message || 'Failed to save profile'
+                              setMessage(errorMsg)
                             } finally {
                               setSaving(false)
                               setTimeout(() => setMessage(''), 3000)

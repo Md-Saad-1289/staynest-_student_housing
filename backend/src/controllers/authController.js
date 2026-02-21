@@ -119,6 +119,14 @@ const getCurrentUser = async (req, res) => {
         mobile: user.mobile,
         role: user.role,
         isVerified: user.isVerified,
+        profileImage: user.profileImage,
+        bio: user.bio,
+        university: user.university,
+        location: user.location,
+        linkedin: user.linkedin,
+        twitter: user.twitter,
+        website: user.website,
+        createdAt: user.createdAt,
       },
     });
   } catch (error) {
@@ -130,15 +138,31 @@ const getCurrentUser = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { name, mobile, profileImage, bio, university, location } = req.body;
+    const { name, mobile, profileImage, bio, university, location, linkedin, twitter, website } = req.body;
+
+    // Validate inputs
+    if (name && typeof name === 'string' && name.trim().length === 0) {
+      return res.status(400).json({ error: 'Name cannot be empty' });
+    }
+
+    if (mobile && typeof mobile === 'string') {
+      // Validate mobile - should have at least 8 digits
+      const digits = mobile.replace(/[^0-9]/g, '');
+      if (digits.length < 8) {
+        return res.status(400).json({ error: 'Phone number must have at least 8 digits' });
+      }
+    }
 
     const updates = {};
-    if (typeof name !== 'undefined') updates.name = name;
-    if (typeof mobile !== 'undefined') updates.mobile = mobile;
+    if (typeof name !== 'undefined' && name !== null) updates.name = name.trim();
+    if (typeof mobile !== 'undefined' && mobile !== null) updates.mobile = mobile;
     if (typeof profileImage !== 'undefined') updates.profileImage = profileImage;
     if (typeof bio !== 'undefined') updates.bio = bio;
     if (typeof university !== 'undefined') updates.university = university;
     if (typeof location !== 'undefined') updates.location = location;
+    if (typeof linkedin !== 'undefined') updates.linkedin = linkedin;
+    if (typeof twitter !== 'undefined') updates.twitter = twitter;
+    if (typeof website !== 'undefined') updates.website = website;
 
     const updated = await User.findByIdAndUpdate(userId, updates, { new: true });
     if (!updated) return res.status(404).json({ error: 'User not found' });
@@ -156,6 +180,9 @@ const updateProfile = async (req, res) => {
         bio: updated.bio,
         university: updated.university,
         location: updated.location,
+        linkedin: updated.linkedin,
+        twitter: updated.twitter,
+        website: updated.website,
         createdAt: updated.createdAt,
       },
     });

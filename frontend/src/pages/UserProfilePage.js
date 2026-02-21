@@ -11,14 +11,16 @@ export const UserProfilePage = () => {
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const res = await userService.getProfile();
-        setProfile(res.data);
-        setFormData(res.data);
-        setAvatarPreview(res.data.profileImage);
+        const data = res?.data?.user || res?.data || null;
+        setProfile(data);
+        setFormData(data || {});
+        setAvatarPreview(data?.profileImage || null);
       } catch (err) {
         console.error('Failed to fetch profile:', err);
       } finally {
@@ -42,18 +44,42 @@ export const UserProfilePage = () => {
   };
 
   const handleSaveProfile = async () => {
+    // client-side validation
+    const validation = validateProfile();
+    setErrors(validation);
+    if (Object.keys(validation).length > 0) return;
+
     try {
       setSaving(true);
-      await userService.updateProfile(formData);
-      setProfile(formData);
+      const res = await userService.updateProfile(formData);
+      const updated = res?.data?.user || res?.data || formData;
+      setProfile(updated);
+      setFormData(updated);
       setEditing(false);
       setMessage('Profile updated successfully!');
       setTimeout(() => setMessage(''), 3000);
     } catch (err) {
-      setMessage('Failed to update profile');
+      console.error('Update profile error:', err);
+      const serverMsg = err?.response?.data?.error || err?.message || 'Failed to update profile';
+      setMessage(serverMsg);
     } finally {
       setSaving(false);
     }
+  };
+
+  const validateProfile = () => {
+    const e = {};
+    const name = (formData.name || '').trim();
+    const mobile = (formData.mobile || '').trim();
+
+    if (!name) e.name = 'Full name is required';
+    if (mobile) {
+      const digits = mobile.replace(/[^0-9]/g, '');
+      if (digits.length < 8) e.mobile = 'Enter a valid phone number';
+    } else {
+      e.mobile = 'Phone number is required';
+    }
+    return e;
   };
 
   if (loading) {
@@ -150,6 +176,7 @@ export const UserProfilePage = () => {
                 ) : (
                   <p className="text-gray-800 font-semibold">{profile?.name}</p>
                 )}
+                {editing && errors.name && <p className="text-xs text-red-600 mt-1">{errors.name}</p>}
               </div>
 
               {/* Email */}
@@ -157,16 +184,8 @@ export const UserProfilePage = () => {
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   <i className="fas fa-envelope text-purple-600"></i> Email
                 </label>
-                {editing ? (
-                  <input
-                    type="email"
-                    value={formData.email || ''}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none"
-                  />
-                ) : (
-                  <p className="text-gray-800 font-semibold">{profile?.email}</p>
-                )}
+                <p className="text-gray-800 font-semibold">{profile?.email}</p>
+                {editing && <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>}
               </div>
 
               {/* Phone */}
@@ -180,10 +199,12 @@ export const UserProfilePage = () => {
                     value={formData.mobile || ''}
                     onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
                     className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none"
+                    placeholder="e.g., 01712345678"
                   />
                 ) : (
                   <p className="text-gray-800 font-semibold">{profile?.mobile}</p>
                 )}
+                {editing && errors.mobile && <p className="text-xs text-red-600 mt-1">{errors.mobile}</p>}
               </div>
 
               {/* Role */}

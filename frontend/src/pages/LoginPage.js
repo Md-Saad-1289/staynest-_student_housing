@@ -7,7 +7,7 @@ export const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useContext(AuthContext);
+  const { login, user } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -17,7 +17,7 @@ export const LoginPage = () => {
 
     try {
       const res = await login(email, password);
-      const role = res.user?.role || res.user?.role;
+      const role = (user && user.role) || (res?.data?.user?.role) || null;
       // Redirect based on role
       if (role === 'admin') navigate('/dashboard/admin');
       else if (role === 'owner') navigate('/dashboard/owner');
