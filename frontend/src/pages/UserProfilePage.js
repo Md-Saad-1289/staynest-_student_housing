@@ -3,7 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import { userService } from '../services/api';
 
 export const UserProfilePage = () => {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, setUser } = useContext(AuthContext);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -13,13 +13,42 @@ export const UserProfilePage = () => {
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState({});
 
+  const initFormData = (d = {}) => ({
+    name: d.name ?? '',
+    mobile: d.mobile ?? '',
+    bio: d.bio ?? '',
+    university: d.university ?? '',
+    location: d.location ?? '',
+    linkedin: d.linkedin ?? '',
+    twitter: d.twitter ?? '',
+    website: d.website ?? '',
+    budgetMin: typeof d.budgetMin === 'number' ? String(d.budgetMin) : (d.budgetMin ?? ''),
+    budgetMax: typeof d.budgetMax === 'number' ? String(d.budgetMax) : (d.budgetMax ?? ''),
+    gender: d.gender ?? '',
+    dateOfBirth: d.dateOfBirth ? new Date(d.dateOfBirth).toISOString().slice(0,10) : '',
+    studentId: d.studentId ?? '',
+    major: d.major ?? '',
+    academicYear: d.academicYear ?? '',
+    addressStreet: d.addressStreet ?? '',
+    addressCity: d.addressCity ?? '',
+    addressZipCode: d.addressZipCode ?? '',
+    addressCountry: d.addressCountry ?? '',
+    emailNotifications: typeof d.emailNotifications !== 'undefined' ? !!d.emailNotifications : true,
+    smsNotifications: typeof d.smsNotifications !== 'undefined' ? !!d.smsNotifications : true,
+    pushNotifications: typeof d.pushNotifications !== 'undefined' ? !!d.pushNotifications : true,
+    roommatePreferences: d.roommatePreferences ?? '',
+    emergencyContactName: d.emergencyContactName ?? '',
+    emergencyContactPhone: d.emergencyContactPhone ?? '',
+    profileImage: d.profileImage ?? null,
+  });
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const res = await userService.getProfile();
         const data = res?.data?.user || res?.data || null;
         setProfile(data);
-        setFormData(data || {});
+        setFormData(initFormData(data || {}));
         setAvatarPreview(data?.profileImage || null);
       } catch (err) {
         console.error('Failed to fetch profile:', err);
@@ -51,10 +80,41 @@ export const UserProfilePage = () => {
 
     try {
       setSaving(true);
-      const res = await userService.updateProfile(formData);
-      const updated = res?.data?.user || res?.data || formData;
+      const payload = {
+        name: formData.name.trim(),
+        mobile: formData.mobile || undefined,
+        bio: formData.bio || undefined,
+        university: formData.university || undefined,
+        location: formData.location || undefined,
+        linkedin: formData.linkedin || undefined,
+        twitter: formData.twitter || undefined,
+        website: formData.website || undefined,
+        dateOfBirth: formData.dateOfBirth || undefined,
+        studentId: formData.studentId || undefined,
+        major: formData.major || undefined,
+        academicYear: formData.academicYear || undefined,
+        addressStreet: formData.addressStreet || undefined,
+        addressCity: formData.addressCity || undefined,
+        addressZipCode: formData.addressZipCode || undefined,
+        addressCountry: formData.addressCountry || undefined,
+        emailNotifications: !!formData.emailNotifications,
+        smsNotifications: !!formData.smsNotifications,
+        pushNotifications: !!formData.pushNotifications,
+        roommatePreferences: formData.roommatePreferences || undefined,
+        emergencyContactName: formData.emergencyContactName || undefined,
+        emergencyContactPhone: formData.emergencyContactPhone || undefined,
+        gender: formData.gender || undefined,
+        profileImage: formData.profileImage || undefined,
+        budgetMin: formData.budgetMin !== '' && formData.budgetMin != null ? formData.budgetMin : undefined,
+        budgetMax: formData.budgetMax !== '' && formData.budgetMax != null ? formData.budgetMax : undefined,
+      };
+
+      const res = await userService.updateProfile(payload);
+      const updated = res?.data?.user || res?.data || payload;
       setProfile(updated);
-      setFormData(updated);
+      setFormData(initFormData(updated));
+      setAvatarPreview(updated?.profileImage || null);
+      if (setUser) setUser(updated);
       setEditing(false);
       setMessage('Profile updated successfully!');
       setTimeout(() => setMessage(''), 3000);
@@ -254,7 +314,10 @@ export const UserProfilePage = () => {
               ) : (
                 <>
                   <button
-                    onClick={() => setEditing(true)}
+                    onClick={() => {
+                      setEditing(true);
+                      setFormData(initFormData(profile || {}));
+                    }}
                     className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2"
                   >
                     <i className="fas fa-edit"></i> Edit Profile

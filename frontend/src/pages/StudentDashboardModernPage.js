@@ -258,12 +258,12 @@ export const StudentDashboardModernPage = ({ tab: tabProp }) => {
                     </p>
                   </div>
                 </div>
-                <a
-                  href="#profile"
+                <button
+                  onClick={() => navigate('/profile/modern')}
                   className="px-6 py-2 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center gap-2"
                 >
                   <i className="fas fa-edit"></i> Edit Profile
-                </a>
+                </button>
               </div>
             </div>
           )}
