@@ -312,6 +312,19 @@ export const AdminDashboardModernPage = ({ tab }) => {
     });
   };
 
+  // Open owner detail modal and fetch full profile for admin inspection
+  const handleOpenOwner = async (userId) => {
+    // Open modal (loading state) then fetch details
+    setOwnerModal({ open: true, owner: null });
+    try {
+      const res = await adminService.getOwnerById(userId);
+      setOwnerModal({ open: true, owner: res.data.user });
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to load owner details');
+      setOwnerModal({ open: false, owner: null });
+    }
+  };
+
   const handleRejectOwner = (ownerId) => {
     const reason = prompt('Reason for rejection (optional):');
     if (reason === null) return; // cancelled
@@ -491,7 +504,7 @@ export const AdminDashboardModernPage = ({ tab }) => {
       render: (row) => (
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setOwnerModal({ open: true, owner: row })}
+            onClick={() => handleOpenOwner(row._id)}
             className="px-3 py-1 text-xs bg-gray-50 text-gray-700 hover:bg-gray-100 rounded font-medium transition-colors flex items-center gap-1"
           >
             <i className="fas fa-eye"></i> View
@@ -1676,42 +1689,80 @@ export const AdminDashboardModernPage = ({ tab }) => {
 
       {/* Owner Detail Modal */}
       {ownerModal.open && ownerModal.owner && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black opacity-40" onClick={() => setOwnerModal({ open: false, owner: null })} />
-          <div className="bg-white rounded-lg shadow-lg z-60 max-w-2xl w-full p-6 relative">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-bold">Owner Details</h3>
-              <button onClick={() => setOwnerModal({ open: false, owner: null })} className="text-gray-500">✕</button>
+          <div className="bg-white rounded-xl shadow-2xl z-60 max-w-4xl w-full p-6 relative overflow-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-2xl font-semibold">Owner Profile</h3>
+              <div className="flex items-center gap-3">
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${ownerModal.owner.isVerified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  {ownerModal.owner.isVerified ? 'Verified' : 'Unverified'}
+                </span>
+                <button onClick={() => setOwnerModal({ open: false, owner: null })} className="text-gray-500 text-lg">✕</button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="font-semibold">Name</p>
-                <p className="text-gray-700 mb-2">{ownerModal.owner.name}</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="col-span-1 flex flex-col items-center gap-4">
+                <div className="w-32 h-32 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center">
+                  {ownerModal.owner.profileImage ? (
+                    <img src={ownerModal.owner.profileImage} alt="avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="text-gray-400">No Avatar</div>
+                  )}
+                </div>
+                <div className="text-center">
+                  <p className="font-semibold text-lg">{ownerModal.owner.name}</p>
+                  <p className="text-sm text-gray-600">{ownerModal.owner.email}</p>
+                  <p className="text-sm text-gray-600">{ownerModal.owner.mobile || '—'}</p>
+                </div>
 
-                <p className="font-semibold">Email</p>
-                <p className="text-gray-700 mb-2">{ownerModal.owner.email}</p>
-
-                <p className="font-semibold">Mobile</p>
-                <p className="text-gray-700 mb-2">{ownerModal.owner.mobile}</p>
-
-                <p className="font-semibold">Submitted NID</p>
-                {ownerModal.owner.nidImage ? (
-                  <img src={ownerModal.owner.nidImage} alt="NID" className="mt-2 border rounded max-h-48 object-contain" />
-                ) : (
-                  <p className="text-sm text-gray-500">No document provided</p>
-                )}
+                <div className="w-full bg-gray-50 p-3 rounded border">
+                  <p className="text-sm font-medium">Submitted NID</p>
+                  {ownerModal.owner.nidImage ? (
+                    <img src={ownerModal.owner.nidImage} alt="NID" className="mt-2 border rounded max-h-48 object-contain w-full" />
+                  ) : (
+                    <p className="text-sm text-gray-500">No document provided</p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-2">NID No: {ownerModal.owner.nidNumber || 'N/A'}</p>
+                </div>
               </div>
 
-              <div>
-                <p className="font-semibold">Account Status</p>
-                <p className={`mt-2 font-medium ${ownerModal.owner.isVerified ? 'text-green-600' : 'text-red-600'}`}>
-                  {ownerModal.owner.isVerified ? 'Verified' : 'Unverified'}
-                </p>
+              <div className="col-span-2 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-4 rounded border">
+                    <p className="text-xs text-gray-500">Bio</p>
+                    <p className="mt-2 text-gray-800">{ownerModal.owner.bio || '—'}</p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded border">
+                    <p className="text-xs text-gray-500">University / Major</p>
+                    <p className="mt-2 text-gray-800">{ownerModal.owner.university ? `${ownerModal.owner.university}${ownerModal.owner.major ? ' — ' + ownerModal.owner.major : ''}` : '—'}</p>
+                    <p className="text-xs text-gray-500 mt-2">Academic Year: {ownerModal.owner.academicYear || '—'}</p>
+                  </div>
+                </div>
 
-                <div className="mt-6 flex gap-3">
-                  <button onClick={() => handleVerifyOwner(ownerModal.owner._id)} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Verify</button>
-                  <button onClick={() => handleRejectOwner(ownerModal.owner._id)} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Reject</button>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-4 rounded border">
+                    <p className="text-xs text-gray-500">Address</p>
+                    <p className="mt-2 text-gray-800">
+                      {ownerModal.owner.addressStreet || ''}{ownerModal.owner.addressCity ? ', ' + ownerModal.owner.addressCity : ''}{ownerModal.owner.addressZipCode ? ', ' + ownerModal.owner.addressZipCode : ''}{ownerModal.owner.addressCountry ? ', ' + ownerModal.owner.addressCountry : ''}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded border">
+                    <p className="text-xs text-gray-500">Contact & Social</p>
+                    <p className="mt-2 text-gray-800">Email: {ownerModal.owner.email}</p>
+                    <p className="text-gray-800">Mobile: {ownerModal.owner.mobile || '—'}</p>
+                    <div className="mt-2 text-sm text-blue-600 space-y-1">
+                      {ownerModal.owner.linkedin && <div><a href={ownerModal.owner.linkedin} target="_blank" rel="noreferrer">LinkedIn</a></div>}
+                      {ownerModal.owner.twitter && <div><a href={ownerModal.owner.twitter} target="_blank" rel="noreferrer">Twitter</a></div>}
+                      {ownerModal.owner.website && <div><a href={ownerModal.owner.website} target="_blank" rel="noreferrer">Website</a></div>}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 items-center justify-end">
+                  <button onClick={() => handleRejectOwner(ownerModal.owner._id)} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Reject</button>
+                  <button onClick={() => handleVerifyOwner(ownerModal.owner._id)} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Verify Owner</button>
                 </div>
               </div>
             </div>

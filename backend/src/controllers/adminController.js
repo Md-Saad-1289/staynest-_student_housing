@@ -149,8 +149,21 @@ const getDashboardStats = async (req, res) => {
 // Get unverified owners
 const getUnverifiedOwners = async (req, res) => {
   try {
-    const owners = await User.find({ role: 'owner', isVerified: false });
+    // Return full owner documents (exclude passwordHash) so admin can inspect all profile fields
+    const owners = await User.find({ role: 'owner', isVerified: false }).select('-passwordHash').lean();
     res.json({ owners });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get single owner by id (admin view) - returns full profile for inspection before approval
+const getOwnerById = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.userId)) return res.status(400).json({ error: 'Invalid user id' });
+    const user = await User.findById(req.params.userId).select('-passwordHash').lean();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ user });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -363,6 +376,7 @@ export {
   verifyListing,
   getDashboardStats,
   getUnverifiedOwners,
+  getOwnerById,
   getUnverifiedListings,
   getFlags,
   resolveFlag,

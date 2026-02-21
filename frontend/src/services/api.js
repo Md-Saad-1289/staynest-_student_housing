@@ -132,6 +132,7 @@ export const testimonialService = {
 export const adminService = {
   getDashboardStats: () => api.get('/admin/dashboard/stats').then(res => res),
   getUnverifiedOwners: () => api.get('/admin/owners/unverified').then(res => res),
+  getOwnerById: (userId) => api.get(`/admin/owners/${userId}`).then(res => res),
   verifyOwner: (userId) => api.put(`/admin/owners/${userId}/verify`).then(res => res),
   rejectOwner: (userId, reason) => api.put(`/admin/owners/${userId}/reject`, { reason }).then(res => res),
   getUnverifiedListings: () => api.get('/admin/listings/unverified').then(res => res),

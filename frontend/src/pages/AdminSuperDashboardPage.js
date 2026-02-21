@@ -90,6 +90,10 @@ export const AdminSuperDashboardPage = () => {
 
   const handleVerifyOwner = async (userId) => {
     try {
+      const res = await adminService.getOwnerById(userId);
+      const owner = res.data.user;
+      const summary = `Approve owner?\nName: ${owner.name}\nEmail: ${owner.email}\nMobile: ${owner.mobile || 'N/A'}\nNID: ${owner.nidNumber || 'N/A'}`;
+      if (!window.confirm(summary)) return;
       await adminService.verifyOwner(userId);
       alert('✓ Owner verified successfully!');
       fetchData();

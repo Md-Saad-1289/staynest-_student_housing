@@ -39,11 +39,16 @@ export const AdminDashboardPage = () => {
 
   const handleVerifyOwner = async (userId) => {
     try {
+      // Fetch full owner profile so admin can inspect all fields before approving
+      const res = await adminService.getOwnerById(userId);
+      const owner = res.data.user;
+      const summary = `Approve owner?\nName: ${owner.name}\nEmail: ${owner.email}\nMobile: ${owner.mobile || 'N/A'}\nNID: ${owner.nidNumber || 'N/A'}`;
+      if (!window.confirm(summary)) return;
       await adminService.verifyOwner(userId);
       alert('Owner verified!');
       fetchData();
     } catch (err) {
-      alert('Failed to verify owner');
+      alert(err.response?.data?.error || 'Failed to verify owner');
     }
   };
 

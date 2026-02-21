@@ -165,64 +165,74 @@ export function ProfilePage() {
   const user = profile || {};
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-5xl mx-auto bg-white p-6 rounded-xl shadow-lg">
 
         {/* HEADER */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold">Profile</h2>
-
-          {!editing ? (
-            <button
-              onClick={startEditing}
-              className="px-4 py-2 bg-blue-600 text-white rounded"
-            >
-              Edit
-            </button>
-          ) : (
-            <div className="flex gap-2">
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="px-4 py-2 bg-green-600 text-white rounded"
-              >
-                {saving ? "Saving..." : "Save"}
-              </button>
-              <button
-                onClick={cancelEditing}
-                className="px-4 py-2 border rounded"
-              >
-                Cancel
-              </button>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center">
+              {user.profileImage ? (
+                <img src={user.profileImage} alt="avatar" className="w-full h-full object-cover" />
+              ) : (
+                <div className="text-gray-400">No Image</div>
+              )}
             </div>
-          )}
+            <div>
+              <h2 className="text-2xl font-semibold">{user.name || 'Profile'}</h2>
+              <p className="text-sm text-gray-600">{user.email}</p>
+            </div>
+          </div>
+
+          <div>
+            {!editing ? (
+              <button onClick={startEditing} className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow">Edit Profile</button>
+            ) : (
+              <div className="flex gap-2">
+                <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-green-600 text-white rounded-lg shadow">{saving ? 'Saving...' : 'Save'}</button>
+                <button onClick={cancelEditing} className="px-4 py-2 border rounded-lg">Cancel</button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* PROFILE VIEW */}
         {!editing ? (
-          <div className="space-y-3 text-sm">
-            <div><strong>Name:</strong> {user.name}</div>
-            <div><strong>Email:</strong> {user.email}</div>
-            <div><strong>Phone:</strong> {user.mobile}</div>
-            <div><strong>University:</strong> {user.university}</div>
-            <div><strong>Major:</strong> {user.major}</div>
-            <div><strong>Academic Year:</strong> {user.academicYear}</div>
-            <div><strong>Location:</strong> {user.location}</div>
-            <div><strong>Address:</strong> {user.addressStreet || ''}{user.addressCity ? ', ' + user.addressCity : ''}{user.addressZipCode ? ', ' + user.addressZipCode : ''}{user.addressCountry ? ', ' + user.addressCountry : ''}</div>
-            <div><strong>Bio:</strong> {user.bio}</div>
-            <div><strong>Social:</strong> {user.linkedin || user.twitter || user.website ? (
-              <div className="space-y-1">
-                {user.linkedin && <div>LinkedIn: <a className="text-blue-600" href={user.linkedin}>{user.linkedin}</a></div>}
-                {user.twitter && <div>Twitter: <a className="text-blue-600" href={user.twitter}>{user.twitter}</a></div>}
-                {user.website && <div>Website: <a className="text-blue-600" href={user.website}>{user.website}</a></div>}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+            <div className="col-span-1 bg-gray-50 p-4 rounded border">
+              <p className="text-xs text-gray-500">Contact</p>
+              <p className="mt-2 text-gray-800">{user.mobile || '—'}</p>
+              <p className="mt-1 text-gray-600 text-sm">{user.location || '—'}</p>
+            </div>
+            <div className="col-span-1 bg-gray-50 p-4 rounded border">
+              <p className="text-xs text-gray-500">Academic</p>
+              <p className="mt-2 text-gray-800">{user.university || '—'}</p>
+              <p className="text-gray-600 text-sm">{user.major || '—'}</p>
+              <p className="text-xs text-gray-500 mt-2">Year: {user.academicYear || '—'}</p>
+            </div>
+            <div className="col-span-1 bg-gray-50 p-4 rounded border">
+              <p className="text-xs text-gray-500">Preferences</p>
+              <p className="mt-2 text-gray-800">Budget: {user.budgetMin ?? '—'} — {user.budgetMax ?? '—'}</p>
+              <p className="text-gray-800">Roommate: {user.roommatePreferences ?? '—'}</p>
+              <p className="text-gray-800">Gender: {user.gender ?? '—'}</p>
+            </div>
+
+            <div className="col-span-2 bg-gray-50 p-4 rounded border">
+              <p className="text-xs text-gray-500">About</p>
+              <p className="mt-2 text-gray-800">{user.bio || '—'}</p>
+              <div className="mt-3 text-sm text-blue-600">
+                {user.linkedin && <div><a href={user.linkedin} target="_blank" rel="noreferrer">LinkedIn</a></div>}
+                {user.twitter && <div><a href={user.twitter} target="_blank" rel="noreferrer">Twitter</a></div>}
+                {user.website && <div><a href={user.website} target="_blank" rel="noreferrer">Website</a></div>}
               </div>
-            ) : '—'}</div>
-            <div><strong>Budget:</strong> {user.budgetMin ?? '—'} - {user.budgetMax ?? '—'}</div>
-            <div><strong>Roommate Preferences:</strong> {user.roommatePreferences ?? '—'}</div>
-            <div><strong>Gender:</strong> {user.gender ?? '—'}</div>
-            <div><strong>Notifications:</strong> Email: {user.emailNotifications ? 'Yes' : 'No'}, SMS: {user.smsNotifications ? 'Yes' : 'No'}, Push: {user.pushNotifications ? 'Yes' : 'No'}</div>
-            <div><strong>Emergency Contact:</strong> {user.emergencyContactName ? `${user.emergencyContactName} (${user.emergencyContactPhone || '—'})` : '—'}</div>
-            <div><strong>Date of Birth:</strong> {user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : '—'}</div>
+            </div>
+
+            <div className="col-span-1 bg-gray-50 p-4 rounded border">
+              <p className="text-xs text-gray-500">Emergency Contact</p>
+              <p className="mt-2 text-gray-800">{user.emergencyContactName ? `${user.emergencyContactName} (${user.emergencyContactPhone || '—'})` : '—'}</p>
+              <p className="text-xs text-gray-500 mt-3">Notifications</p>
+              <p className="mt-1 text-gray-800">Email: {user.emailNotifications ? 'Yes' : 'No'}</p>
+            </div>
           </div>
         ) : (
           /* EDIT MODE */

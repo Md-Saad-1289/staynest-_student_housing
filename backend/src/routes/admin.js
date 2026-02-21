@@ -5,6 +5,7 @@ import {
   verifyListing,
   getDashboardStats,
   getUnverifiedOwners,
+  getOwnerById,
   getUnverifiedListings,
   getFlags,
   resolveFlag,
@@ -22,6 +23,7 @@ router.use(auth, authorize('admin'));
 
 router.get('/dashboard/stats', getDashboardStats);
 router.get('/owners/unverified', getUnverifiedOwners);
+router.get('/owners/:userId', getOwnerById);
 router.put('/owners/:userId/verify', verifyOwner);
 router.put('/owners/:userId/reject', rejectOwner);
 router.get('/listings/unverified', getUnverifiedListings);

@@ -38,6 +38,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    nidNumber: {
+      type: String,
+      default: null,
+    },
     verifiedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
