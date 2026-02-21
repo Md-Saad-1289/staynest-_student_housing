@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useContext } from 'react'
-import { userService } from '../services/api'
+import { useNavigate } from 'react-router-dom'
+import { userService, authService } from '../services/api'
 import { AuthContext } from '../context/AuthContext'
 
 const Badge = ({ children, color = 'bg-white border border-gray-200 text-gray-700' }) => (
@@ -17,7 +18,8 @@ const InfoRow = ({ label, value, icon }) => (
 )
 
 export function ProfilePage() {
-  const { user: authUser } = useContext(AuthContext)
+  const { user: authUser, logout } = useContext(AuthContext)
+  const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -27,10 +29,28 @@ export function ProfilePage() {
       try {
         const res = await userService.getProfile()
         // API returns { user: { ... } }
-        const data = res?.data?.user || res?.data || null
+        let data = res?.data?.user || res?.data || null
+        // fallback to authService.getCurrentUser if shape differs
+        if ((!data || Object.keys(data).length === 0) && authService) {
+          try {
+            const r2 = await authService.getCurrentUser()
+            data = r2?.data?.user || r2?.data || data
+          } catch (e) {
+            console.debug('authService.getCurrentUser fallback failed', e)
+          }
+        }
         if (mounted) setProfile(data)
       } catch (err) {
         console.error('Failed to load profile:', err)
+        // If unauthorized, force logout and redirect to login
+        if (err?.response?.status === 401) {
+          try {
+            logout()
+          } catch (e) {
+            console.debug('logout failed', e)
+          }
+          if (mounted) navigate('/login')
+        }
       } finally {
         if (mounted) setLoading(false)
       }
@@ -78,6 +98,7 @@ export function ProfilePage() {
   const lastLogin = user.lastLogin || ''
   const completion = user.completion || 0
   const avatar = user.profileImage || user.avatar || 'https://images.unsplash.com/photo-1545996124-3a4f8b0a3a8b?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=8b6f3e1b3c'
+  const [showDebug, setShowDebug] = useState(false)
 
   return (
     <div className="min-h-screen bg-gray-50 text-slate-800 p-6 md:p-12 font-sans">
@@ -128,6 +149,7 @@ export function ProfilePage() {
                   <div className="flex items-center gap-3">
                     <button className="flex items-center gap-2 px-4 py-2 rounded-md bg-gradient-to-br from-sky-600 to-blue-600 text-white shadow hover:opacity-95 transition">Edit profile</button>
                     <button className="px-3 py-2 rounded-md border border-gray-200 bg-white text-sm">Settings</button>
+                    <button onClick={() => setShowDebug(s => !s)} className="px-3 py-2 rounded-md border border-gray-200 bg-white text-sm">Debug</button>
                   </div>
                 </div>
               </div>
@@ -143,23 +165,27 @@ export function ProfilePage() {
               <InfoRow
                 icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M2 5a2 2 0 012-2h3.5a1.5 1.5 0 010 3H4v9h12V6h-3.5a1.5 1.5 0 010-3H16a2 2 0 012 2v11a1 1 0 01-1 1H3a1 1 0 01-1-1V5z"/></svg>}
                 label="Email"
-                value={email}
+                value={email || '—'}
               />
               <InfoRow
                 icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5A2.5 2.5 0 015.5 3h2A2.5 2.5 0 0110 5.5V7h4v1H4V5.5zM4 10h16v8.5A2.5 2.5 0 0117.5 21h-11A2.5 2.5 0 014 18.5V10z"/></svg>}
                 label="Phone"
-                value={phone}
+                value={phone || '—'}
               />
-              <InfoRow
-                icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h6l-5 4 2 7-6-4-6 4 2-7-5-4h6z"/></svg>}
-                label="University"
-                value={university}
-              />
-              <InfoRow
-                icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7z"/></svg>}
-                label="Location"
-                value={location}
-              />
+              {university && (
+                <InfoRow
+                  icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h6l-5 4 2 7-6-4-6 4 2-7-5-4h6z"/></svg>}
+                  label="University"
+                  value={university}
+                />
+              )}
+              {location && (
+                <InfoRow
+                  icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7z"/></svg>}
+                  label="Location"
+                  value={location}
+                />
+              )}
             </div>
           </div>
 
@@ -200,6 +226,13 @@ export function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {showDebug && (
+          <div className="mt-6 bg-white border border-red-100 rounded-lg p-4 text-sm text-red-700">
+            <div className="font-semibold mb-2">Profile debug data</div>
+            <pre className="text-xs text-gray-700 max-h-64 overflow-auto">{JSON.stringify(user, null, 2)}</pre>
+          </div>
+        )}
       </div>
     </div>
   )
