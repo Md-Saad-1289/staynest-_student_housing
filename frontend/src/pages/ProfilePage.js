@@ -248,12 +248,14 @@ export function ProfilePage() {
                                 setProfile(updated)
                                 setFormData({})
                               }
-                              setMessage('Profile saved')
+                              setMessage('✓ Profile saved successfully!')
                               setEditing(false)
+                              setTimeout(() => setMessage(''), 4000)
                             } catch (err) {
                               console.error('Save failed', err)
                               const errorMsg = err?.response?.data?.error || err?.message || 'Failed to save profile'
-                              setMessage(errorMsg)
+                              setMessage('✗ ' + errorMsg)
+                              setTimeout(() => setMessage(''), 5000)
                             } finally {
                               setSaving(false)
                               setTimeout(() => setMessage(''), 3000)
@@ -645,13 +647,15 @@ export function ProfilePage() {
                         try {
                           setChangingPwd(true)
                           const res = await authService.changePassword(pwdForm.currentPassword, pwdForm.newPassword)
-                          setMessage('Password changed successfully')
+                          setMessage('✓ Password changed successfully!')
                           setPwdForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
                           setShowChangePassword(false)
+                          setTimeout(() => setMessage(''), 4000)
                         } catch (err) {
                           console.error('Password change failed', err)
                           const errMsg = err?.response?.data?.error || err?.response?.data?.message || 'Password change failed'
-                          setMessage(errMsg)
+                          setMessage('✗ ' + errMsg)
+                          setTimeout(() => setMessage(''), 5000)
                         } finally {
                           setChangingPwd(false)
                           setTimeout(() => setMessage(''), 4000)
@@ -665,6 +669,16 @@ export function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {message && (
+          <div className={`mt-6 rounded-lg p-4 text-sm font-medium ${
+            message.includes('saved') || message.includes('success') || message.includes('Successfully') 
+              ? 'bg-green-50 border border-green-200 text-green-800' 
+              : 'bg-red-50 border border-red-200 text-red-800'
+          }`}>
+            {message}
+          </div>
+        )}
 
         {showDebug && (
           <div className="mt-6 bg-white border border-red-100 rounded-lg p-4 text-sm text-red-700">
