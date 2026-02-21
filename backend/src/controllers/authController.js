@@ -54,7 +54,14 @@ const register = async (req, res) => {
         id: newUser._id,
         name: newUser.name,
         email: newUser.email,
+        mobile: newUser.mobile,
         role: newUser.role,
+        isVerified: newUser.isVerified,
+        profileImage: newUser.profileImage,
+        bio: newUser.bio,
+        university: newUser.university,
+        location: newUser.location,
+        createdAt: newUser.createdAt,
       },
     });
   } catch (error) {
@@ -94,8 +101,22 @@ const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        mobile: user.mobile,
         role: user.role,
         isVerified: user.isVerified,
+        profileImage: user.profileImage,
+        bio: user.bio,
+        university: user.university,
+        location: user.location,
+        linkedin: user.linkedin,
+        twitter: user.twitter,
+        website: user.website,
+        dateOfBirth: user.dateOfBirth,
+        studentId: user.studentId,
+        major: user.major,
+        academicYear: user.academicYear,
+        gender: user.gender,
+        createdAt: user.createdAt,
       },
     });
   } catch (error) {
@@ -180,14 +201,31 @@ const updateProfile = async (req, res) => {
     // Validate dates
     if (dateOfBirth) {
       const dob = new Date(dateOfBirth);
-      if (dob > new Date()) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (dob > today) {
         return res.status(400).json({ error: 'Date of birth cannot be in the future' });
+      }
+      // Check if age is at least 13 years old
+      const age = today.getFullYear() - dob.getFullYear();
+      const monthDiff = today.getMonth() - dob.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+        const actualAge = age - 1;
+        if (actualAge < 13) {
+          return res.status(400).json({ error: 'You must be at least 13 years old' });
+        }
+      } else if (age < 13) {
+        return res.status(400).json({ error: 'You must be at least 13 years old' });
       }
     }
 
     // Validate budget
-    if (budgetMin && budgetMax && budgetMin > budgetMax) {
-      return res.status(400).json({ error: 'Minimum budget cannot be greater than maximum budget' });
+    if (budgetMin && budgetMax) {
+      const minBudget = typeof budgetMin === 'string' ? parseFloat(budgetMin) : budgetMin;
+      const maxBudget = typeof budgetMax === 'string' ? parseFloat(budgetMax) : budgetMax;
+      if (minBudget > maxBudget) {
+        return res.status(400).json({ error: 'Minimum budget cannot be greater than maximum budget' });
+      }
     }
 
     // Validate academic year
@@ -205,7 +243,13 @@ const updateProfile = async (req, res) => {
     const updates = {};
     if (typeof name !== 'undefined' && name !== null) updates.name = name.trim();
     if (typeof mobile !== 'undefined' && mobile !== null) updates.mobile = mobile;
-    if (typeof profileImage !== 'undefined') updates.profileImage = profileImage;
+    if (typeof profileImage !== 'undefined') {
+      // Validate profileImage size (max 2MB)
+      if (profileImage && typeof profileImage === 'string' && profileImage.length > 2 * 1024 * 1024) {
+        return res.status(400).json({ error: 'Profile image is too large. Maximum size is 2MB' });
+      }
+      updates.profileImage = profileImage;
+    }
     if (typeof bio !== 'undefined') updates.bio = bio;
     if (typeof university !== 'undefined') updates.university = university;
     if (typeof location !== 'undefined') updates.location = location;
@@ -223,8 +267,8 @@ const updateProfile = async (req, res) => {
     if (typeof emailNotifications !== 'undefined') updates.emailNotifications = emailNotifications;
     if (typeof smsNotifications !== 'undefined') updates.smsNotifications = smsNotifications;
     if (typeof pushNotifications !== 'undefined') updates.pushNotifications = pushNotifications;
-    if (typeof budgetMin !== 'undefined') updates.budgetMin = budgetMin;
-    if (typeof budgetMax !== 'undefined') updates.budgetMax = budgetMax;
+    if (typeof budgetMin !== 'undefined' && budgetMin !== null && budgetMin !== '') updates.budgetMin = parseFloat(budgetMin);
+    if (typeof budgetMax !== 'undefined' && budgetMax !== null && budgetMax !== '') updates.budgetMax = parseFloat(budgetMax);
     if (typeof roommatePreferences !== 'undefined') updates.roommatePreferences = roommatePreferences;
     if (typeof gender !== 'undefined') updates.gender = gender;
     if (typeof emergencyContactName !== 'undefined') updates.emergencyContactName = emergencyContactName;

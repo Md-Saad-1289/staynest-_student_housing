@@ -518,17 +518,23 @@ export function ProfilePage() {
                     <input type="password" placeholder="Confirm new password" value={pwdForm.confirmPassword} onChange={(e) => setPwdForm(p => ({ ...p, confirmPassword: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" />
                     <div className="flex items-center gap-2">
                       <button onClick={async () => {
-                        if (!pwdForm.currentPassword || !pwdForm.newPassword) { setMessage('Please fill passwords'); return }
+                        // Validate fields
+                        if (!pwdForm.currentPassword) { setMessage('Current password is required'); return }
+                        if (!pwdForm.newPassword) { setMessage('New password is required'); return }
+                        if (!pwdForm.confirmPassword) { setMessage('Confirm password is required'); return }
+                        if (pwdForm.newPassword.length < 6) { setMessage('New password must be at least 6 characters'); return }
                         if (pwdForm.newPassword !== pwdForm.confirmPassword) { setMessage('New passwords do not match'); return }
+                        if (pwdForm.currentPassword === pwdForm.newPassword) { setMessage('New password must be different from current password'); return }
                         try {
                           setChangingPwd(true)
                           const res = await authService.changePassword(pwdForm.currentPassword, pwdForm.newPassword)
-                          setMessage(res?.data?.message || 'Password changed')
+                          setMessage('Password changed successfully')
                           setPwdForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
                           setShowChangePassword(false)
                         } catch (err) {
                           console.error('Password change failed', err)
-                          setMessage(err?.response?.data?.message || 'Password change failed')
+                          const errMsg = err?.response?.data?.error || err?.response?.data?.message || 'Password change failed'
+                          setMessage(errMsg)
                         } finally {
                           setChangingPwd(false)
                           setTimeout(() => setMessage(''), 4000)
