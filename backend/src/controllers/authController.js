@@ -276,9 +276,23 @@ const updateProfile = async (req, res) => {
     if (typeof name !== 'undefined' && name !== null) updates.name = name.trim();
     if (typeof mobile !== 'undefined' && mobile !== null) updates.mobile = mobile;
     if (typeof profileImage !== 'undefined') {
-      // Validate profileImage size (max 2MB)
-      if (profileImage && typeof profileImage === 'string' && profileImage.length > 2 * 1024 * 1024) {
-        return res.status(400).json({ error: 'Profile image is too large. Maximum size is 2MB' });
+      // Validate profileImage size (max 2MB) only for inline/base64 images.
+      if (profileImage && typeof profileImage === 'string') {
+        // If profileImage is a data URL (base64), estimate size; otherwise assume it's a URL and skip size check.
+        if (profileImage.startsWith('data:')) {
+          try {
+            const base64Data = profileImage.split(',')[1] || '';
+            // approximate bytes from base64 length
+            const padding = (base64Data.endsWith('==') ? 2 : (base64Data.endsWith('=') ? 1 : 0));
+            const sizeInBytes = Math.floor((base64Data.length * 3) / 4) - padding;
+            if (sizeInBytes > 2 * 1024 * 1024) {
+              return res.status(400).json({ error: 'Profile image is too large. Maximum size is 2MB' });
+            }
+          } catch (err) {
+            // If parsing fails, reject to be safe
+            return res.status(400).json({ error: 'Invalid profile image data' });
+          }
+        }
       }
       updates.profileImage = profileImage;
     }
@@ -306,7 +320,8 @@ const updateProfile = async (req, res) => {
     if (typeof emergencyContactName !== 'undefined') updates.emergencyContactName = emergencyContactName;
     if (typeof emergencyContactPhone !== 'undefined') updates.emergencyContactPhone = emergencyContactPhone;
 
-    const updated = await User.findByIdAndUpdate(userId, updates, { new: true });
+    // Use runValidators to ensure enums and types are enforced on update
+    const updated = await User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true, context: 'query' });
     if (!updated) return res.status(404).json({ error: 'User not found' });
 
     res.json({
