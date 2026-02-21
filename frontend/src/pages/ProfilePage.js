@@ -22,7 +22,11 @@ export function ProfilePage() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [showDebug, setShowDebug] = useState(false)
+    const [showDebug, setShowDebug] = useState(false)
+    const [editing, setEditing] = useState(false)
+    const [formData, setFormData] = useState({})
+    const [saving, setSaving] = useState(false)
+    const [message, setMessage] = useState('')
 
   useEffect(() => {
     let mounted = true
@@ -147,9 +151,34 @@ export function ProfilePage() {
 
                 <div className="mt-4 md:mt-0 md:flex-none ml-auto">
                   <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2 rounded-md bg-gradient-to-br from-sky-600 to-blue-600 text-white shadow hover:opacity-95 transition">Edit profile</button>
-                    <button className="px-3 py-2 rounded-md border border-gray-200 bg-white text-sm">Settings</button>
-                    <button onClick={() => setShowDebug(s => !s)} className="px-3 py-2 rounded-md border border-gray-200 bg-white text-sm">Debug</button>
+                      {!editing ? (
+                        <>
+                          <button onClick={() => { setEditing(true); setFormData({ name: fullName, mobile: phone, bio, university, location }); setMessage('') }} className="flex items-center gap-2 px-4 py-2 rounded-md bg-gradient-to-br from-sky-600 to-blue-600 text-white shadow hover:opacity-95 transition">Edit profile</button>
+                          <button className="px-3 py-2 rounded-md border border-gray-200 bg-white text-sm">Settings</button>
+                        </>
+                      ) : (
+                        <>
+                          <button onClick={async () => {
+                            try {
+                              setSaving(true)
+                              const payload = { name: formData.name, mobile: formData.mobile, profileImage: formData.profileImage, bio: formData.bio, university: formData.university, location: formData.location }
+                              const res = await userService.updateProfile(payload)
+                              const updated = res?.data?.user || res?.data || null
+                              if (updated) setProfile(updated)
+                              setMessage('Profile saved')
+                              setEditing(false)
+                            } catch (err) {
+                              console.error('Save failed', err)
+                              setMessage('Failed to save profile')
+                            } finally {
+                              setSaving(false)
+                              setTimeout(() => setMessage(''), 3000)
+                            }
+                          }} disabled={saving} className="px-4 py-2 rounded-md bg-green-600 text-white">{saving ? 'Saving...' : 'Save'}</button>
+                          <button onClick={() => { setEditing(false); setFormData({}); setMessage(''); }} className="px-3 py-2 rounded-md border border-gray-200 bg-white text-sm">Cancel</button>
+                        </>
+                      )}
+                      <button onClick={() => setShowDebug(s => !s)} className="px-3 py-2 rounded-md border border-gray-200 bg-white text-sm">Debug</button>
                   </div>
                 </div>
               </div>
@@ -162,29 +191,61 @@ export function ProfilePage() {
           <div className="md:col-span-2 bg-white border border-gray-100 rounded-2xl shadow-md p-6">
             <h3 className="text-lg font-semibold text-slate-900 mb-4">Personal Information</h3>
             <div className="space-y-2">
-              <InfoRow
-                icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M2 5a2 2 0 012-2h3.5a1.5 1.5 0 010 3H4v9h12V6h-3.5a1.5 1.5 0 010-3H16a2 2 0 012 2v11a1 1 0 01-1 1H3a1 1 0 01-1-1V5z"/></svg>}
-                label="Email"
-                value={email || '—'}
-              />
-              <InfoRow
-                icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5A2.5 2.5 0 015.5 3h2A2.5 2.5 0 0110 5.5V7h4v1H4V5.5zM4 10h16v8.5A2.5 2.5 0 0117.5 21h-11A2.5 2.5 0 014 18.5V10z"/></svg>}
-                label="Phone"
-                value={phone || '—'}
-              />
-              {university && (
-                <InfoRow
-                  icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h6l-5 4 2 7-6-4-6 4 2-7-5-4h6z"/></svg>}
-                  label="University"
-                  value={university}
-                />
-              )}
-              {location && (
-                <InfoRow
-                  icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7z"/></svg>}
-                  label="Location"
-                  value={location}
-                />
+              <div className="flex items-center justify-between py-2">
+                <div className="text-sm text-gray-500">Email</div>
+                <div className="text-sm text-gray-800 font-medium">{email || '—'}</div>
+              </div>
+
+              {!editing ? (
+                <>
+                  <InfoRow
+                    icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5A2.5 2.5 0 015.5 3h2A2.5 2.5 0 0110 5.5V7h4v1H4V5.5zM4 10h16v8.5A2.5 2.5 0 0117.5 21h-11A2.5 2.5 0 014 18.5V10z"/></svg>}
+                    label="Phone"
+                    value={phone || '—'}
+                  />
+                  {university && (
+                    <InfoRow
+                      icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h6l-5 4 2 7-6-4-6 4 2-7-5-4h6z"/></svg>}
+                      label="University"
+                      value={university}
+                    />
+                  )}
+                  {location && (
+                    <InfoRow
+                      icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7z"/></svg>}
+                      label="Location"
+                      value={location}
+                    />
+                  )}
+                  {bio && (
+                    <InfoRow label="Bio" value={bio} />
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Full name</label>
+                      <input value={formData.name || ''} onChange={(e) => setFormData(fd => ({ ...fd, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Phone</label>
+                      <input value={formData.mobile || ''} onChange={(e) => setFormData(fd => ({ ...fd, mobile: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">University</label>
+                      <input value={formData.university || ''} onChange={(e) => setFormData(fd => ({ ...fd, university: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Location</label>
+                      <input value={formData.location || ''} onChange={(e) => setFormData(fd => ({ ...fd, location: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Bio</label>
+                      <textarea value={formData.bio || ''} onChange={(e) => setFormData(fd => ({ ...fd, bio: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" rows={3} />
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           </div>

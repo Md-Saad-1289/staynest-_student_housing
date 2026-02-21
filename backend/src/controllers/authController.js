@@ -127,3 +127,43 @@ const getCurrentUser = async (req, res) => {
 };
 
 export { register, login, getCurrentUser };
+
+// Update profile
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { name, mobile, profileImage, bio, university, location } = req.body;
+
+    const updates = {};
+    if (typeof name !== 'undefined') updates.name = name;
+    if (typeof mobile !== 'undefined') updates.mobile = mobile;
+    if (typeof profileImage !== 'undefined') updates.profileImage = profileImage;
+    if (typeof bio !== 'undefined') updates.bio = bio;
+    if (typeof university !== 'undefined') updates.university = university;
+    if (typeof location !== 'undefined') updates.location = location;
+
+    const updated = await User.findByIdAndUpdate(userId, updates, { new: true });
+    if (!updated) return res.status(404).json({ error: 'User not found' });
+
+    res.json({
+      message: 'Profile updated',
+      user: {
+        id: updated._id,
+        name: updated.name,
+        email: updated.email,
+        mobile: updated.mobile,
+        role: updated.role,
+        isVerified: updated.isVerified,
+        profileImage: updated.profileImage,
+        bio: updated.bio,
+        university: updated.university,
+        location: updated.location,
+        createdAt: updated.createdAt,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export { register, login, getCurrentUser, updateProfile };

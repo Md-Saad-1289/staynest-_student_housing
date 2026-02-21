@@ -64,6 +64,18 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    bio: {
+      type: String,
+      default: null,
+    },
+    university: {
+      type: String,
+      default: null,
+    },
+    location: {
+      type: String,
+      default: null,
+    },
     favorites: [
       {
         type: mongoose.Schema.Types.ObjectId,
