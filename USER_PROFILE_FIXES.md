@@ -311,11 +311,79 @@ const errorMsg =
 - `linkedin` - LinkedIn URL (optional)
 - `twitter` - Twitter handle/URL (optional)
 - `website` - Personal website (optional)
+- `dateOfBirth` - User's date of birth (optional)
+- `studentId` - Student ID number (optional)
+- `major` - Major/Field of study (optional)
+- `academicYear` - Academic year (1st Year, 2nd Year, 3rd Year, 4th Year, Masters, PhD) (optional)
+- `addressStreet` - Street address (optional)
+- `addressCity` - City (optional)
+- `addressZipCode` - Zip code (optional)
+- `addressCountry` - Country (optional)
+- `emailNotifications` - Email notification preference (boolean)
+- `smsNotifications` - SMS notification preference (boolean)
+- `pushNotifications` - Push notification preference (boolean)
+- `budgetMin` - Minimum budget in ৳ (optional, number)
+- `budgetMax` - Maximum budget in ৳ (optional, number)
+- `roommatePreferences` - Roommate preferences description (optional)
+- `gender` - Gender selection (Male, Female, Other) (optional)
+- `emergencyContactName` - Emergency contact person name (optional)
+- `emergencyContactPhone` - Emergency contact phone number (optional)
 
 **Returns:** Updated user profile with all fields
 
 ---
 
-## Status: ✅ All Bugs Fixed
+## 🎯 Enhancement: Additional Profile Fields Added
 
-All identified issues have been resolved and tested. The user profile functionality now works correctly across both frontend pages and the backend API.
+### New Fields Implemented ✨
+
+Based on user requirements, the following important profile details have been added:
+
+#### Academic Information
+
+- **Date of Birth** - For user age verification
+- **Student ID** - Unique student identifier (e.g., CSE-2021-001)
+- **Major/Field** - Area of academic study
+- **Academic Year** - Current year (1st-4th, Masters, PhD)
+
+#### Address Information
+
+- **Street Address** - Full street address
+- **City** - City of residence
+- **Zip Code** - Postal code
+- **Country** - Country of residence
+
+#### Contact Preferences
+
+- **Email/SMS/Push Notifications** - User notification preferences
+
+#### User Preferences
+
+- **Gender** - Male, Female, or Other
+- **Budget Range** - Minimum and maximum budget in ৳
+- **Roommate Preferences** - Specific requirements/preferences
+
+#### Emergency Contact
+
+- **Emergency Contact Name** - Contact person name
+- **Emergency Contact Phone** - Contact phone number
+
+### Implementation Details
+
+**Backend Changes:**
+
+- Added 20 new fields to User model with proper validation
+- Updated `getCurrentUser()` and `updateProfile()` endpoints
+- Added validation for dates, budgets, enums
+
+**Frontend Changes:**
+
+- Added organized form sections in ProfilePage component
+- Implemented proper field types (date picker, selects, checkboxes)
+- Improved UX with clear labels and placeholders
+
+---
+
+## Status: ✅ All Bugs Fixed + Enhanced Features Added
+
+All identified issues resolved. User profile now includes comprehensive personal, academic, and preference information.

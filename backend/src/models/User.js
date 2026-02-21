@@ -88,6 +88,80 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    // Student/Profile Details
+    dateOfBirth: {
+      type: Date,
+      default: null,
+    },
+    studentId: {
+      type: String,
+      default: null,
+    },
+    major: {
+      type: String,
+      default: null,
+    },
+    academicYear: {
+      type: String,
+      enum: ['1st Year', '2nd Year', '3rd Year', '4th Year', 'Masters', 'PhD', null],
+      default: null,
+    },
+    // Address Details
+    addressStreet: {
+      type: String,
+      default: null,
+    },
+    addressCity: {
+      type: String,
+      default: null,
+    },
+    addressZipCode: {
+      type: String,
+      default: null,
+    },
+    addressCountry: {
+      type: String,
+      default: null,
+    },
+    // Contact Preferences
+    emailNotifications: {
+      type: Boolean,
+      default: true,
+    },
+    smsNotifications: {
+      type: Boolean,
+      default: true,
+    },
+    pushNotifications: {
+      type: Boolean,
+      default: true,
+    },
+    // User Preferences
+    budgetMin: {
+      type: Number,
+      default: null,
+    },
+    budgetMax: {
+      type: Number,
+      default: null,
+    },
+    roommatePreferences: {
+      type: String,
+      default: null,
+    },
+    gender: {
+      type: String,
+      enum: ['Male', 'Female', 'Other', null],
+      default: null,
+    },
+    emergencyContactName: {
+      type: String,
+      default: null,
+    },
+    emergencyContactPhone: {
+      type: String,
+      default: null,
+    },
     favorites: [
       {
         type: mongoose.Schema.Types.ObjectId,

@@ -161,7 +161,37 @@ export function ProfilePage() {
                   <div className="flex items-center gap-3">
                       {!editing ? (
                         <>
-                          <button onClick={() => { setEditing(true); setFormData({ name: fullName, mobile: phone, bio, university, location, linkedin: user.linkedin || '', twitter: user.twitter || '', website: user.website || '' }); setMessage('') }} className="flex items-center gap-2 px-4 py-2 rounded-md bg-gradient-to-br from-sky-600 to-blue-600 text-white shadow hover:opacity-95 transition">Edit profile</button>
+                          <button onClick={() => { 
+                            setEditing(true); 
+                            setFormData({ 
+                              name: fullName, 
+                              mobile: phone, 
+                              bio, 
+                              university, 
+                              location, 
+                              linkedin: user.linkedin || '', 
+                              twitter: user.twitter || '', 
+                              website: user.website || '',
+                              dateOfBirth: user.dateOfBirth || '',
+                              studentId: user.studentId || '',
+                              major: user.major || '',
+                              academicYear: user.academicYear || '',
+                              addressStreet: user.addressStreet || '',
+                              addressCity: user.addressCity || '',
+                              addressZipCode: user.addressZipCode || '',
+                              addressCountry: user.addressCountry || '',
+                              emailNotifications: user.emailNotifications !== false,
+                              smsNotifications: user.smsNotifications !== false,
+                              pushNotifications: user.pushNotifications !== false,
+                              budgetMin: user.budgetMin || '',
+                              budgetMax: user.budgetMax || '',
+                              roommatePreferences: user.roommatePreferences || '',
+                              gender: user.gender || '',
+                              emergencyContactName: user.emergencyContactName || '',
+                              emergencyContactPhone: user.emergencyContactPhone || ''
+                            }); 
+                            setMessage('') 
+                          }} className="flex items-center gap-2 px-4 py-2 rounded-md bg-gradient-to-br from-sky-600 to-blue-600 text-white shadow hover:opacity-95 transition">Edit profile</button>
                           <button className="px-3 py-2 rounded-md border border-gray-200 bg-white text-sm">Settings</button>
                         </>
                       ) : (
@@ -192,7 +222,25 @@ export function ProfilePage() {
                                 location: formData.location || '',
                                 linkedin: formData.linkedin || '',
                                 twitter: formData.twitter || '',
-                                website: formData.website || ''
+                                website: formData.website || '',
+                                // New fields
+                                dateOfBirth: formData.dateOfBirth || null,
+                                studentId: formData.studentId || '',
+                                major: formData.major || '',
+                                academicYear: formData.academicYear || '',
+                                addressStreet: formData.addressStreet || '',
+                                addressCity: formData.addressCity || '',
+                                addressZipCode: formData.addressZipCode || '',
+                                addressCountry: formData.addressCountry || '',
+                                emailNotifications: formData.emailNotifications !== false,
+                                smsNotifications: formData.smsNotifications !== false,
+                                pushNotifications: formData.pushNotifications !== false,
+                                budgetMin: formData.budgetMin ? parseInt(formData.budgetMin) : null,
+                                budgetMax: formData.budgetMax ? parseInt(formData.budgetMax) : null,
+                                roommatePreferences: formData.roommatePreferences || '',
+                                gender: formData.gender || '',
+                                emergencyContactName: formData.emergencyContactName || '',
+                                emergencyContactPhone: formData.emergencyContactPhone || ''
                               }
                               const res = await userService.updateProfile(payload)
                               const updated = res?.data?.user || res?.data || null
@@ -319,6 +367,106 @@ export function ProfilePage() {
                         <input value={formData.linkedin || ''} onChange={(e) => setFormData(fd => ({ ...fd, linkedin: e.target.value }))} placeholder="LinkedIn URL" className="w-full border rounded px-3 py-2 text-sm" />
                         <input value={formData.twitter || ''} onChange={(e) => setFormData(fd => ({ ...fd, twitter: e.target.value }))} placeholder="Twitter URL" className="w-full border rounded px-3 py-2 text-sm" />
                         <input value={formData.website || ''} onChange={(e) => setFormData(fd => ({ ...fd, website: e.target.value }))} placeholder="Website" className="w-full border rounded px-3 py-2 text-sm" />
+                      </div>
+                    </div>
+
+                    {/* Academic Information */}
+                    <div className="border-t pt-4 mt-4">
+                      <label className="block text-xs font-semibold text-gray-700 mb-3">Academic Information</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Date of Birth</label>
+                          <input type="date" value={formData.dateOfBirth ? formData.dateOfBirth.split('T')[0] : ''} onChange={(e) => setFormData(fd => ({ ...fd, dateOfBirth: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Student ID</label>
+                          <input value={formData.studentId || ''} onChange={(e) => setFormData(fd => ({ ...fd, studentId: e.target.value }))} placeholder="e.g., CSE-2021-001" className="w-full border rounded px-3 py-2 text-sm" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Major/Field</label>
+                          <input value={formData.major || ''} onChange={(e) => setFormData(fd => ({ ...fd, major: e.target.value }))} placeholder="e.g., Computer Science" className="w-full border rounded px-3 py-2 text-sm" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Academic Year</label>
+                          <select value={formData.academicYear || ''} onChange={(e) => setFormData(fd => ({ ...fd, academicYear: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm">
+                            <option value="">Select year</option>
+                            <option value="1st Year">1st Year</option>
+                            <option value="2nd Year">2nd Year</option>
+                            <option value="3rd Year">3rd Year</option>
+                            <option value="4th Year">4th Year</option>
+                            <option value="Masters">Masters</option>
+                            <option value="PhD">PhD</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Address Information */}
+                    <div className="border-t pt-4 mt-4">
+                      <label className="block text-xs font-semibold text-gray-700 mb-3">Address Information</label>
+                      <div className="grid grid-cols-1 gap-2">
+                        <input value={formData.addressStreet || ''} onChange={(e) => setFormData(fd => ({ ...fd, addressStreet: e.target.value }))} placeholder="Street Address" className="w-full border rounded px-3 py-2 text-sm" />
+                        <div className="grid grid-cols-2 gap-2">
+                          <input value={formData.addressCity || ''} onChange={(e) => setFormData(fd => ({ ...fd, addressCity: e.target.value }))} placeholder="City" className="w-full border rounded px-3 py-2 text-sm" />
+                          <input value={formData.addressZipCode || ''} onChange={(e) => setFormData(fd => ({ ...fd, addressZipCode: e.target.value }))} placeholder="Zip Code" className="w-full border rounded px-3 py-2 text-sm" />
+                        </div>
+                        <input value={formData.addressCountry || ''} onChange={(e) => setFormData(fd => ({ ...fd, addressCountry: e.target.value }))} placeholder="Country" className="w-full border rounded px-3 py-2 text-sm" />
+                      </div>
+                    </div>
+
+                    {/* User Preferences */}
+                    <div className="border-t pt-4 mt-4">
+                      <label className="block text-xs font-semibold text-gray-700 mb-3">Preferences</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Gender</label>
+                          <select value={formData.gender || ''} onChange={(e) => setFormData(fd => ({ ...fd, gender: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm">
+                            <option value="">Select gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Budget Min (৳)</label>
+                          <input type="number" value={formData.budgetMin || ''} onChange={(e) => setFormData(fd => ({ ...fd, budgetMin: e.target.value }))} placeholder="Min rent" className="w-full border rounded px-3 py-2 text-sm" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Budget Max (৳)</label>
+                          <input type="number" value={formData.budgetMax || ''} onChange={(e) => setFormData(fd => ({ ...fd, budgetMax: e.target.value }))} placeholder="Max rent" className="w-full border rounded px-3 py-2 text-sm" />
+                        </div>
+                      </div>
+                      <div className="mt-2">
+                        <label className="block text-xs text-gray-500 mb-1">Roommate Preferences</label>
+                        <textarea value={formData.roommatePreferences || ''} onChange={(e) => setFormData(fd => ({ ...fd, roommatePreferences: e.target.value }))} placeholder="e.g., Quiet, Non-smoker, Early riser" className="w-full border rounded px-3 py-2 text-sm" rows={2} />
+                      </div>
+                    </div>
+
+                    {/* Contact Preferences */}
+                    <div className="border-t pt-4 mt-4">
+                      <label className="block text-xs font-semibold text-gray-700 mb-3">Contact Preferences</label>
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-2 text-sm">
+                          <input type="checkbox" checked={formData.emailNotifications !== false} onChange={(e) => setFormData(fd => ({ ...fd, emailNotifications: e.target.checked }))} className="rounded" />
+                          <span>Email Notifications</span>
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input type="checkbox" checked={formData.smsNotifications !== false} onChange={(e) => setFormData(fd => ({ ...fd, smsNotifications: e.target.checked }))} className="rounded" />
+                          <span>SMS Notifications</span>
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <input type="checkbox" checked={formData.pushNotifications !== false} onChange={(e) => setFormData(fd => ({ ...fd, pushNotifications: e.target.checked }))} className="rounded" />
+                          <span>Push Notifications</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Emergency Contact */}
+                    <div className="border-t pt-4 mt-4">
+                      <label className="block text-xs font-semibold text-gray-700 mb-3">Emergency Contact</label>
+                      <div className="grid grid-cols-1 gap-2">
+                        <input value={formData.emergencyContactName || ''} onChange={(e) => setFormData(fd => ({ ...fd, emergencyContactName: e.target.value }))} placeholder="Contact Name" className="w-full border rounded px-3 py-2 text-sm" />
+                        <input value={formData.emergencyContactPhone || ''} onChange={(e) => setFormData(fd => ({ ...fd, emergencyContactPhone: e.target.value }))} placeholder="Contact Phone" className="w-full border rounded px-3 py-2 text-sm" />
                       </div>
                     </div>
                   </div>

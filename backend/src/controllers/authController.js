@@ -126,6 +126,24 @@ const getCurrentUser = async (req, res) => {
         linkedin: user.linkedin,
         twitter: user.twitter,
         website: user.website,
+        // New fields
+        dateOfBirth: user.dateOfBirth,
+        studentId: user.studentId,
+        major: user.major,
+        academicYear: user.academicYear,
+        addressStreet: user.addressStreet,
+        addressCity: user.addressCity,
+        addressZipCode: user.addressZipCode,
+        addressCountry: user.addressCountry,
+        emailNotifications: user.emailNotifications,
+        smsNotifications: user.smsNotifications,
+        pushNotifications: user.pushNotifications,
+        budgetMin: user.budgetMin,
+        budgetMax: user.budgetMax,
+        roommatePreferences: user.roommatePreferences,
+        gender: user.gender,
+        emergencyContactName: user.emergencyContactName,
+        emergencyContactPhone: user.emergencyContactPhone,
         createdAt: user.createdAt,
       },
     });
@@ -138,7 +156,14 @@ const getCurrentUser = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { name, mobile, profileImage, bio, university, location, linkedin, twitter, website } = req.body;
+    const { 
+      name, mobile, profileImage, bio, university, location, linkedin, twitter, website,
+      dateOfBirth, studentId, major, academicYear, 
+      addressStreet, addressCity, addressZipCode, addressCountry,
+      emailNotifications, smsNotifications, pushNotifications,
+      budgetMin, budgetMax, roommatePreferences, gender,
+      emergencyContactName, emergencyContactPhone 
+    } = req.body;
 
     // Validate inputs
     if (name && typeof name === 'string' && name.trim().length === 0) {
@@ -146,11 +171,35 @@ const updateProfile = async (req, res) => {
     }
 
     if (mobile && typeof mobile === 'string') {
-      // Validate mobile - should have at least 8 digits
       const digits = mobile.replace(/[^0-9]/g, '');
       if (digits.length < 8) {
         return res.status(400).json({ error: 'Phone number must have at least 8 digits' });
       }
+    }
+
+    // Validate dates
+    if (dateOfBirth) {
+      const dob = new Date(dateOfBirth);
+      if (dob > new Date()) {
+        return res.status(400).json({ error: 'Date of birth cannot be in the future' });
+      }
+    }
+
+    // Validate budget
+    if (budgetMin && budgetMax && budgetMin > budgetMax) {
+      return res.status(400).json({ error: 'Minimum budget cannot be greater than maximum budget' });
+    }
+
+    // Validate academic year
+    const validAcademicYears = ['1st Year', '2nd Year', '3rd Year', '4th Year', 'Masters', 'PhD'];
+    if (academicYear && !validAcademicYears.includes(academicYear)) {
+      return res.status(400).json({ error: 'Invalid academic year' });
+    }
+
+    // Validate gender
+    const validGenders = ['Male', 'Female', 'Other'];
+    if (gender && !validGenders.includes(gender)) {
+      return res.status(400).json({ error: 'Invalid gender selection' });
     }
 
     const updates = {};
@@ -163,6 +212,23 @@ const updateProfile = async (req, res) => {
     if (typeof linkedin !== 'undefined') updates.linkedin = linkedin;
     if (typeof twitter !== 'undefined') updates.twitter = twitter;
     if (typeof website !== 'undefined') updates.website = website;
+    if (typeof dateOfBirth !== 'undefined') updates.dateOfBirth = dateOfBirth;
+    if (typeof studentId !== 'undefined') updates.studentId = studentId;
+    if (typeof major !== 'undefined') updates.major = major;
+    if (typeof academicYear !== 'undefined') updates.academicYear = academicYear;
+    if (typeof addressStreet !== 'undefined') updates.addressStreet = addressStreet;
+    if (typeof addressCity !== 'undefined') updates.addressCity = addressCity;
+    if (typeof addressZipCode !== 'undefined') updates.addressZipCode = addressZipCode;
+    if (typeof addressCountry !== 'undefined') updates.addressCountry = addressCountry;
+    if (typeof emailNotifications !== 'undefined') updates.emailNotifications = emailNotifications;
+    if (typeof smsNotifications !== 'undefined') updates.smsNotifications = smsNotifications;
+    if (typeof pushNotifications !== 'undefined') updates.pushNotifications = pushNotifications;
+    if (typeof budgetMin !== 'undefined') updates.budgetMin = budgetMin;
+    if (typeof budgetMax !== 'undefined') updates.budgetMax = budgetMax;
+    if (typeof roommatePreferences !== 'undefined') updates.roommatePreferences = roommatePreferences;
+    if (typeof gender !== 'undefined') updates.gender = gender;
+    if (typeof emergencyContactName !== 'undefined') updates.emergencyContactName = emergencyContactName;
+    if (typeof emergencyContactPhone !== 'undefined') updates.emergencyContactPhone = emergencyContactPhone;
 
     const updated = await User.findByIdAndUpdate(userId, updates, { new: true });
     if (!updated) return res.status(404).json({ error: 'User not found' });
@@ -183,6 +249,23 @@ const updateProfile = async (req, res) => {
         linkedin: updated.linkedin,
         twitter: updated.twitter,
         website: updated.website,
+        dateOfBirth: updated.dateOfBirth,
+        studentId: updated.studentId,
+        major: updated.major,
+        academicYear: updated.academicYear,
+        addressStreet: updated.addressStreet,
+        addressCity: updated.addressCity,
+        addressZipCode: updated.addressZipCode,
+        addressCountry: updated.addressCountry,
+        emailNotifications: updated.emailNotifications,
+        smsNotifications: updated.smsNotifications,
+        pushNotifications: updated.pushNotifications,
+        budgetMin: updated.budgetMin,
+        budgetMax: updated.budgetMax,
+        roommatePreferences: updated.roommatePreferences,
+        gender: updated.gender,
+        emergencyContactName: updated.emergencyContactName,
+        emergencyContactPhone: updated.emergencyContactPhone,
         createdAt: updated.createdAt,
       },
     });
