@@ -18,7 +18,6 @@ const MENU_ITEMS = {
     { icon: 'fas fa-plus-circle', label: 'Create Listing', path: '/dashboard/owner/create-listing', section: 'Actions' },
   ],
   admin: [
-    { icon: 'fas fa-crown', label: 'Super Admin', path: '/dashboard/admin', section: 'Main', badge: 'premium' },
     { icon: 'fas fa-chart-pie', label: 'Dashboard Overview', path: '/dashboard/admin/dashboard', section: 'Overview' },
     { icon: 'fas fa-layer-group', label: 'Listings Management', path: '/dashboard/admin/listings-overview', badge: 'pending', section: 'Management' },
     { icon: 'fas fa-users', label: 'User Management', path: '/dashboard/admin/users', badge: 'verification', section: 'Management' },
