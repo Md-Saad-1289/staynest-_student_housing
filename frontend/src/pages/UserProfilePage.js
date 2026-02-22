@@ -16,30 +16,12 @@ export const UserProfilePage = () => {
   const initFormData = (d = {}) => ({
     name: d.name ?? '',
     phoneNo: d.phoneNo ?? d.mobile ?? '',
-    bio: d.bio ?? '',
-    university: d.university ?? '',
-    location: d.location ?? '',
-    linkedin: d.linkedin ?? '',
-    twitter: d.twitter ?? '',
-    website: d.website ?? '',
-    budgetMin: typeof d.budgetMin === 'number' ? String(d.budgetMin) : (d.budgetMin ?? ''),
-    budgetMax: typeof d.budgetMax === 'number' ? String(d.budgetMax) : (d.budgetMax ?? ''),
-    gender: d.gender ?? '',
-    dob: d.dob ? new Date(d.dob).toISOString().slice(0,10) : (d.dateOfBirth ? new Date(d.dateOfBirth).toISOString().slice(0,10) : ''),
-    studentId: d.studentId ?? '',
-    major: d.major ?? '',
-    academicYear: d.academicYear ?? '',
-    addressStreet: d.addressStreet ?? '',
-    addressCity: d.addressCity ?? '',
-    addressZipCode: d.addressZipCode ?? '',
-    addressCountry: d.addressCountry ?? '',
-    emailNotifications: typeof d.emailNotifications !== 'undefined' ? !!d.emailNotifications : true,
-    smsNotifications: typeof d.smsNotifications !== 'undefined' ? !!d.smsNotifications : true,
-    pushNotifications: typeof d.pushNotifications !== 'undefined' ? !!d.pushNotifications : true,
-    roommatePreferences: d.roommatePreferences ?? '',
-    emergencyContactName: d.emergencyContactName ?? '',
-    emergencyContactPhone: d.emergencyContactPhone ?? '',
     profileImage: d.profileImage ?? null,
+    fullAddress: d.fullAddress ?? (d.addressStreet ? `${d.addressStreet}${d.addressCity ? ', ' + d.addressCity : ''}` : '') ?? '',
+    dob: d.dob ? new Date(d.dob).toISOString().slice(0,10) : (d.dateOfBirth ? new Date(d.dateOfBirth).toISOString().slice(0,10) : ''),
+    gender: d.gender ?? '',
+    emergencyContact: d.emergencyContact ?? (d.emergencyContactName || d.emergencyContactPhone ? `${d.emergencyContactName || ''}|${d.emergencyContactPhone || ''}` : ''),
+    nidNumber: d.nidNumber ?? '',
   });
 
   useEffect(() => {
@@ -74,32 +56,17 @@ export const UserProfilePage = () => {
       const payload = {
         name: formData.name.trim(),
         phoneNo: formData.phoneNo || undefined,
-        bio: formData.bio || undefined,
-        university: formData.university || undefined,
-        location: formData.location || undefined,
-        linkedin: formData.linkedin || undefined,
-        twitter: formData.twitter || undefined,
-        website: formData.website || undefined,
-        dob: formData.dob || formData.dateOfBirth || undefined,
-        studentId: formData.studentId || undefined,
-        major: formData.major || undefined,
-        academicYear: formData.academicYear || undefined,
-        addressStreet: formData.addressStreet || undefined,
-        addressCity: formData.addressCity || undefined,
-        addressZipCode: formData.addressZipCode || undefined,
-        addressCountry: formData.addressCountry || undefined,
-        emailNotifications: !!formData.emailNotifications,
-        smsNotifications: !!formData.smsNotifications,
-        pushNotifications: !!formData.pushNotifications,
-        roommatePreferences: formData.roommatePreferences || undefined,
-        // combine emergency contact name/phone into single stored string
-        emergencyContact: (formData.emergencyContactName || formData.emergencyContactPhone) ? `${formData.emergencyContactName || ''}|${formData.emergencyContactPhone || ''}` : undefined,
+        fullAddress: formData.fullAddress || undefined,
+        dob: formData.dob || undefined,
         gender: formData.gender || undefined,
-        // only accept http(s) URLs for profileImage
+        emergencyContact: formData.emergencyContact || undefined,
         profileImage: (formData.profileImage && (() => { try { const u = new URL(formData.profileImage); return ['http:','https:'].includes(u.protocol); } catch { return false; } })()) ? formData.profileImage : undefined,
-        budgetMin: formData.budgetMin !== '' && formData.budgetMin != null ? formData.budgetMin : undefined,
-        budgetMax: formData.budgetMax !== '' && formData.budgetMax != null ? formData.budgetMax : undefined,
       };
+
+      if ((profile?.role === 'owner')) {
+        if (!formData.nidNumber && !profile?.nidNumber) { setErrors({ nidNumber: 'NID number required for owners' }); setSaving(false); return; }
+        if (formData.nidNumber) payload.nidNumber = formData.nidNumber;
+      }
 
       const res = await userService.updateProfile(payload);
       const updated = res?.data?.user || res?.data || payload;
@@ -271,70 +238,12 @@ export const UserProfilePage = () => {
                   placeholder="Profile image URL (http/https)"
                   className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none"
                 />
-                <textarea
-                  value={formData.bio}
-                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                  placeholder="Short bio"
-                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none"
+                <input
+                  value={formData.fullAddress || ''}
+                  onChange={(e) => setFormData({ ...formData, fullAddress: e.target.value })}
+                  placeholder="Full address"
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
                 />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    value={formData.university}
-                    onChange={(e) => setFormData({ ...formData, university: e.target.value })}
-                    placeholder="University"
-                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
-                  />
-                  <input
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    placeholder="Location"
-                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <input
-                    value={formData.linkedin}
-                    onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
-                    placeholder="LinkedIn URL"
-                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
-                  />
-                  <input
-                    value={formData.twitter}
-                    onChange={(e) => setFormData({ ...formData, twitter: e.target.value })}
-                    placeholder="Twitter URL"
-                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
-                  />
-                  <input
-                    value={formData.website}
-                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                    placeholder="Website"
-                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <input
-                    value={formData.major}
-                    onChange={(e) => setFormData({ ...formData, major: e.target.value })}
-                    placeholder="Major"
-                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
-                  />
-                  <input
-                    value={formData.studentId}
-                    onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-                    placeholder="Student ID"
-                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
-                  />
-                  <input
-                    value={formData.academicYear}
-                    onChange={(e) => setFormData({ ...formData, academicYear: e.target.value })}
-                    placeholder="Academic Year"
-                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
-                  />
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input
                     type="date"
@@ -342,139 +251,45 @@ export const UserProfilePage = () => {
                     onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
                     className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
                   />
-                  <input
-                    value={formData.roommatePreferences}
-                    onChange={(e) => setFormData({ ...formData, roommatePreferences: e.target.value })}
-                    placeholder="Roommate preferences"
-                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
-                  />
+                  <select value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className="w-full border-2 border-gray-300 rounded-lg px-4 py-2">
+                    <option value="">Prefer not to say</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input
+                  value={formData.emergencyContact || ''}
+                  onChange={(e) => setFormData({ ...formData, emergencyContact: e.target.value })}
+                  placeholder="Emergency contact (Name|Phone)"
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
+                />
+                {profile?.role === 'owner' && (
                   <input
-                    value={formData.addressStreet}
-                    onChange={(e) => setFormData({ ...formData, addressStreet: e.target.value })}
-                    placeholder="Street Address"
+                    value={formData.nidNumber || ''}
+                    onChange={(e) => setFormData({ ...formData, nidNumber: e.target.value })}
+                    placeholder="NID number"
                     className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
                   />
-                  <input
-                    value={formData.addressCity}
-                    onChange={(e) => setFormData({ ...formData, addressCity: e.target.value })}
-                    placeholder="City"
-                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
-                  />
-                  <input
-                    value={formData.addressZipCode}
-                    onChange={(e) => setFormData({ ...formData, addressZipCode: e.target.value })}
-                    placeholder="ZIP / Postal Code"
-                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <input
-                    value={formData.addressCountry}
-                    onChange={(e) => setFormData({ ...formData, addressCountry: e.target.value })}
-                    placeholder="Country"
-                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
-                  />
-                  <input
-                    value={formData.budgetMin}
-                    onChange={(e) => setFormData({ ...formData, budgetMin: e.target.value })}
-                    placeholder="Budget Min"
-                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
-                  />
-                  <input
-                    value={formData.budgetMax}
-                    onChange={(e) => setFormData({ ...formData, budgetMax: e.target.value })}
-                    placeholder="Budget Max"
-                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
-                  />
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2"><input type="checkbox" checked={!!formData.emailNotifications} onChange={(e) => setFormData({ ...formData, emailNotifications: e.target.checked })} /> Email notifications</label>
-                  <label className="flex items-center gap-2"><input type="checkbox" checked={!!formData.smsNotifications} onChange={(e) => setFormData({ ...formData, smsNotifications: e.target.checked })} /> SMS</label>
-                  <label className="flex items-center gap-2"><input type="checkbox" checked={!!formData.pushNotifications} onChange={(e) => setFormData({ ...formData, pushNotifications: e.target.checked })} /> Push</label>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    value={formData.emergencyContactName}
-                    onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })}
-                    placeholder="Emergency contact name"
-                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
-                  />
-                  <input
-                    value={formData.emergencyContactPhone}
-                    onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })}
-                    placeholder="Emergency contact phone"
-                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
-                  />
-                </div>
+                )}
               </div>
             ) : (
               <div className="mb-6 space-y-4">
-                {/* Bio */}
-                {profile?.bio && (
-                  <div className="text-gray-800">
-                    <h4 className="font-semibold text-gray-700">About</h4>
-                    <p className="mt-1">{profile.bio}</p>
-                  </div>
-                )}
-
-                {/* Academic & Work */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
-                  {profile?.university && <div><strong>University:</strong> {profile.university}</div>}
-                  {profile?.major && <div><strong>Major:</strong> {profile.major}</div>}
-                  {profile?.academicYear && <div><strong>Academic Year:</strong> {profile.academicYear}</div>}
-                  {profile?.studentId && <div><strong>Student ID:</strong> {profile.studentId}</div>}
-                  { (profile?.dob || profile?.dateOfBirth) && <div><strong>DOB:</strong> {new Date(profile.dob || profile.dateOfBirth).toLocaleDateString()}</div> }
+                <div className="text-gray-800">
+                  <h4 className="font-semibold text-gray-700">About</h4>
+                  <p className="mt-1">{profile?.bio || '—'}</p>
                 </div>
 
-                {/* Socials */}
-                {(profile?.linkedin || profile?.twitter || profile?.website) && (
-                  <div>
-                    <h4 className="font-semibold text-gray-700">Social</h4>
-                    <div className="mt-1 text-sm text-blue-600 space-y-1">
-                      {profile.linkedin && <div>LinkedIn: <a href={profile.linkedin} target="_blank" rel="noreferrer">{profile.linkedin}</a></div>}
-                      {profile.twitter && <div>Twitter: <a href={profile.twitter} target="_blank" rel="noreferrer">{profile.twitter}</a></div>}
-                      {profile.website && <div>Website: <a href={profile.website} target="_blank" rel="noreferrer">{profile.website}</a></div>}
-                    </div>
-                  </div>
-                )}
-
-                {/* Address */}
-                {(profile?.addressStreet || profile?.addressCity || profile?.addressZipCode || profile?.addressCountry) && (
-                  <div>
-                    <h4 className="font-semibold text-gray-700">Address</h4>
-                    <p className="mt-1 text-sm text-gray-700">
-                      {profile.addressStreet ? profile.addressStreet + ', ' : ''}
-                      {profile.addressCity ? profile.addressCity + ', ' : ''}
-                      {profile.addressZipCode ? profile.addressZipCode + ', ' : ''}
-                      {profile.addressCountry || ''}
-                    </p>
-                  </div>
-                )}
-
-                {/* Preferences & Budget */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
-                  <div><strong>Budget:</strong> {profile.budgetMin ?? '—'} - {profile.budgetMax ?? '—'}</div>
-                  <div><strong>Roommate Preferences:</strong> {profile.roommatePreferences ?? '—'}</div>
+                  <div><strong>Address:</strong> {profile.fullAddress || '—'}</div>
+                  <div><strong>DOB:</strong> {profile.dob ? new Date(profile.dob).toLocaleDateString() : '—'}</div>
                 </div>
 
-                {/* Gender & Notifications */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
                   <div><strong>Gender:</strong> {profile.gender ?? '—'}</div>
-                  <div><strong>Notifications:</strong> Email: {profile.emailNotifications ? 'Yes' : 'No'}, SMS: {profile.smsNotifications ? 'Yes' : 'No'}, Push: {profile.pushNotifications ? 'Yes' : 'No'}</div>
+                  <div><strong>Emergency Contact:</strong> {profile.emergencyContact || '—'}</div>
                 </div>
 
-                {/* Emergency Contact */}
-                <div className="text-sm text-gray-700">
-                  <strong>Emergency Contact:</strong> {profile.emergencyContactName ? `${profile.emergencyContactName} (${profile.emergencyContactPhone || '—'})` : '—'}
-                </div>
-
-                {/* Verification */}
                 <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200 text-sm">
                   <p className="font-semibold text-green-900 flex items-center gap-2">
                     <i className={`fas fa-${profile?.isVerified ? 'check-circle' : 'clock'} text-green-600`}></i>
@@ -483,7 +298,7 @@ export const UserProfilePage = () => {
                   <p className="text-xs text-green-700 mt-1">
                     {profile?.isVerified
                       ? `Verified on ${new Date(profile?.verifiedAt).toLocaleDateString()}`
-                      : 'Your account is pending verification. Please upload your NID or passport.'}
+                      : 'Your account is pending verification.'}
                   </p>
                 </div>
               </div>
