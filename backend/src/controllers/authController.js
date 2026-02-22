@@ -5,7 +5,7 @@ import validator from 'validator';
 // Register (minimal)
 const register = async (req, res) => {
   try {
-    const { name, email, mobile, phoneNo, password, role, nidNumber } = req.body;
+    const { name, email, mobile, phoneNo, password, role, nidNumber, adminSecret } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'name, email and password are required' });
@@ -13,8 +13,17 @@ const register = async (req, res) => {
 
     if (!validateEmail(email)) return res.status(400).json({ error: 'Invalid email' });
 
-    const userRole = role || 'student';
-    if (!['student', 'owner'].includes(userRole)) return res.status(400).json({ error: 'Invalid role' });
+    // Validate role: allow admin only with correct secret
+    let userRole = role || 'student';
+    
+    if (userRole === 'admin') {
+      const expectedSecret = process.env.ADMIN_SECRET || 'admin-secret-key';
+      if (adminSecret !== expectedSecret) {
+        return res.status(400).json({ error: 'Invalid role' });
+      }
+    }
+    
+    if (!['student', 'owner', 'admin'].includes(userRole)) return res.status(400).json({ error: 'Invalid role' });
 
     // Accept either `phoneNo` or legacy `mobile`
     const finalPhone = (phoneNo || mobile || '').trim();
