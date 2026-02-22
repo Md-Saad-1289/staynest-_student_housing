@@ -12,15 +12,17 @@ import { ListingsManagement } from '../components/ListingsManagement';
  * AdminDashboardModernPage: Production-ready Admin Dashboard
  * 
  * Props:
- * - tab (optional): Set initial active tab (e.g., 'overview', 'users', 'listings', 'featured', 'testimonials', 'flags', 'logs')
+ * - tab (optional): Set initial active tab (e.g., 'dashboard', 'listings-overview', 'users', 'listings', 'featured', 'testimonials', 'flags', 'logs')
  * 
  * Features:
- * - View platform overview with dashboard stats (overview)
- * - Manage users - verify owners, view students (users)
- * - Manage listings - verify and feature listings (listings, featured)
- * - Manage testimonials - create, edit, approve testimonials (testimonials)
- * - Moderate reports - resolve flags and issues (flags)
- * - View audit logs - system activity tracking (logs)
+ * - Dashboard Overview: View platform overview with dashboard stats
+ * - Listings Management: View, approve, and manage all property listings (New!)
+ * - User Management: Manage users - verify owners, view students
+ * - Listing Approval: Manage listings - verify and feature listings
+ * - Featured Listings: Manage featured listings
+ * - Testimonials: Create, edit, approve testimonials
+ * - Moderation: Moderate reports - resolve flags and issues
+ * - Audit Logs: View system activity tracking
  * 
  * Privileges:
  * - ONLY admins allowed to perform actions
@@ -49,7 +51,7 @@ export const AdminDashboardModernPage = ({ tab }) => {
   const [actionTargetFilter, setActionTargetFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterVerified, setFilterVerified] = useState('');
-  const [activeTab, setActiveTab] = useState(tab || 'overview');
+  const [activeTab, setActiveTab] = useState(tab || 'dashboard');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [confirmModal, setConfirmModal] = useState({ open: false });
@@ -85,7 +87,7 @@ export const AdminDashboardModernPage = ({ tab }) => {
       setLoading(true);
       setError('');
 
-      if (activeTab === 'overview') {
+      if (activeTab === 'dashboard') {
         const statsRes = await adminService.getDashboardStats();
         setStats(statsRes.data.stats);
 
@@ -652,7 +654,7 @@ export const AdminDashboardModernPage = ({ tab }) => {
     },
   ];
 
-  if (loading && activeTab !== 'overview') {
+  if (loading && activeTab !== 'dashboard' && activeTab !== 'listings-overview') {
     return (
       <DashboardLayout title="Admin Dashboard">
         <div className="flex items-center justify-center h-96">
@@ -674,12 +676,12 @@ export const AdminDashboardModernPage = ({ tab }) => {
         </div>
       )}
 
-      {/* Listings Management Tab */}
-      {activeTab === 'overview' && (
+      {/* Listings Management Tab - All Listings Overview */}
+      {activeTab === 'listings-overview' && (
         <ListingsManagement />
       )}
 
-      {/* Dashboard Tab */}
+      {/* Dashboard Overview Tab - System Metrics & Stats */}
       {activeTab === 'dashboard' && stats && (
         <>
           {/* Enhanced System Overview Section */}
