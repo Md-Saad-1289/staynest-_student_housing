@@ -46,11 +46,6 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Compatibility virtuals for existing code that uses `mobile` and emergencyContactName/Phone
-userSchema.virtual('mobile')
-  .get(function () { return this.mobile || this.phoneNo; })
-  .set(function (v) { this.mobile = v; this.phoneNo = v; });
-
 // Ensure phoneNo/mobile stay in sync when one is modified directly
 userSchema.pre('save', function (next) {
   if (this.isModified('mobile') && !this.isModified('phoneNo')) {
