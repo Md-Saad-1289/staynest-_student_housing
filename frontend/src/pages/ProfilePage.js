@@ -36,7 +36,7 @@ export function ProfilePage() {
     setForm({
       name: u.name || '',
       email: u.email || '',
-      mobile: u.mobile || u.phoneNo || u.phone || '',
+      mobile: u.phoneNo || '',
       fullAddress: u.fullAddress || '',
       dob: u.dob ? new Date(u.dob).toISOString().slice(0,10) : '',
       gender: u.gender || '',
@@ -104,14 +104,13 @@ export function ProfilePage() {
 
         {!editing ? (
           <div>
-            <div className="mb-4"><strong>Mobile:</strong> {user.mobile || user.phoneNo || user.phone || '—'}</div>
+            <div className="mb-4"><strong>Mobile:</strong> {user.phoneNo || '—'}</div>
             <div className="mb-4"><strong>Address:</strong> {user.fullAddress || '—'}</div>
             <div className="mb-4"><strong>DOB:</strong> {user.dob ? new Date(user.dob).toLocaleDateString() : '—'}</div>
             <div className="mb-4"><strong>Gender:</strong> {user.gender || '—'}</div>
             <div className="mb-4"><strong>Emergency Contact:</strong> {user.emergencyContact || '—'}</div>
             <div className="mb-4"><strong>Verified:</strong> {user.isVerified ? 'Yes' : 'No'}</div>
             {user.role === 'owner' && <div className="mb-4"><strong>NID:</strong> {user.nidNumber || '—'}</div>}
-            <details className="mb-4 p-2 bg-gray-100 text-xs"><summary>Debug Info</summary><pre>{JSON.stringify({mobile: user.mobile, phoneNo: user.phoneNo, phone: user.phone, fullAddress: user.fullAddress}, null, 2)}</pre></details>
             <div className="flex gap-2">
               <button onClick={startEdit} className="px-4 py-2 bg-blue-600 text-white rounded">Edit Profile</button>
             </div>
