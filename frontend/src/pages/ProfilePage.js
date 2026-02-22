@@ -68,10 +68,7 @@ export function ProfilePage() {
     };
 
     if (form.profileImage && validateUrl(form.profileImage)) payload.profileImage = form.profileImage;
-    if ((profile?.role === 'owner')) {
-      if (!form.nidNumber && !profile?.nidNumber) { return setError('NID number required for owners'); }
-      if (form.nidNumber) payload.nidNumber = form.nidNumber;
-    }
+    if (form.nidNumber && profile?.role === 'owner') payload.nidNumber = form.nidNumber;
 
     try {
       setSaving(true); setError('');

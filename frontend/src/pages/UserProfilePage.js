@@ -63,10 +63,7 @@ export const UserProfilePage = () => {
         profileImage: (formData.profileImage && (() => { try { const u = new URL(formData.profileImage); return ['http:','https:'].includes(u.protocol); } catch { return false; } })()) ? formData.profileImage : undefined,
       };
 
-      if ((profile?.role === 'owner')) {
-        if (!formData.nidNumber && !profile?.nidNumber) { setErrors({ nidNumber: 'NID number required for owners' }); setSaving(false); return; }
-        if (formData.nidNumber) payload.nidNumber = formData.nidNumber;
-      }
+      if (formData.nidNumber && profile?.role === 'owner') payload.nidNumber = formData.nidNumber;
 
       const res = await userService.updateProfile(payload);
       const updated = res?.data?.user || res?.data || payload;

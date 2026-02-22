@@ -20,11 +20,6 @@ const register = async (req, res) => {
     const finalPhone = (phoneNo || mobile || '').trim();
     if (finalPhone && !validateMobile(finalPhone)) return res.status(400).json({ error: 'Invalid phone number' });
 
-    // If owner, require nidNumber at registration (schema requires it)
-    if (userRole === 'owner' && (!nidNumber || String(nidNumber).trim() === '')) {
-      return res.status(400).json({ error: 'nidNumber is required for owner' });
-    }
-
     const exists = await User.findOne({ email });
     if (exists) return res.status(400).json({ error: 'Email already registered' });
 
@@ -36,7 +31,7 @@ const register = async (req, res) => {
       passwordHash: password,
       role: userRole,
       isVerified: userRole !== 'owner',
-      nidNumber: userRole === 'owner' ? String(nidNumber).trim() : ''
+      nidNumber: ''
     });
 
     await user.save();
