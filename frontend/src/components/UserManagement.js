@@ -25,6 +25,8 @@ export const UserManagement = () => {
   const [showDetail, setShowDetail] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showBanModal, setShowBanModal] = useState(false);
+  const [banReason, setBanReason] = useState('');
 
   // Fetch users based on filters and pagination
   const fetchUsers = useCallback(async () => {
@@ -66,6 +68,7 @@ export const UserManagement = () => {
       await adminService.verifyOwner(userId);
       setSuccess('User verified successfully!');
       setTimeout(() => setSuccess(''), 3000);
+      setShowDetail(false);
       fetchUsers();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to verify user');
@@ -79,10 +82,36 @@ export const UserManagement = () => {
       setTimeout(() => setSuccess(''), 3000);
       setShowRejectModal(false);
       setRejectReason('');
-      setSelectedUser(null);
+      setShowDetail(false);
       fetchUsers();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to reject user');
+    }
+  };
+
+  const handleBanConfirm = async (userId) => {
+    try {
+      await adminService.banUser(userId, banReason || 'Banned by admin');
+      setSuccess('User banned successfully!');
+      setTimeout(() => setSuccess(''), 3000);
+      setShowBanModal(false);
+      setBanReason('');
+      setShowDetail(false);
+      fetchUsers();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to ban user');
+    }
+  };
+
+  const handleUnban = async (userId) => {
+    try {
+      await adminService.unbanUser(userId);
+      setSuccess('User unbanned successfully!');
+      setTimeout(() => setSuccess(''), 3000);
+      setShowDetail(false);
+      fetchUsers();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to unban user');
     }
   };
 
@@ -101,6 +130,10 @@ export const UserManagement = () => {
 
   const getVerificationBadgeColor = (isVerified) => {
     return isVerified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+  };
+
+  const getBanBadgeColor = (isBanned) => {
+    return isBanned ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800';
   };
 
   return (
@@ -230,6 +263,7 @@ export const UserManagement = () => {
                       <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Email</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Role</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Ban Status</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Phone</th>
                       <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">Actions</th>
                     </tr>
@@ -260,6 +294,16 @@ export const UserManagement = () => {
                             {user.isVerified ? 'Verified' : 'Unverified'}
                           </span>
                         </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 w-fit ${getBanBadgeColor(
+                              user.isBanned
+                            )}`}
+                          >
+                            <i className={`fas ${user.isBanned ? 'fa-ban' : 'fa-check'}`}></i>
+                            {user.isBanned ? 'Banned' : 'Active'}
+                          </span>
+                        </td>
                         <td className="px-6 py-4 text-gray-700">{user.mobile}</td>
                         <td className="px-6 py-4">
                           <div className="flex justify-center gap-2">
@@ -273,27 +317,6 @@ export const UserManagement = () => {
                             >
                               <i className="fas fa-eye"></i> View
                             </button>
-                            {!user.isVerified && user.role === 'owner' && (
-                              <>
-                                <button
-                                  onClick={() => handleVerify(user._id)}
-                                  className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition text-sm font-medium"
-                                  title="Verify User"
-                                >
-                                  <i className="fas fa-check"></i>
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setSelectedUser(user);
-                                    setShowRejectModal(true);
-                                  }}
-                                  className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-sm font-medium"
-                                  title="Reject User"
-                                >
-                                  <i className="fas fa-times"></i>
-                                </button>
-                              </>
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -330,100 +353,262 @@ export const UserManagement = () => {
         </div>
       </div>
 
-      {/* Detail Modal */}
+      {/* Professional User Details Modal */}
       {showDetail && selectedUser && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-screen overflow-y-auto">
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 text-white flex justify-between items-center">
-              <h3 className="text-lg font-bold">User Details</h3>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-screen overflow-y-auto">
+            {/* Modal Header with gradient */}
+            <div className="sticky top-0 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 px-8 py-6 text-white flex justify-between items-center">
+              <div>
+                <h3 className="text-2xl font-bold">User Details</h3>
+                <p className="text-blue-100 text-sm mt-1">Complete user information and actions</p>
+              </div>
               <button
                 onClick={() => {
                   setShowDetail(false);
                   setSelectedUser(null);
                 }}
-                className="text-white hover:text-blue-100 transition"
+                className="text-white hover:text-blue-100 transition text-2xl"
               >
-                <i className="fas fa-times text-xl"></i>
+                ✕
               </button>
             </div>
 
             {/* Modal Content */}
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Full Name</label>
-                <p className="text-gray-900">{selectedUser.name}</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
-                <p className="text-gray-900 break-all">{selectedUser.email}</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Phone</label>
-                <p className="text-gray-900">{selectedUser.mobile}</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Role</label>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getRoleBadgeColor(selectedUser.role)}`}>
-                  {selectedUser.role.charAt(0).toUpperCase() + selectedUser.role.slice(1)}
-                </span>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Verification Status</label>
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 w-fit ${getVerificationBadgeColor(
-                    selectedUser.isVerified
-                  )}`}
-                >
-                  <i className={`fas ${selectedUser.isVerified ? 'fa-check-circle' : 'fa-times-circle'}`}></i>
-                  {selectedUser.isVerified ? 'Verified' : 'Unverified'}
-                </span>
-              </div>
-
-              {selectedUser.nidNumber && (
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">NID Number</label>
-                  <p className="text-gray-900">{selectedUser.nidNumber}</p>
+            <div className="p-8">
+              {/* Alert if user is banned */}
+              {selectedUser.isBanned && (
+                <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded">
+                  <p className="text-red-800 font-semibold flex items-center gap-2">
+                    <i className="fas fa-ban text-red-600"></i>
+                    This user is currently BANNED
+                  </p>
+                  {selectedUser.banReason && (
+                    <p className="text-red-700 text-sm mt-2">Reason: {selectedUser.banReason}</p>
+                  )}
                 </div>
               )}
 
-              {selectedUser.isVerified && selectedUser.verifiedAt && (
-                <>
+              {/* Personal Information Section */}
+              <div className="mb-8">
+                <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-blue-600 flex items-center gap-2">
+                  <i className="fas fa-user-circle text-blue-600"></i>
+                  Personal Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Verified At</label>
-                    <p className="text-gray-900">
-                      {new Date(selectedUser.verifiedAt).toLocaleDateString('en-US', {
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Full Name</label>
+                    <p className="text-gray-900 text-lg">{selectedUser.name}</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">User ID</label>
+                    <p className="text-gray-900 font-mono text-sm bg-gray-100 px-3 py-2 rounded">{selectedUser._id}</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Email Address</label>
+                    <p className="text-gray-900 break-all">{selectedUser.email}</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Phone Number</label>
+                    <p className="text-gray-900">{selectedUser.mobile}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Account Status Section */}
+              <div className="mb-8">
+                <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-green-600 flex items-center gap-2">
+                  <i className="fas fa-shield-alt text-green-600"></i>
+                  Account Status
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Role</label>
+                    <span className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${getRoleBadgeColor(selectedUser.role)}`}>
+                      <i className={`fas ${selectedUser.role === 'admin' ? 'fa-crown' : selectedUser.role === 'owner' ? 'fa-home' : 'fa-graduation-cap'} mr-2`}></i>
+                      {selectedUser.role.charAt(0).toUpperCase() + selectedUser.role.slice(1)}
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Verification Status</label>
+                    <span
+                      className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${getVerificationBadgeColor(
+                        selectedUser.isVerified
+                      )}`}
+                    >
+                      <i className={`fas ${selectedUser.isVerified ? 'fa-check-circle' : 'fa-times-circle'} mr-2`}></i>
+                      {selectedUser.isVerified ? 'Verified' : 'Unverified'}
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Ban Status</label>
+                    <span
+                      className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${getBanBadgeColor(
+                        selectedUser.isBanned
+                      )}`}
+                    >
+                      <i className={`fas ${selectedUser.isBanned ? 'fa-ban' : 'fa-check'} mr-2`}></i>
+                      {selectedUser.isBanned ? 'Banned' : 'Active'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* NID Information Section */}
+              {selectedUser.nidNumber && (
+                <div className="mb-8">
+                  <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-purple-600 flex items-center gap-2">
+                    <i className="fas fa-id-card text-purple-600"></i>
+                    NID Information
+                  </h4>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">NID Number</label>
+                    <p className="text-gray-900 font-mono text-lg bg-gray-100 px-4 py-2 rounded">{selectedUser.nidNumber}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Verification History */}
+              {(selectedUser.isVerified || selectedUser.rejectionReason) && (
+                <div className="mb-8">
+                  <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-orange-600 flex items-center gap-2">
+                    <i className="fas fa-history text-orange-600"></i>
+                    Verification History
+                  </h4>
+                  {selectedUser.isVerified && selectedUser.verifiedAt && (
+                    <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded">
+                      <p className="text-green-800 font-semibold">✓ Verified on</p>
+                      <p className="text-green-700 mt-1">
+                        {new Date(selectedUser.verifiedAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedUser.rejectionReason && (
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded">
+                      <p className="text-red-800 font-semibold">✗ Rejection Reason</p>
+                      <p className="text-red-700 mt-1">{selectedUser.rejectionReason}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Ban History */}
+              {selectedUser.isBanned && selectedUser.bannedAt && (
+                <div className="mb-8">
+                  <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-red-600 flex items-center gap-2">
+                    <i className="fas fa-ban text-red-600"></i>
+                    Ban Information
+                  </h4>
+                  <div className="p-4 bg-red-50 border border-red-200 rounded">
+                    <p className="text-red-800 font-semibold">Banned on</p>
+                    <p className="text-red-700 mt-1">
+                      {new Date(selectedUser.bannedAt).toLocaleDateString('en-US', {
                         year: 'numeric',
-                        month: 'short',
+                        month: 'long',
                         day: 'numeric',
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
                     </p>
+                    {selectedUser.banReason && (
+                      <>
+                        <p className="text-red-800 font-semibold mt-3">Reason</p>
+                        <p className="text-red-700 mt-1">{selectedUser.banReason}</p>
+                      </>
+                    )}
                   </div>
-                </>
-              )}
-
-              {selectedUser.rejectionReason && (
-                <div className="bg-red-50 p-3 rounded border border-red-200">
-                  <label className="block text-sm font-semibold text-red-800 mb-1">Rejection Reason</label>
-                  <p className="text-red-700">{selectedUser.rejectionReason}</p>
                 </div>
               )}
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Member Since</label>
-                <p className="text-gray-900">
-                  {new Date(selectedUser.createdAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </p>
+              {/* Account Timeline */}
+              <div className="mb-8">
+                <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-gray-600 flex items-center gap-2">
+                  <i className="fas fa-clock text-gray-600"></i>
+                  Account Timeline
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <span className="text-gray-700 font-semibold">Member Since</span>
+                    <span className="text-gray-900">
+                      {new Date(selectedUser.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <span className="text-gray-700 font-semibold">Last Updated</span>
+                    <span className="text-gray-900">
+                      {new Date(selectedUser.updatedAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="border-t pt-6 flex gap-3 flex-wrap">
+                <button
+                  onClick={() => {
+                    setShowDetail(false);
+                    setSelectedUser(null);
+                  }}
+                  className="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-semibold flex items-center justify-center gap-2"
+                >
+                  <i className="fas fa-times"></i> Close
+                </button>
+
+                {!selectedUser.isVerified && selectedUser.role === 'owner' && (
+                  <button
+                    onClick={() => handleVerify(selectedUser._id)}
+                    className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold flex items-center justify-center gap-2"
+                  >
+                    <i className="fas fa-check-circle"></i> Verify
+                  </button>
+                )}
+
+                {!selectedUser.isVerified && selectedUser.role === 'owner' && (
+                  <button
+                    onClick={() => setShowRejectModal(true)}
+                    className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-semibold flex items-center justify-center gap-2"
+                  >
+                    <i className="fas fa-times-circle"></i> Reject
+                  </button>
+                )}
+
+                {!selectedUser.isBanned && selectedUser.role !== 'admin' && (
+                  <button
+                    onClick={() => setShowBanModal(true)}
+                    className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold flex items-center justify-center gap-2"
+                  >
+                    <i className="fas fa-ban"></i> Ban
+                  </button>
+                )}
+
+                {selectedUser.isBanned && (
+                  <button
+                    onClick={() => handleUnban(selectedUser._id)}
+                    className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold flex items-center justify-center gap-2"
+                  >
+                    <i className="fas fa-undo"></i> Unban
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -432,30 +617,30 @@ export const UserManagement = () => {
 
       {/* Reject Modal */}
       {showRejectModal && selectedUser && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="bg-red-600 px-6 py-4 text-white flex justify-between items-center">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+            <div className="bg-orange-600 px-6 py-4 text-white flex justify-between items-center rounded-t-xl">
               <h3 className="text-lg font-bold">Reject User</h3>
               <button
                 onClick={() => {
                   setShowRejectModal(false);
                   setRejectReason('');
                 }}
-                className="text-white hover:text-red-100 transition"
+                className="text-white hover:text-orange-100 transition"
               >
-                <i className="fas fa-times text-xl"></i>
+                ✕
               </button>
             </div>
 
             <div className="p-6 space-y-4">
               <p className="text-gray-700">
-                Are you sure you want to reject <span className="font-semibold">{selectedUser.name}</span>?
+                Are you sure you want to reject <span className="font-semibold text-orange-600">{selectedUser.name}</span>?
               </p>
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Rejection Reason (Optional)</label>
                 <textarea
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition"
                   placeholder="Provide a reason for rejection..."
                   rows="3"
                   value={rejectReason}
@@ -469,15 +654,71 @@ export const UserManagement = () => {
                     setShowRejectModal(false);
                     setRejectReason('');
                   }}
-                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition font-medium"
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => handleRejectConfirm(selectedUser._id)}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition font-medium"
+                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-medium"
                 >
-                  Reject User
+                  Reject
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ban Modal */}
+      {showBanModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+            <div className="bg-red-600 px-6 py-4 text-white flex justify-between items-center rounded-t-xl">
+              <h3 className="text-lg font-bold">Ban User</h3>
+              <button
+                onClick={() => {
+                  setShowBanModal(false);
+                  setBanReason('');
+                }}
+                className="text-white hover:text-red-100 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-gray-700">
+                Are you sure you want to ban <span className="font-semibold text-red-600">{selectedUser.name}</span>?
+              </p>
+              <p className="text-sm text-gray-600">This user will be unable to access the platform and all their listings will be hidden.</p>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Ban Reason</label>
+                <textarea
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition"
+                  placeholder="Explain why this user is being banned..."
+                  rows="3"
+                  value={banReason}
+                  onChange={(e) => setBanReason(e.target.value)}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => {
+                    setShowBanModal(false);
+                    setBanReason('');
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleBanConfirm(selectedUser._id)}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
+                >
+                  Ban User
                 </button>
               </div>
             </div>

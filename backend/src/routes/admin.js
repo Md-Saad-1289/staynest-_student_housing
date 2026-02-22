@@ -15,6 +15,8 @@ import {
   getAllListingsForAdmin,
   getAdminActions,
   getAllUsers,
+  banUser,
+  unbanUser,
 } from '../controllers/adminController.js';
 import { auth, authorize } from '../middleware/auth.js';
 
@@ -24,6 +26,8 @@ router.use(auth, authorize('admin'));
 
 router.get('/dashboard/stats', getDashboardStats);
 router.get('/users/all', getAllUsers);
+router.put('/users/:userId/ban', banUser);
+router.put('/users/:userId/unban', unbanUser);
 router.get('/owners/unverified', getUnverifiedOwners);
 router.get('/owners/:userId', getOwnerById);
 router.put('/owners/:userId/verify', verifyOwner);

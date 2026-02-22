@@ -370,6 +370,67 @@ const getAdminActions = async (req, res) => {
   }
 };
 
+// Ban a user
+const banUser = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    if (!mongoose.Types.ObjectId.isValid(req.params.userId)) return res.status(400).json({ error: 'Invalid user id' });
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.isBanned = true;
+    user.bannedBy = req.user.userId || null;
+    user.bannedAt = new Date();
+    user.banReason = reason || 'Banned by admin';
+    await user.save();
+
+    await AuditLog.create({
+      adminId: req.user.userId,
+      action: 'ban_user',
+      targetType: 'user',
+      targetId: user._id,
+      reason: user.banReason,
+      meta: { email: user.email, role: user.role },
+    });
+
+    res.json({ message: 'User banned successfully', user });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Unban a user
+const unbanUser = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.userId)) return res.status(400).json({ error: 'Invalid user id' });
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.isBanned = false;
+    user.bannedBy = null;
+    user.bannedAt = null;
+    user.banReason = null;
+    await user.save();
+
+    await AuditLog.create({
+      adminId: req.user.userId,
+      action: 'unban_user',
+      targetType: 'user',
+      targetId: user._id,
+      reason: 'User unbanned',
+      meta: { email: user.email, role: user.role },
+    });
+
+    res.json({ message: 'User unbanned successfully', user });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Get all users with filtering and pagination
 const getAllUsers = async (req, res) => {
   try {
@@ -438,4 +499,6 @@ export {
   getAllListingsForAdmin,
   getAdminActions,
   getAllUsers,
+  banUser,
+  unbanUser,
 };
