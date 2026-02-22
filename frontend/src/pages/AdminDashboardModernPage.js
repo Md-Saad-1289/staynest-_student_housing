@@ -5,6 +5,7 @@ import { DataTable } from '../components/Dashboard/DataTable';
 import { StatusBadge } from '../components/Dashboard/StatusBadge';
 import { ConfirmModal } from '../components/Dashboard/ConfirmModal';
 import { adminService } from '../services/api';
+import UserManagement from '../components/UserManagement';
 
 /**
  * AdminDashboardModernPage: Production-ready Admin Dashboard
@@ -1078,33 +1079,9 @@ export const AdminDashboardModernPage = ({ tab }) => {
         </>
       )}
 
-      {/* Owners Tab */}
+      {/* Users Tab - All Users Management */}
       {activeTab === 'users' && (
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <i className="fas fa-user-check text-blue-600"></i>
-                Unverified Owners
-              </h2>
-              <p className="text-sm text-gray-600 mt-1">Manage and verify owner accounts</p>
-            </div>
-            <button
-              onClick={() => setRefreshKey((k) => k + 1)}
-              className="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 font-semibold"
-            >
-              <i className="fas fa-sync"></i> Refresh
-            </button>
-          </div>
-          {unverifiedOwners.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-              <i className="fas fa-check-circle text-4xl text-green-400 mb-4"></i>
-              <p className="text-gray-600 font-medium">All owners are verified!</p>
-            </div>
-          ) : (
-            <DataTable columns={ownersColumns} data={unverifiedOwners} />
-          )}
-        </div>
+        <UserManagement />
       )}
 
       {/* Listings Tab */}
