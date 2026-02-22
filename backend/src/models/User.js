@@ -10,7 +10,9 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true, immutable: true },
 
     // phone number (preferred name)
+    // legacy field kept for compatibility; new canonical field `mobile`
     phoneNo: { type: String, trim: true, default: '' },
+    mobile: { type: String, trim: true, default: '' },
 
     // single address string
     fullAddress: { type: String, trim: true, default: '' },
@@ -46,8 +48,18 @@ const userSchema = new mongoose.Schema(
 
 // Compatibility virtuals for existing code that uses `mobile` and emergencyContactName/Phone
 userSchema.virtual('mobile')
-  .get(function () { return this.phoneNo; })
-  .set(function (v) { this.phoneNo = v; });
+  .get(function () { return this.mobile || this.phoneNo; })
+  .set(function (v) { this.mobile = v; this.phoneNo = v; });
+
+// Ensure phoneNo/mobile stay in sync when one is modified directly
+userSchema.pre('save', function (next) {
+  if (this.isModified('mobile') && !this.isModified('phoneNo')) {
+    this.phoneNo = this.mobile;
+  } else if (this.isModified('phoneNo') && !this.isModified('mobile')) {
+    this.mobile = this.phoneNo;
+  }
+  next();
+});
 
 userSchema.virtual('emergencyContactName')
   .get(function () {

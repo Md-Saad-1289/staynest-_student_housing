@@ -18,28 +18,28 @@ export function ProfilePage() {
     let mounted = true;
     const fetch = async () => {
       try {
-        const res = await userService.getProfile();
-        const data = res?.data?.user || res?.data;
-        if (mounted) setProfile(data);
-      } catch (err) {
-        if (err?.response?.status === 401) { logout(); navigate('/login'); }
-      } finally { if (mounted) setLoading(false); }
-    };
-
-    if (authUser) { setProfile(authUser); setLoading(false); fetch(); }
-    else fetch();
-    return () => (mounted = false);
+        setForm({
+          name: u.name || '',
+          email: u.email || '',
+          mobile: u.mobile || u.phoneNo || '',
+          fullAddress: u.fullAddress || '',
+          dob: u.dob ? new Date(u.dob).toISOString().slice(0,10) : '',
+          gender: u.gender || '',
+          emergencyContact: u.emergencyContact || '',
+          profileImage: u.profileImage || '',
+          nidNumber: u.nidNumber || ''
+        });
   }, [authUser, logout, navigate]);
 
   const startEdit = () => {
     const u = profile || {};
-    setForm({
-      name: u.name || '',
+        if (form.mobile) {
+          const digits = String(form.mobile).replace(/\D/g,''); if (digits.length < 8) return setError('Invalid mobile number');
       email: u.email || '',
       phoneNo: u.phoneNo || '',
       fullAddress: u.fullAddress || '',
       dob: u.dob ? new Date(u.dob).toISOString().slice(0,10) : '',
-      gender: u.gender || '',
+          phoneNo: form.mobile || undefined,
       emergencyContact: u.emergencyContact || '',
       profileImage: u.profileImage || '',
       nidNumber: u.nidNumber || ''
@@ -50,9 +50,9 @@ export function ProfilePage() {
   const cancel = () => { setEditing(false); setError(''); };
 
   const validateUrl = (s) => { try { const u = new URL(s); return ['http:','https:'].includes(u.protocol); } catch { return false; } };
-
+            <input value={form.mobile} onChange={e=>setForm({...form,mobile:e.target.value})} placeholder="Mobile" className="border p-2 rounded" />
   const save = async () => {
-    if (!form.name?.trim()) return setError('Name is required');
+            <div className="mb-4"><strong>Mobile:</strong> {user.mobile || user.phoneNo || '—'}</div>
     if (form.phoneNo) {
       const digits = String(form.phoneNo).replace(/\D/g,''); if (digits.length < 8) return setError('Invalid phone number');
     }

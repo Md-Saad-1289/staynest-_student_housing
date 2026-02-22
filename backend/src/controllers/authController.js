@@ -32,6 +32,7 @@ const register = async (req, res) => {
       name: name.trim(),
       email: email.trim().toLowerCase(),
       phoneNo: finalPhone,
+      mobile: finalPhone,
       passwordHash: password,
       role: userRole,
       isVerified: userRole !== 'owner',
@@ -45,7 +46,7 @@ const register = async (req, res) => {
       id: user._id,
       name: user.name,
       email: user.email,
-      mobile: user.phoneNo,
+      mobile: user.mobile || user.phoneNo,
       role: user.role,
       isVerified: user.isVerified,
       profileImage: user.profileImage,
@@ -74,7 +75,7 @@ const login = async (req, res) => {
       id: user._id,
       name: user.name,
       email: user.email,
-      mobile: user.phoneNo,
+      mobile: user.mobile || user.phoneNo,
       role: user.role,
       isVerified: user.isVerified,
       profileImage: user.profileImage,
@@ -96,7 +97,7 @@ const getCurrentUser = async (req, res) => {
       id: user._id,
       name: user.name,
       email: user.email,
-      mobile: user.phoneNo,
+      mobile: user.mobile || user.phoneNo,
       fullAddress: user.fullAddress,
       dob: user.dob,
       gender: user.gender,
@@ -122,7 +123,7 @@ const updateProfile = async (req, res) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     // Allowed fields
-    const allowedCommon = ['name', 'phoneNo', 'fullAddress', 'dob', 'gender', 'emergencyContact', 'profileImage'];
+    const allowedCommon = ['name', 'phoneNo', 'mobile', 'fullAddress', 'dob', 'gender', 'emergencyContact', 'profileImage'];
     const allowedOwner = [...allowedCommon, 'nidNumber'];
     const allowed = user.role === 'owner' ? allowedOwner : allowedCommon;
 
@@ -155,6 +156,14 @@ const updateProfile = async (req, res) => {
           const d = new Date(val);
           if (isNaN(d.getTime())) return res.status(400).json({ error: 'Invalid dob' });
           updates.dob = d;
+          continue;
+        }
+
+        // normalize mobile/phoneNo: set both fields when provided
+        if (key === 'phoneNo' || key === 'mobile') {
+          const s = typeof val === 'string' ? validator.escape(val.trim()) : val;
+          updates.phoneNo = s;
+          updates.mobile = s;
           continue;
         }
 

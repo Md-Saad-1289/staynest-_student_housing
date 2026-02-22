@@ -15,7 +15,7 @@ export const UserProfilePage = () => {
 
   const initFormData = (d = {}) => ({
     name: d.name ?? '',
-    phoneNo: d.phoneNo ?? d.mobile ?? '',
+    mobile: d.mobile ?? d.phoneNo ?? '',
     profileImage: d.profileImage ?? null,
     fullAddress: d.fullAddress ?? (d.addressStreet ? `${d.addressStreet}${d.addressCity ? ', ' + d.addressCity : ''}` : '') ?? '',
     dob: d.dob ? new Date(d.dob).toISOString().slice(0,10) : (d.dateOfBirth ? new Date(d.dateOfBirth).toISOString().slice(0,10) : ''),
@@ -55,7 +55,7 @@ export const UserProfilePage = () => {
       setSaving(true);
       const payload = {
         name: formData.name.trim(),
-        phoneNo: formData.phoneNo || undefined,
+        phoneNo: formData.mobile || undefined,
         fullAddress: formData.fullAddress || undefined,
         dob: formData.dob || undefined,
         gender: formData.gender || undefined,
