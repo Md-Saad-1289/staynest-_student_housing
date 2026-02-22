@@ -6,6 +6,7 @@ import { StatusBadge } from '../components/Dashboard/StatusBadge';
 import { ConfirmModal } from '../components/Dashboard/ConfirmModal';
 import { adminService } from '../services/api';
 import UserManagement from '../components/UserManagement';
+import { ListingsManagement } from '../components/ListingsManagement';
 
 /**
  * AdminDashboardModernPage: Production-ready Admin Dashboard
@@ -673,8 +674,13 @@ export const AdminDashboardModernPage = ({ tab }) => {
         </div>
       )}
 
+      {/* Listings Management Tab */}
+      {activeTab === 'overview' && (
+        <ListingsManagement />
+      )}
+
       {/* Dashboard Tab */}
-      {activeTab === 'overview' && stats && (
+      {activeTab === 'dashboard' && stats && (
         <>
           {/* Enhanced System Overview Section */}
           <div className="mb-8 p-6 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-xl text-white shadow-lg">

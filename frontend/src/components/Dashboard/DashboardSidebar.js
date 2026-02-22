@@ -19,9 +19,8 @@ const MENU_ITEMS = {
   ],
   admin: [
     { icon: 'fas fa-crown', label: 'Super Admin', path: '/dashboard/admin', section: 'Main', badge: 'premium' },
-    { icon: 'fas fa-chart-pie', label: 'Overview', path: '/dashboard/admin/overview', section: 'Overview' },
+    { icon: 'fas fa-layer-group', label: 'Listings Management', path: '/dashboard/admin/overview', badge: 'pending', section: 'Management' },
     { icon: 'fas fa-users', label: 'User Management', path: '/dashboard/admin/users', badge: 'verification', section: 'Management' },
-    { icon: 'fas fa-home', label: 'Listing Management', path: '/dashboard/admin/listings', badge: 'pending', section: 'Management' },
     { icon: 'fas fa-star', label: 'Featured Listings', path: '/dashboard/admin/featured', section: 'Management' },
     { icon: 'fas fa-comment-dots', label: 'Testimonials', path: '/dashboard/admin/testimonials', section: 'Content' },
     { icon: 'fas fa-flag', label: 'Flags & Reports', path: '/dashboard/admin/flags', badge: 'flags', section: 'Moderation' },
