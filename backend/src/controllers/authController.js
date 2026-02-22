@@ -41,7 +41,7 @@ const register = async (req, res) => {
       id: user._id,
       name: user.name,
       email: user.email,
-      mobile: user.mobile || user.phoneNo,
+      phoneNo: user.phoneNo,
       role: user.role,
       isVerified: user.isVerified,
       profileImage: user.profileImage,
@@ -70,7 +70,7 @@ const login = async (req, res) => {
       id: user._id,
       name: user.name,
       email: user.email,
-      mobile: user.mobile || user.phoneNo,
+      phoneNo: user.phoneNo,
       role: user.role,
       isVerified: user.isVerified,
       profileImage: user.profileImage,
@@ -92,7 +92,7 @@ const getCurrentUser = async (req, res) => {
       id: user._id,
       name: user.name,
       email: user.email,
-      mobile: user.mobile || user.phoneNo,
+      phoneNo: user.phoneNo,
       fullAddress: user.fullAddress,
       dob: user.dob,
       gender: user.gender,
@@ -167,13 +167,6 @@ const updateProfile = async (req, res) => {
       }
     }
 
-    // Owner must have nidNumber saved or provided
-    if (user.role === 'owner') {
-      const finalNid = updates.nidNumber || user.nidNumber || '';
-      if (!finalNid) return res.status(400).json({ error: 'nidNumber is required for owner' });
-      updates.nidNumber = String(finalNid).trim();
-    }
-
     // Apply updates explicitly
     Object.keys(updates).forEach(k => { user[k] = updates[k]; });
     await user.save();
@@ -182,7 +175,7 @@ const updateProfile = async (req, res) => {
       id: user._id,
       name: user.name,
       email: user.email,
-      mobile: user.phoneNo,
+      phoneNo: user.phoneNo,
       fullAddress: user.fullAddress,
       dob: user.dob,
       gender: user.gender,

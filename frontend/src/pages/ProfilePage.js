@@ -20,16 +20,17 @@ export function ProfilePage() {
       try {
         const res = await userService.getProfile();
         const data = res?.data?.user || res?.data;
+        console.log('Fetched profile data:', data);
         if (mounted) setProfile(data);
       } catch (err) {
         if (err?.response?.status === 401) { logout(); navigate('/login'); }
+        else console.error('Error fetching profile:', err);
       } finally { if (mounted) setLoading(false); }
     };
 
-    if (authUser) { setProfile(authUser); setLoading(false); fetch(); }
-    else fetch();
+    fetch();
     return () => (mounted = false);
-  }, [authUser, logout, navigate]);
+  }, [logout, navigate]);
 
   const startEdit = () => {
     const u = profile || {};
@@ -44,8 +45,10 @@ export function ProfilePage() {
       profileImage: u.profileImage || '',
       nidNumber: u.nidNumber || ''
     });
-    console.log('Profile data:', u);
-    setEditing(true); setError('');
+    console.log('Starting edit with profile:', u);
+    console.log('Phone number value:', u.phoneNo);
+    setEditing(true); 
+    setError('');
   };
 
   const cancel = () => { setEditing(false); setError(''); };
@@ -101,7 +104,7 @@ export function ProfilePage() {
 
         {!editing ? (
           <div>
-            <div className="mb-4"><strong>Mobile:</strong> {user.phoneNo || '—'}</div>
+            <div className="mb-4"><strong>Phone Number:</strong> {user.phoneNo || '—'}</div>
             <div className="mb-4"><strong>Address:</strong> {user.fullAddress || '—'}</div>
             <div className="mb-4"><strong>DOB:</strong> {user.dob ? new Date(user.dob).toLocaleDateString() : '—'}</div>
             <div className="mb-4"><strong>Gender:</strong> {user.gender || '—'}</div>
