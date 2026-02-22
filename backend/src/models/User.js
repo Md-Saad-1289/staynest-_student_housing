@@ -37,8 +37,8 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: ['student', 'owner'], required: true, immutable: true },
     isVerified: { type: Boolean, default: false },
 
-    // Owner-only required field
-    nidNumber: { type: String, trim: true, default: '', required: function () { return this.role === 'owner'; } },
+    // NID number (optional, for owners)
+    nidNumber: { type: String, trim: true, default: '' },
 
     // password hash storage
     passwordHash: { type: String, required: true, select: false }
