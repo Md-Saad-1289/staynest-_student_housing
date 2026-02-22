@@ -14,6 +14,7 @@ import {
   deleteAdminListing,
   getAllListingsForAdmin,
   getAdminActions,
+  getAllUsers,
 } from '../controllers/adminController.js';
 import { auth, authorize } from '../middleware/auth.js';
 
@@ -22,6 +23,7 @@ const router = express.Router();
 router.use(auth, authorize('admin'));
 
 router.get('/dashboard/stats', getDashboardStats);
+router.get('/users/all', getAllUsers);
 router.get('/owners/unverified', getUnverifiedOwners);
 router.get('/owners/:userId', getOwnerById);
 router.put('/owners/:userId/verify', verifyOwner);

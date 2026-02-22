@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { adminService } from '../services/api';
+import UserManagement from '../components/UserManagement';
 
 export const AdminDashboardPage = () => {
   const [stats, setStats] = useState(null);
@@ -16,6 +17,9 @@ export const AdminDashboardPage = () => {
       if (tab === 'dashboard') {
         const res = await adminService.getDashboardStats();
         setStats(res.data.stats);
+      } else if (tab === 'users') {
+        // Users tab is handled by UserManagement component
+        return;
       } else if (tab === 'owners') {
         const res = await adminService.getUnverifiedOwners();
         setUnverifiedOwners(res.data.owners);
@@ -73,20 +77,21 @@ export const AdminDashboardPage = () => {
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  if (loading && tab !== 'users') return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8"><i className="fas fa-shield-alt text-blue-600"></i> Admin Dashboard</h1>
+        {tab !== 'users' && <h1 className="text-3xl font-bold mb-8"><i className="fas fa-shield-alt text-blue-600"></i> Admin Dashboard</h1>}
 
-        {error && <div className="bg-red-100 text-red-700 p-4 rounded mb-4"><i className="fas fa-exclamation-circle"></i> {error}</div>}
+        {error && tab !== 'users' && <div className="bg-red-100 text-red-700 p-4 rounded mb-4"><i className="fas fa-exclamation-circle"></i> {error}</div>}
 
         {/* Tabs */}
         <div className="flex gap-4 mb-6 border-b overflow-x-auto">
           {[
             { name: 'dashboard', icon: 'fas fa-chart-pie', label: 'Dashboard' },
-            { name: 'owners', icon: 'fas fa-users', label: 'Owners' },
+            { name: 'users', icon: 'fas fa-users', label: 'Users' },
+            { name: 'owners', icon: 'fas fa-home', label: 'Owners' },
             { name: 'listings', icon: 'fas fa-list', label: 'Listings' },
             { name: 'flags', icon: 'fas fa-flag', label: 'Flags' }
           ].map((t) => (
@@ -124,6 +129,11 @@ export const AdminDashboardPage = () => {
               </div>
             ))}
           </div>
+        )}
+
+        {/* Users Management Tab */}
+        {tab === 'users' && (
+          <UserManagement />
         )}
 
         {/* Unverified Owners Tab */}

@@ -370,6 +370,58 @@ const getAdminActions = async (req, res) => {
   }
 };
 
+// Get all users with filtering and pagination
+const getAllUsers = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search = '', role = '', isVerified = '', sortBy = 'createdAt', sortOrder = '-1' } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const sort = { [sortBy]: parseInt(sortOrder) };
+
+    const filter = {};
+
+    // Search filter
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { mobile: { $regex: search, $options: 'i' } },
+        { nidNumber: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    // Role filter
+    if (role && role !== 'all') {
+      filter.role = role;
+    }
+
+    // Verification status filter
+    if (isVerified !== '') {
+      filter.isVerified = isVerified === 'true';
+    }
+
+    const users = await User.find(filter)
+      .select('-passwordHash')
+      .sort(sort)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    const total = await User.countDocuments(filter);
+
+    res.json({
+      users,
+      pagination: {
+        total,
+        page: parseInt(page),
+        pages: Math.ceil(total / parseInt(limit)),
+        limit: parseInt(limit),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export {
   verifyOwner,
   rejectOwner,
@@ -385,4 +437,5 @@ export {
   deleteAdminListing,
   getAllListingsForAdmin,
   getAdminActions,
+  getAllUsers,
 };

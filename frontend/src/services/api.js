@@ -131,6 +131,7 @@ export const testimonialService = {
 ========================= */
 export const adminService = {
   getDashboardStats: () => api.get('/admin/dashboard/stats').then(res => res),
+  getAllUsers: (params) => api.get('/admin/users/all', { params }).then(res => res),
   getUnverifiedOwners: () => api.get('/admin/owners/unverified').then(res => res),
   getOwnerById: (userId) => api.get(`/admin/owners/${userId}`).then(res => res),
   verifyOwner: (userId) => api.put(`/admin/owners/${userId}/verify`).then(res => res),
