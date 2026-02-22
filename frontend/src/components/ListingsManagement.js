@@ -3,12 +3,13 @@ import { adminService } from '../services/api';
 
 export const ListingsManagement = () => {
   const [listings, setListings] = useState([]);
-  const [filteredListings, setFilteredListings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState(''); // 'verified', 'unverified', ''
+  const [statusFilter, setStatusFilter] = useState(''); // 'true', 'false', ''
   const [cityFilter, setCityFilter] = useState('');
-  const [sortBy, setSortBy] = useState('createdAt'); // 'createdAt', 'rent', 'title'
+  const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const [page, setPage] = useState(1);
   const [itemsPerPage] = useState(15);
@@ -17,16 +18,18 @@ export const ListingsManagement = () => {
   const [selectedListing, setSelectedListing] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ open: false });
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Fetch all listings
   const fetchListings = useCallback(async () => {
     try {
       setLoading(true);
+      setError('');
       const filterParams = {
         page,
         limit: itemsPerPage,
-        search: searchQuery,
-        verified: statusFilter || undefined,
+        search: searchQuery || undefined,
+        isVerified: statusFilter || undefined,
         city: cityFilter || undefined,
         sortBy,
         sortOrder,
@@ -36,13 +39,14 @@ export const ListingsManagement = () => {
       
       const allListings = res.data.listings || [];
       setListings(allListings);
-      setTotalListings(res.data.total || allListings.length);
+      setTotalListings(res.data.total || res.data.meta?.total || allListings.length);
 
       // Extract unique cities
       const uniqueCities = [...new Set(allListings.map((l) => l.city).filter(Boolean))];
       setCities(uniqueCities.sort());
     } catch (error) {
       console.error('Failed to fetch listings:', error);
+      setError('Failed to load listings. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -64,18 +68,24 @@ export const ListingsManagement = () => {
       reason,
       listingId: listing._id,
       listingTitle: listing.title,
+      action: 'delete',
     });
   };
 
   const confirmDelete = async () => {
     try {
+      setIsProcessing(true);
       await adminService.deleteListing(confirmModal.listingId, confirmModal.reason);
-      alert('✓ Listing deleted successfully');
+      setSuccess('✓ Listing deleted successfully');
       setConfirmModal({ open: false });
       setShowDetailModal(false);
+      setTimeout(() => setSuccess(''), 3000);
       fetchListings();
     } catch (error) {
-      alert('Failed to delete: ' + (error.response?.data?.error || error.message));
+      setError('Failed to delete: ' + (error.response?.data?.error || error.message));
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -92,12 +102,17 @@ export const ListingsManagement = () => {
 
   const confirmVerify = async () => {
     try {
+      setIsProcessing(true);
       await adminService.verifyListing(confirmModal.listingId);
-      alert('✓ Listing approved successfully');
+      setSuccess('✓ Listing approved successfully');
       setConfirmModal({ open: false });
+      setTimeout(() => setSuccess(''), 3000);
       fetchListings();
     } catch (error) {
-      alert('Failed: ' + (error.response?.data?.error || error.message));
+      setError('Failed: ' + (error.response?.data?.error || error.message));
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -146,6 +161,19 @@ export const ListingsManagement = () => {
 
   return (
     <div className="space-y-6">
+      {/* Error & Success Messages */}
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 flex items-center gap-2">
+          <i className="fas fa-circle-exclamation"></i>
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 flex items-center gap-2">
+          <i className="fas fa-check-circle"></i>
+          {success}
+        </div>
+      )}
       {/* Header Section */}
       <div className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-xl p-6 text-white shadow-lg">
         <div className="flex items-center justify-between">
@@ -391,15 +419,17 @@ export const ListingsManagement = () => {
                       {!listing.isVerified && (
                         <button
                           onClick={() => handleVerifyListing(listing)}
-                          className="px-3 py-2 text-xs bg-green-50 text-green-600 hover:bg-green-100 rounded-lg font-medium transition-colors flex items-center gap-1"
+                          disabled={isProcessing}
+                          className="px-3 py-2 text-xs bg-green-50 text-green-600 hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium transition-colors flex items-center gap-1"
                         >
-                          <i className="fas fa-check"></i> Approve
+                          <i className={`fas ${isProcessing ? 'fa-spinner fa-spin' : 'fa-check'}`}></i> Approve
                         </button>
                       )}
 
                       <button
                         onClick={() => handleDeleteListing(listing)}
-                        className="px-3 py-2 text-xs bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-medium transition-colors flex items-center gap-1"
+                        disabled={isProcessing}
+                        className="px-3 py-2 text-xs bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium transition-colors flex items-center gap-1"
                       >
                         <i className="fas fa-trash"></i> Delete
                       </button>
@@ -618,7 +648,8 @@ export const ListingsManagement = () => {
               <div className="border-t pt-6 flex gap-3 flex-wrap">
                 <button
                   onClick={() => setShowDetailModal(false)}
-                  className="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-semibold flex items-center justify-center gap-2"
+                  disabled={isProcessing}
+                  className="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition font-semibold flex items-center justify-center gap-2"
                 >
                   <i className="fas fa-times"></i> Close
                 </button>
@@ -629,9 +660,10 @@ export const ListingsManagement = () => {
                       handleVerifyListing(selectedListing);
                       setShowDetailModal(false);
                     }}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+                    disabled={isProcessing}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
                   >
-                    <i className="fas fa-check-circle"></i> Approve Listing
+                    <i className={`fas ${isProcessing ? 'fa-spinner fa-spin' : 'fa-check-circle'}`}></i> Approve Listing
                   </button>
                 )}
 
@@ -640,9 +672,10 @@ export const ListingsManagement = () => {
                     handleDeleteListing(selectedListing);
                     setShowDetailModal(false);
                   }}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg hover:from-red-600 hover:to-rose-700 transition font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+                  disabled={isProcessing}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg hover:from-red-600 hover:to-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
                 >
-                  <i className="fas fa-trash"></i> Delete Listing
+                  <i className={`fas ${isProcessing ? 'fa-spinner fa-spin' : 'fa-trash'}`}></i> Delete Listing
                 </button>
               </div>
             </div>
@@ -655,12 +688,13 @@ export const ListingsManagement = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full">
             <div className={`px-6 py-4 text-white flex justify-between items-center ${
-              confirmModal.reason ? 'bg-red-600' : 'bg-orange-600'
+              confirmModal.action === 'delete' ? 'bg-red-600' : 'bg-orange-600'
             }`}>
               <h3 className="text-lg font-bold">{confirmModal.title}</h3>
               <button
                 onClick={() => setConfirmModal({ open: false })}
-                className="text-white hover:text-gray-200 transition"
+                disabled={isProcessing}
+                className="text-white hover:text-gray-200 transition disabled:opacity-50"
               >
                 ✕
               </button>
@@ -672,25 +706,28 @@ export const ListingsManagement = () => {
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmModal({ open: false })}
-                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-medium"
+                  disabled={isProcessing}
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium"
                 >
                   Cancel
                 </button>
 
                 <button
                   onClick={() => {
-                    if (confirmModal.reason) {
+                    if (confirmModal.action === 'delete') {
                       confirmDelete();
                     } else if (confirmModal.action === 'verify') {
                       confirmVerify();
                     }
                   }}
-                  className={`flex-1 px-4 py-2 text-white rounded-lg transition font-medium ${
-                    confirmModal.reason
+                  disabled={isProcessing}
+                  className={`flex-1 px-4 py-2 text-white rounded-lg transition font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                    confirmModal.action === 'delete'
                       ? 'bg-red-600 hover:bg-red-700'
                       : 'bg-orange-600 hover:bg-orange-700'
                   }`}
                 >
+                  <i className={`fas ${isProcessing ? 'fa-spinner fa-spin' : ''}`}></i>
                   {confirmModal.action === 'verify' ? 'Approve' : 'Delete'}
                 </button>
               </div>
