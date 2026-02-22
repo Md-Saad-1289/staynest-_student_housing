@@ -357,134 +357,172 @@ export const UserManagement = () => {
       {showDetail && selectedUser && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-screen overflow-y-auto">
-            {/* Modal Header with gradient */}
-            <div className="sticky top-0 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 px-8 py-6 text-white flex justify-between items-center">
-              <div>
-                <h3 className="text-2xl font-bold">User Details</h3>
-                <p className="text-blue-100 text-sm mt-1">Complete user information and actions</p>
+            {/* Stunning Header with Gradient and Pattern */}
+            <div className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 px-8 py-8 text-white">
+              {/* Background Pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -mr-20 -mt-20"></div>
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full -ml-16 -mb-16"></div>
               </div>
-              <button
-                onClick={() => {
-                  setShowDetail(false);
-                  setSelectedUser(null);
-                }}
-                className="text-white hover:text-blue-100 transition text-2xl"
-              >
-                ✕
-              </button>
+              
+              {/* Header Content */}
+              <div className="relative flex justify-between items-start">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                      <i className="fas fa-user-circle text-white text-xl"></i>
+                    </div>
+                    <h3 className="text-3xl font-bold">{selectedUser.name}</h3>
+                  </div>
+                  <p className="text-blue-100 text-sm">User ID: {selectedUser._id}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowDetail(false);
+                    setSelectedUser(null);
+                  }}
+                  className="text-white hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center transition"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             {/* Modal Content */}
-            <div className="p-8">
+            <div className="p-8 space-y-6">
               {/* Alert if user is banned */}
               {selectedUser.isBanned && (
-                <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded">
-                  <p className="text-red-800 font-semibold flex items-center gap-2">
+                <div className="p-4 bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 rounded-lg">
+                  <p className="text-red-800 font-bold flex items-center gap-2 text-lg">
                     <i className="fas fa-ban text-red-600"></i>
-                    This user is currently BANNED
+                    ACCOUNT BANNED
                   </p>
                   {selectedUser.banReason && (
-                    <p className="text-red-700 text-sm mt-2">Reason: {selectedUser.banReason}</p>
+                    <p className="text-red-700 text-sm mt-2 ml-8">💬 {selectedUser.banReason}</p>
                   )}
                 </div>
               )}
+              
+              {/* Quick Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
+                  <p className="text-blue-600 text-sm font-semibold mb-1">
+                    <i className="fas fa-shield-alt mr-2"></i>ROLE
+                  </p>
+                  <p className="text-xl font-bold text-blue-800">{selectedUser.role.toUpperCase()}</p>
+                </div>
 
-              {/* Personal Information Section */}
-              <div className="mb-8">
-                <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-blue-600 flex items-center gap-2">
-                  <i className="fas fa-user-circle text-blue-600"></i>
-                  Personal Information
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Full Name</label>
-                    <p className="text-gray-900 text-lg">{selectedUser.name}</p>
-                  </div>
+                <div className={`bg-gradient-to-br p-4 rounded-xl border ${selectedUser.isVerified ? 'from-green-50 to-green-100 border-green-200' : 'from-orange-50 to-orange-100 border-orange-200'}`}>
+                  <p className={`${selectedUser.isVerified ? 'text-green-600' : 'text-orange-600'} text-sm font-semibold mb-1`}>
+                    <i className={`fas ${selectedUser.isVerified ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2`}></i>
+                    VERIFICATION
+                  </p>
+                  <p className={`text-xl font-bold ${selectedUser.isVerified ? 'text-green-800' : 'text-orange-800'}`}>
+                    {selectedUser.isVerified ? 'VERIFIED' : 'UNVERIFIED'}
+                  </p>
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">User ID</label>
-                    <p className="text-gray-900 font-mono text-sm bg-gray-100 px-3 py-2 rounded">{selectedUser._id}</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Email Address</label>
-                    <p className="text-gray-900 break-all">{selectedUser.email}</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Phone Number</label>
-                    <p className="text-gray-900">{selectedUser.mobile}</p>
-                  </div>
+                <div className={`bg-gradient-to-br p-4 rounded-xl border ${selectedUser.isBanned ? 'from-red-50 to-red-100 border-red-200' : 'from-emerald-50 to-emerald-100 border-emerald-200'}`}>
+                  <p className={`${selectedUser.isBanned ? 'text-red-600' : 'text-emerald-600'} text-sm font-semibold mb-1`}>
+                    <i className={`fas ${selectedUser.isBanned ? 'fa-ban' : 'fa-check'} mr-2`}></i>
+                    STATUS
+                  </p>
+                  <p className={`text-xl font-bold ${selectedUser.isBanned ? 'text-red-800' : 'text-emerald-800'}`}>
+                    {selectedUser.isBanned ? 'BANNED' : 'ACTIVE'}
+                  </p>
                 </div>
               </div>
 
-              {/* Account Status Section */}
-              <div className="mb-8">
-                <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-green-600 flex items-center gap-2">
-                  <i className="fas fa-shield-alt text-green-600"></i>
-                  Account Status
+              {/* Contact Information Section */}
+              <div>
+                <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-blue-600 flex items-center gap-2">
+                  <i className="fas fa-envelope text-blue-600 bg-blue-50 w-8 h-8 flex items-center justify-center rounded-lg"></i>
+                  Contact Information
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Role</label>
-                    <span className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${getRoleBadgeColor(selectedUser.role)}`}>
-                      <i className={`fas ${selectedUser.role === 'admin' ? 'fa-crown' : selectedUser.role === 'owner' ? 'fa-home' : 'fa-graduation-cap'} mr-2`}></i>
-                      {selectedUser.role.charAt(0).toUpperCase() + selectedUser.role.slice(1)}
-                    </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-blue-300 transition group">
+                    <p className="text-gray-600 text-xs font-bold uppercase tracking-wide mb-2">
+                      <i className="fas fa-at text-blue-600 mr-2"></i>Email Address
+                    </p>
+                    <p className="text-gray-900 font-medium break-all group-hover:text-blue-600 transition">{selectedUser.email}</p>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Verification Status</label>
-                    <span
-                      className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${getVerificationBadgeColor(
-                        selectedUser.isVerified
-                      )}`}
-                    >
-                      <i className={`fas ${selectedUser.isVerified ? 'fa-check-circle' : 'fa-times-circle'} mr-2`}></i>
-                      {selectedUser.isVerified ? 'Verified' : 'Unverified'}
-                    </span>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Ban Status</label>
-                    <span
-                      className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${getBanBadgeColor(
-                        selectedUser.isBanned
-                      )}`}
-                    >
-                      <i className={`fas ${selectedUser.isBanned ? 'fa-ban' : 'fa-check'} mr-2`}></i>
-                      {selectedUser.isBanned ? 'Banned' : 'Active'}
-                    </span>
+                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-blue-300 transition group">
+                    <p className="text-gray-600 text-xs font-bold uppercase tracking-wide mb-2">
+                      <i className="fas fa-phone text-blue-600 mr-2"></i>Phone Number
+                    </p>
+                    <p className="text-gray-900 font-medium group-hover:text-blue-600 transition">{selectedUser.mobile}</p>
                   </div>
                 </div>
               </div>
 
               {/* NID Information Section */}
               {selectedUser.nidNumber && (
-                <div className="mb-8">
+                <div>
                   <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-purple-600 flex items-center gap-2">
-                    <i className="fas fa-id-card text-purple-600"></i>
+                    <i className="fas fa-id-card text-purple-600 bg-purple-50 w-8 h-8 flex items-center justify-center rounded-lg"></i>
                     NID Information
                   </h4>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">NID Number</label>
-                    <p className="text-gray-900 font-mono text-lg bg-gray-100 px-4 py-2 rounded">{selectedUser.nidNumber}</p>
+                  <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
+                    <p className="text-purple-600 text-xs font-bold uppercase tracking-wide mb-2">
+                      <i className="fas fa-hashtag mr-2"></i>NID Number
+                    </p>
+                    <p className="text-gray-900 font-mono text-lg bg-white px-4 py-2 rounded-lg">{selectedUser.nidNumber}</p>
                   </div>
                 </div>
               )}
 
               {/* Verification History */}
               {(selectedUser.isVerified || selectedUser.rejectionReason) && (
-                <div className="mb-8">
-                  <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-orange-600 flex items-center gap-2">
-                    <i className="fas fa-history text-orange-600"></i>
+                <div>
+                  <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-amber-600 flex items-center gap-2">
+                    <i className="fas fa-history text-amber-600 bg-amber-50 w-8 h-8 flex items-center justify-center rounded-lg"></i>
                     Verification History
                   </h4>
-                  {selectedUser.isVerified && selectedUser.verifiedAt && (
-                    <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded">
-                      <p className="text-green-800 font-semibold">✓ Verified on</p>
-                      <p className="text-green-700 mt-1">
-                        {new Date(selectedUser.verifiedAt).toLocaleDateString('en-US', {
+                  <div className="space-y-3">
+                    {selectedUser.isVerified && selectedUser.verifiedAt && (
+                      <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-lg">
+                        <p className="text-green-800 font-bold text-sm mb-1">
+                          <i className="fas fa-check-circle text-green-600 mr-2"></i>Verified On
+                        </p>
+                        <p className="text-green-700 text-sm ml-6 font-medium">
+                          {new Date(selectedUser.verifiedAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedUser.rejectionReason && (
+                      <div className="p-4 bg-gradient-to-r from-orange-50 to-red-50 border-l-4 border-orange-500 rounded-lg">
+                        <p className="text-orange-800 font-bold text-sm mb-1">
+                          <i className="fas fa-times-circle text-orange-600 mr-2"></i>Rejection Reason
+                        </p>
+                        <p className="text-orange-700 text-sm ml-6">{selectedUser.rejectionReason}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Ban History */}
+              {selectedUser.isBanned && selectedUser.bannedAt && (
+                <div>
+                  <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-red-600 flex items-center gap-2">
+                    <i className="fas fa-ban text-red-600 bg-red-50 w-8 h-8 flex items-center justify-center rounded-lg"></i>
+                    Ban Information
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="p-4 bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 rounded-lg">
+                      <p className="text-red-800 font-bold text-sm mb-1">
+                        <i className="fas fa-calendar text-red-600 mr-2"></i>Banned Date
+                      </p>
+                      <p className="text-red-700 text-sm ml-6 font-medium">
+                        {new Date(selectedUser.bannedAt).toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'long',
                           day: 'numeric',
@@ -493,72 +531,107 @@ export const UserManagement = () => {
                         })}
                       </p>
                     </div>
-                  )}
-
-                  {selectedUser.rejectionReason && (
-                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded">
-                      <p className="text-red-800 font-semibold">✗ Rejection Reason</p>
-                      <p className="text-red-700 mt-1">{selectedUser.rejectionReason}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Ban History */}
-              {selectedUser.isBanned && selectedUser.bannedAt && (
-                <div className="mb-8">
-                  <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-red-600 flex items-center gap-2">
-                    <i className="fas fa-ban text-red-600"></i>
-                    Ban Information
-                  </h4>
-                  <div className="p-4 bg-red-50 border border-red-200 rounded">
-                    <p className="text-red-800 font-semibold">Banned on</p>
-                    <p className="text-red-700 mt-1">
-                      {new Date(selectedUser.bannedAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
                     {selectedUser.banReason && (
-                      <>
-                        <p className="text-red-800 font-semibold mt-3">Reason</p>
-                        <p className="text-red-700 mt-1">{selectedUser.banReason}</p>
-                      </>
+                      <div className="p-4 bg-gradient-to-r from-rose-50 to-pink-50 border-l-4 border-rose-500 rounded-lg">
+                        <p className="text-rose-800 font-bold text-sm mb-1">
+                          <i className="fas fa-comment-slash text-rose-600 mr-2"></i>Ban Reason
+                        </p>
+                        <p className="text-rose-700 text-sm ml-6">{selectedUser.banReason}</p>
+                      </div>
                     )}
                   </div>
                 </div>
               )}
 
               {/* Account Timeline */}
-              <div className="mb-8">
-                <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-gray-600 flex items-center gap-2">
-                  <i className="fas fa-clock text-gray-600"></i>
+              <div>
+                <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-indigo-600 flex items-center gap-2">
+                  <i className="fas fa-clock text-indigo-600 bg-indigo-50 w-8 h-8 flex items-center justify-center rounded-lg"></i>
                   Account Timeline
                 </h4>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                    <span className="text-gray-700 font-semibold">Member Since</span>
-                    <span className="text-gray-900">
-                      {new Date(selectedUser.createdAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </span>
+                <div className="space-y-3 relative">
+                  {/* Timeline Line */}
+                  <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-200 via-indigo-300 to-indigo-400"></div>
+                  
+                  {/* Created Timeline Item */}
+                  <div className="relative pl-20">
+                    <div className="absolute left-0 top-2.5 w-10 h-10 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-full flex items-center justify-center text-white shadow-lg">
+                      <i className="fas fa-user-plus text-sm"></i>
+                    </div>
+                    <div className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-indigo-500 rounded-lg hover:shadow-md transition-all">
+                      <p className="text-indigo-900 font-bold text-sm">Account Created</p>
+                      <p className="text-indigo-700 text-sm mt-1">
+                        {new Date(selectedUser.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                    <span className="text-gray-700 font-semibold">Last Updated</span>
-                    <span className="text-gray-900">
-                      {new Date(selectedUser.updatedAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </span>
+
+                  {/* Update Timeline Item */}
+                  <div className="relative pl-20">
+                    <div className="absolute left-0 top-2.5 w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-full flex items-center justify-center text-white shadow-lg">
+                      <i className="fas fa-sync text-sm"></i>
+                    </div>
+                    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-lg hover:shadow-md transition-all">
+                      <p className="text-blue-900 font-bold text-sm">Last Updated</p>
+                      <p className="text-blue-700 text-sm mt-1">
+                        {new Date(selectedUser.updatedAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
                   </div>
+
+                  {/* Verification Timeline Item */}
+                  {selectedUser.isVerified && selectedUser.verifiedAt && (
+                    <div className="relative pl-20">
+                      <div className="absolute left-0 top-2.5 w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center text-white shadow-lg">
+                        <i className="fas fa-check text-sm"></i>
+                      </div>
+                      <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-lg hover:shadow-md transition-all">
+                        <p className="text-green-900 font-bold text-sm">Owner Verified</p>
+                        <p className="text-green-700 text-sm mt-1">
+                          {new Date(selectedUser.verifiedAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ban Timeline Item */}
+                  {selectedUser.isBanned && selectedUser.bannedAt && (
+                    <div className="relative pl-20">
+                      <div className="absolute left-0 top-2.5 w-10 h-10 bg-gradient-to-br from-red-400 to-rose-600 rounded-full flex items-center justify-center text-white shadow-lg">
+                        <i className="fas fa-ban text-sm"></i>
+                      </div>
+                      <div className="p-4 bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 rounded-lg hover:shadow-md transition-all">
+                        <p className="text-red-900 font-bold text-sm">Account Banned</p>
+                        <p className="text-red-700 text-sm mt-1">
+                          {new Date(selectedUser.bannedAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -569,7 +642,7 @@ export const UserManagement = () => {
                     setShowDetail(false);
                     setSelectedUser(null);
                   }}
-                  className="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-semibold flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 rounded-lg hover:from-gray-300 hover:to-gray-400 transition font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:scale-105 duration-200"
                 >
                   <i className="fas fa-times"></i> Close
                 </button>
@@ -577,7 +650,7 @@ export const UserManagement = () => {
                 {!selectedUser.isVerified && selectedUser.role === 'owner' && (
                   <button
                     onClick={() => handleVerify(selectedUser._id)}
-                    className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 duration-200"
                   >
                     <i className="fas fa-check-circle"></i> Verify
                   </button>
@@ -586,7 +659,7 @@ export const UserManagement = () => {
                 {!selectedUser.isVerified && selectedUser.role === 'owner' && (
                   <button
                     onClick={() => setShowRejectModal(true)}
-                    className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-semibold flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-lg hover:from-orange-600 hover:to-amber-700 transition font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 duration-200"
                   >
                     <i className="fas fa-times-circle"></i> Reject
                   </button>
@@ -595,7 +668,7 @@ export const UserManagement = () => {
                 {!selectedUser.isBanned && selectedUser.role !== 'admin' && (
                   <button
                     onClick={() => setShowBanModal(true)}
-                    className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg hover:from-red-600 hover:to-rose-700 transition font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 duration-200"
                   >
                     <i className="fas fa-ban"></i> Ban
                   </button>
@@ -604,7 +677,7 @@ export const UserManagement = () => {
                 {selectedUser.isBanned && (
                   <button
                     onClick={() => handleUnban(selectedUser._id)}
-                    className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 duration-200"
                   >
                     <i className="fas fa-undo"></i> Unban
                   </button>
