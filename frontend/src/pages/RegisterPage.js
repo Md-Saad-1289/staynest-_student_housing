@@ -6,7 +6,7 @@ export const RegisterPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    mobile: '',
+    phoneNo: '',
     password: '',
     role: 'student',
   });
@@ -31,7 +31,7 @@ export const RegisterPage = () => {
       await register(
         formData.name,
         formData.email,
-        formData.mobile,
+        formData.phoneNo,
         formData.password,
         formData.role
       );
@@ -92,8 +92,8 @@ export const RegisterPage = () => {
             <label className="block text-gray-700 font-semibold mb-2 text-sm"><i className="fas fa-mobile-alt text-blue-600 mr-2"></i>Mobile Number</label>
             <input
               type="text"
-              name="mobile"
-              value={formData.mobile}
+              name="phoneNo"
+              value={formData.phoneNo}
               onChange={handleChange}
               placeholder="01XXXXXXXXX"
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-gray-50 hover:bg-white"

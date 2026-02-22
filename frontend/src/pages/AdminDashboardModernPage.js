@@ -469,12 +469,12 @@ export const AdminDashboardModernPage = ({ tab }) => {
       ),
     },
     {
-      key: 'mobile',
+      key: 'phoneNo',
       label: 'Contact',
       render: (row) => (
         <div className="flex items-center gap-1">
           <i className="fas fa-phone text-gray-500"></i>
-          <span className="text-sm">{row.mobile}</span>
+          <span className="text-sm">{row.phoneNo}</span>
         </div>
       ),
     },
@@ -1699,7 +1699,7 @@ export const AdminDashboardModernPage = ({ tab }) => {
                 <div className="text-center">
                   <p className="font-semibold text-lg">{ownerModal.owner.name}</p>
                   <p className="text-sm text-gray-600">{ownerModal.owner.email}</p>
-                  <p className="text-sm text-gray-600">{ownerModal.owner.mobile || '—'}</p>
+                  <p className="text-sm text-gray-600">{ownerModal.owner.phoneNo || '—'}</p>
                 </div>
 
                 <div className="w-full bg-gray-50 p-3 rounded border">
@@ -1736,7 +1736,7 @@ export const AdminDashboardModernPage = ({ tab }) => {
                   <div className="bg-gray-50 p-4 rounded border">
                     <p className="text-xs text-gray-500">Contact & Social</p>
                     <p className="mt-2 text-gray-800">Email: {ownerModal.owner.email}</p>
-                    <p className="text-gray-800">Mobile: {ownerModal.owner.mobile || '—'}</p>
+                    <p className="text-gray-800">Phone: {ownerModal.owner.phoneNo || '—'}</p>
                     <div className="mt-2 text-sm text-blue-600 space-y-1">
                       {ownerModal.owner.linkedin && <div><a href={ownerModal.owner.linkedin} target="_blank" rel="noreferrer">LinkedIn</a></div>}
                       {ownerModal.owner.twitter && <div><a href={ownerModal.owner.twitter} target="_blank" rel="noreferrer">Twitter</a></div>}

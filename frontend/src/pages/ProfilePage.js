@@ -36,7 +36,7 @@ export function ProfilePage() {
     setForm({
       name: u.name || '',
       email: u.email || '',
-      phoneNo: u.mobile || u.phoneNo || '',
+      phoneNo: u.phoneNo || '',
       fullAddress: u.fullAddress || '',
       dob: u.dob ? new Date(u.dob).toISOString().slice(0,10) : '',
       gender: u.gender || '',
@@ -103,11 +103,12 @@ export function ProfilePage() {
 
         {!editing ? (
           <div>
-            <div className="mb-4"><strong>Phone:</strong> {user.mobile || '—'}</div>
+            <div className="mb-4"><strong>Phone:</strong> {user.phoneNo || '—'}</div>
             <div className="mb-4"><strong>Address:</strong> {user.fullAddress || '—'}</div>
             <div className="mb-4"><strong>DOB:</strong> {user.dob ? new Date(user.dob).toLocaleDateString() : '—'}</div>
             <div className="mb-4"><strong>Gender:</strong> {user.gender || '—'}</div>
             <div className="mb-4"><strong>Emergency Contact:</strong> {user.emergencyContact || '—'}</div>
+            <div className="mb-4"><strong>Verified:</strong> {user.isVerified ? 'Yes' : 'No'}</div>
             {user.role === 'owner' && <div className="mb-4"><strong>NID:</strong> {user.nidNumber || '—'}</div>}
             <div className="flex gap-2">
               <button onClick={startEdit} className="px-4 py-2 bg-blue-600 text-white rounded">Edit Profile</button>
@@ -116,6 +117,7 @@ export function ProfilePage() {
         ) : (
           <div className="grid gap-3">
             <input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Full name" className="border p-2 rounded" />
+            <input value={form.email} disabled placeholder="Email (read-only)" className="border p-2 rounded bg-gray-100 text-gray-700" />
             <input value={form.phoneNo} onChange={e=>setForm({...form,phoneNo:e.target.value})} placeholder="Phone" className="border p-2 rounded" />
             <input value={form.fullAddress} onChange={e=>setForm({...form,fullAddress:e.target.value})} placeholder="Full address" className="border p-2 rounded" />
             <input type="date" value={form.dob} onChange={e=>setForm({...form,dob:e.target.value})} className="border p-2 rounded" />

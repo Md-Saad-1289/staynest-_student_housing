@@ -15,7 +15,7 @@ export const UserProfilePage = () => {
 
   const initFormData = (d = {}) => ({
     name: d.name ?? '',
-    mobile: d.mobile ?? '',
+    phoneNo: d.phoneNo ?? d.mobile ?? '',
     bio: d.bio ?? '',
     university: d.university ?? '',
     location: d.location ?? '',
@@ -25,7 +25,7 @@ export const UserProfilePage = () => {
     budgetMin: typeof d.budgetMin === 'number' ? String(d.budgetMin) : (d.budgetMin ?? ''),
     budgetMax: typeof d.budgetMax === 'number' ? String(d.budgetMax) : (d.budgetMax ?? ''),
     gender: d.gender ?? '',
-    dateOfBirth: d.dateOfBirth ? new Date(d.dateOfBirth).toISOString().slice(0,10) : '',
+    dob: d.dob ? new Date(d.dob).toISOString().slice(0,10) : (d.dateOfBirth ? new Date(d.dateOfBirth).toISOString().slice(0,10) : ''),
     studentId: d.studentId ?? '',
     major: d.major ?? '',
     academicYear: d.academicYear ?? '',
@@ -60,17 +60,8 @@ export const UserProfilePage = () => {
     fetchProfile();
   }, []);
 
-  const handleAvatarChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result);
-        setFormData({ ...formData, profileImage: reader.result });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  // file uploads disabled — profileImage must be a valid http(s) URL
+  const handleAvatarChange = () => {};
 
   const handleSaveProfile = async () => {
     // client-side validation
@@ -82,14 +73,14 @@ export const UserProfilePage = () => {
       setSaving(true);
       const payload = {
         name: formData.name.trim(),
-        mobile: formData.mobile || undefined,
+        phoneNo: formData.phoneNo || undefined,
         bio: formData.bio || undefined,
         university: formData.university || undefined,
         location: formData.location || undefined,
         linkedin: formData.linkedin || undefined,
         twitter: formData.twitter || undefined,
         website: formData.website || undefined,
-        dateOfBirth: formData.dateOfBirth || undefined,
+        dob: formData.dob || formData.dateOfBirth || undefined,
         studentId: formData.studentId || undefined,
         major: formData.major || undefined,
         academicYear: formData.academicYear || undefined,
@@ -101,10 +92,11 @@ export const UserProfilePage = () => {
         smsNotifications: !!formData.smsNotifications,
         pushNotifications: !!formData.pushNotifications,
         roommatePreferences: formData.roommatePreferences || undefined,
-        emergencyContactName: formData.emergencyContactName || undefined,
-        emergencyContactPhone: formData.emergencyContactPhone || undefined,
+        // combine emergency contact name/phone into single stored string
+        emergencyContact: (formData.emergencyContactName || formData.emergencyContactPhone) ? `${formData.emergencyContactName || ''}|${formData.emergencyContactPhone || ''}` : undefined,
         gender: formData.gender || undefined,
-        profileImage: formData.profileImage || undefined,
+        // only accept http(s) URLs for profileImage
+        profileImage: (formData.profileImage && (() => { try { const u = new URL(formData.profileImage); return ['http:','https:'].includes(u.protocol); } catch { return false; } })()) ? formData.profileImage : undefined,
         budgetMin: formData.budgetMin !== '' && formData.budgetMin != null ? formData.budgetMin : undefined,
         budgetMax: formData.budgetMax !== '' && formData.budgetMax != null ? formData.budgetMax : undefined,
       };
@@ -130,14 +122,14 @@ export const UserProfilePage = () => {
   const validateProfile = () => {
     const e = {};
     const name = (formData.name || '').trim();
-    const mobile = (formData.mobile || '').trim();
+    const phone = (formData.phoneNo || '').trim();
 
     if (!name) e.name = 'Full name is required';
-    if (mobile) {
-      const digits = mobile.replace(/[^0-9]/g, '');
-      if (digits.length < 8) e.mobile = 'Enter a valid phone number';
+    if (phone) {
+      const digits = phone.replace(/[^0-9]/g, '');
+      if (digits.length < 8) e.phoneNo = 'Enter a valid phone number';
     } else {
-      e.mobile = 'Phone number is required';
+      e.phoneNo = 'Phone number is required';
     }
     return e;
   };
@@ -194,15 +186,9 @@ export const UserProfilePage = () => {
                   </div>
                 )}
                 {editing && (
-                  <label className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center cursor-pointer hover:bg-blue-700 transition">
+                  <div className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center cursor-default" title="Edit profile image via URL in the form below">
                     <i className="fas fa-camera"></i>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAvatarChange}
-                      className="hidden"
-                    />
-                  </label>
+                  </div>
                 )}
               </div>
               <h2 className="text-2xl font-bold text-gray-800 mt-4">{profile?.name}</h2>
@@ -210,7 +196,7 @@ export const UserProfilePage = () => {
                 <i className="fas fa-envelope"></i> {profile?.email}
               </p>
               <p className="text-gray-600 flex items-center gap-2 mt-1">
-                <i className="fas fa-phone"></i> {profile?.mobile}
+                <i className="fas fa-phone"></i> {profile?.phoneNo}
               </p>
               <span className="mt-3 inline-block px-4 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700 capitalize">
                 <i className="fas fa-tag mr-1"></i> {profile?.role}
@@ -256,15 +242,15 @@ export const UserProfilePage = () => {
                 {editing ? (
                   <input
                     type="tel"
-                    value={formData.mobile || ''}
-                    onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+                    value={formData.phoneNo || ''}
+                    onChange={(e) => setFormData({ ...formData, phoneNo: e.target.value })}
                     className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none"
                     placeholder="e.g., 01712345678"
                   />
                 ) : (
-                  <p className="text-gray-800 font-semibold">{profile?.mobile}</p>
+                  <p className="text-gray-800 font-semibold">{profile?.phoneNo}</p>
                 )}
-                {editing && errors.mobile && <p className="text-xs text-red-600 mt-1">{errors.mobile}</p>}
+                {editing && errors.phoneNo && <p className="text-xs text-red-600 mt-1">{errors.phoneNo}</p>}
               </div>
 
               {/* Role */}
@@ -279,6 +265,12 @@ export const UserProfilePage = () => {
             {/* Extended Profile Fields */}
             {editing ? (
               <div className="mb-6 grid grid-cols-1 gap-4">
+                <input
+                  value={formData.profileImage || ''}
+                  onChange={(e) => setFormData({ ...formData, profileImage: e.target.value })}
+                  placeholder="Profile image URL (http/https)"
+                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none"
+                />
                 <textarea
                   value={formData.bio}
                   onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
@@ -346,8 +338,8 @@ export const UserProfilePage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input
                     type="date"
-                    value={formData.dateOfBirth}
-                    onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                    value={formData.dob}
+                    onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
                     className="w-full border-2 border-gray-300 rounded-lg px-4 py-2"
                   />
                   <input
@@ -437,7 +429,7 @@ export const UserProfilePage = () => {
                   {profile?.major && <div><strong>Major:</strong> {profile.major}</div>}
                   {profile?.academicYear && <div><strong>Academic Year:</strong> {profile.academicYear}</div>}
                   {profile?.studentId && <div><strong>Student ID:</strong> {profile.studentId}</div>}
-                  {profile?.dateOfBirth && <div><strong>DOB:</strong> {new Date(profile.dateOfBirth).toLocaleDateString()}</div>}
+                  { (profile?.dob || profile?.dateOfBirth) && <div><strong>DOB:</strong> {new Date(profile.dob || profile.dateOfBirth).toLocaleDateString()}</div> }
                 </div>
 
                 {/* Socials */}

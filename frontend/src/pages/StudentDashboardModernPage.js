@@ -254,7 +254,7 @@ export const StudentDashboardModernPage = ({ tab: tabProp }) => {
                     </p>
                     <p className="text-blue-100 flex items-center gap-1 mt-1">
                       <i className="fas fa-phone"></i>
-                      {profile.mobile}
+                      {profile.phoneNo}
                     </p>
                   </div>
                 </div>

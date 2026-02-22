@@ -579,7 +579,7 @@ export const ListingsManagement = () => {
 
                   <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
                     <p className="text-green-600 text-xs font-bold uppercase tracking-wide mb-1">Phone</p>
-                    <p className="text-gray-900 font-medium">{selectedListing.ownerId?.mobile}</p>
+                    <p className="text-gray-900 font-medium">{selectedListing.ownerId?.phoneNo}</p>
                   </div>
 
                   <div className="p-3">{getOwnerBadge(selectedListing)}</div>

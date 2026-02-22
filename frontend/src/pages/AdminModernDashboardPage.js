@@ -18,14 +18,14 @@ const MOCK_UNVERIFIED_OWNERS = [
     _id: '1',
     name: 'Reza Khan',
     email: 'reza@example.com',
-    mobile: '01712345678',
+    phoneNo: '01712345678',
     listingsCount: 2,
   },
   {
     _id: '2',
     name: 'Aisha Ahmed',
     email: 'aisha@example.com',
-    mobile: '01722345678',
+    phoneNo: '01722345678',
     listingsCount: 1,
   },
 ];
@@ -105,9 +105,9 @@ export const AdminDashboardPage = () => {
       ),
     },
     {
-      key: 'mobile',
+      key: 'phoneNo',
       label: 'Contact',
-      render: (row) => <span className="text-sm text-gray-700">{row.mobile}</span>,
+      render: (row) => <span className="text-sm text-gray-700">{row.phoneNo}</span>,
     },
     {
       key: 'listings',

@@ -46,7 +46,7 @@ export const AdminDashboardPage = () => {
       // Fetch full owner profile so admin can inspect all fields before approving
       const res = await adminService.getOwnerById(userId);
       const owner = res.data.user;
-      const summary = `Approve owner?\nName: ${owner.name}\nEmail: ${owner.email}\nMobile: ${owner.mobile || 'N/A'}\nNID: ${owner.nidNumber || 'N/A'}`;
+      const summary = `Approve owner?\nName: ${owner.name}\nEmail: ${owner.email}\nPhone: ${owner.phoneNo || 'N/A'}\nNID: ${owner.nidNumber || 'N/A'}`;
       if (!window.confirm(summary)) return;
       await adminService.verifyOwner(userId);
       alert('Owner verified!');
@@ -148,7 +148,7 @@ export const AdminDashboardPage = () => {
                     <div>
                       <h3 className="text-xl font-bold">{owner.name}</h3>
                       <p className="text-gray-600">{owner.email}</p>
-                      <p className="text-gray-600">{owner.mobile}</p>
+                      <p className="text-gray-600">{owner.phoneNo}</p>
                     </div>
                     <button
                       onClick={() => handleVerifyOwner(owner._id)}

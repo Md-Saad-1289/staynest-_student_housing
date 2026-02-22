@@ -43,7 +43,7 @@ const MOCK_LISTING = {
     _id: 'owner1',
     name: 'Fatima Khan',
     email: 'fatima@example.com',
-    mobile: '01712345678',
+    phoneNo: '01712345678',
     isVerified: true,
     totalListings: 3,
   },
@@ -392,13 +392,13 @@ export const ListingDetailPage = () => {
                 <i className="fas fa-envelope"></i> Send Email
               </a>
               <a
-                href={`tel:${currentListing.ownerId?.mobile}`}
+                href={`tel:${currentListing.ownerId?.phoneNo}`}
                 className="w-full border border-sky-600 text-sky-600 text-center py-3 rounded-lg font-semibold hover:bg-sky-50 text-sm flex items-center justify-center gap-2 transition"
               >
                 <i className="fas fa-phone"></i> Call Owner
               </a>
               <a
-                href={`https://wa.me/${currentListing.ownerId?.mobile?.replace(/[^\d]/g, '')}`}
+                href={`https://wa.me/${currentListing.ownerId?.phoneNo?.replace(/[^\d]/g, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full bg-green-500 text-white text-center py-3 rounded-lg font-semibold hover:bg-green-600 text-sm flex items-center justify-center gap-2 transition"
@@ -459,7 +459,7 @@ export const ListingDetailPage = () => {
       <QuickActionBar
         onBookingClick={() => setShowBookingModal(true)}
         onCallClick={() => {
-          window.location.href = `tel:${currentListing.ownerId?.mobile}`;
+          window.location.href = `tel:${currentListing.ownerId?.phoneNo}`;
         }}
         isAuthenticated={isAuthenticated}
         userRole={user?.role}

@@ -34,8 +34,8 @@ api.interceptors.request.use(
    AUTH SERVICES
 ========================= */
 export const authService = {
-  register: (name, email, mobile, password, role) =>
-    api.post('/auth/register', { name, email, mobile, password, role }).then(res => res),
+  register: (name, email, phoneNo, password, role) =>
+    api.post('/auth/register', { name, email, phoneNo, password, role }).then(res => res),
 
   login: (email, password) =>
     api.post('/auth/login', { email, password }).then(res => res),

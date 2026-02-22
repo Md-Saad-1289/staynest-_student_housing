@@ -92,7 +92,7 @@ export const AdminSuperDashboardPage = () => {
     try {
       const res = await adminService.getOwnerById(userId);
       const owner = res.data.user;
-      const summary = `Approve owner?\nName: ${owner.name}\nEmail: ${owner.email}\nMobile: ${owner.mobile || 'N/A'}\nNID: ${owner.nidNumber || 'N/A'}`;
+      const summary = `Approve owner?\nName: ${owner.name}\nEmail: ${owner.email}\nPhone: ${owner.phoneNo || 'N/A'}\nNID: ${owner.nidNumber || 'N/A'}`;
       if (!window.confirm(summary)) return;
       await adminService.verifyOwner(userId);
       alert('✓ Owner verified successfully!');
@@ -216,9 +216,9 @@ export const AdminSuperDashboardPage = () => {
       ),
     },
     {
-      key: 'mobile',
+      key: 'phoneNo',
       label: 'Contact',
-      render: (row) => <span className="text-sm text-gray-700">{row.mobile}</span>,
+      render: (row) => <span className="text-sm text-gray-700">{row.phoneNo}</span>,
     },
     {
       key: 'actions',

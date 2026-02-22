@@ -304,7 +304,7 @@ export const UserManagement = () => {
                             {user.isBanned ? 'Banned' : 'Active'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-gray-700">{user.mobile}</td>
+                        <td className="px-6 py-4 text-gray-700">{user.phoneNo}</td>
                         <td className="px-6 py-4">
                           <div className="flex justify-center gap-2">
                             <button
@@ -451,7 +451,7 @@ export const UserManagement = () => {
                     <p className="text-gray-600 text-xs font-bold uppercase tracking-wide mb-2">
                       <i className="fas fa-phone text-blue-600 mr-2"></i>Phone Number
                     </p>
-                    <p className="text-gray-900 font-medium group-hover:text-blue-600 transition">{selectedUser.mobile}</p>
+                    <p className="text-gray-900 font-medium group-hover:text-blue-600 transition">{selectedUser.phoneNo}</p>
                   </div>
                 </div>
               </div>
