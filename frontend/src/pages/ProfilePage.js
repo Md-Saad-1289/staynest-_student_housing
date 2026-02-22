@@ -18,28 +18,28 @@ export function ProfilePage() {
     let mounted = true;
     const fetch = async () => {
       try {
-        setForm({
-          name: u.name || '',
-          email: u.email || '',
-          mobile: u.mobile || u.phoneNo || '',
-          fullAddress: u.fullAddress || '',
-          dob: u.dob ? new Date(u.dob).toISOString().slice(0,10) : '',
-          gender: u.gender || '',
-          emergencyContact: u.emergencyContact || '',
-          profileImage: u.profileImage || '',
-          nidNumber: u.nidNumber || ''
-        });
+        const res = await userService.getProfile();
+        const data = res?.data?.user || res?.data;
+        if (mounted) setProfile(data);
+      } catch (err) {
+        if (err?.response?.status === 401) { logout(); navigate('/login'); }
+      } finally { if (mounted) setLoading(false); }
+    };
+
+    if (authUser) { setProfile(authUser); setLoading(false); fetch(); }
+    else fetch();
+    return () => (mounted = false);
   }, [authUser, logout, navigate]);
 
   const startEdit = () => {
     const u = profile || {};
-        if (form.mobile) {
-          const digits = String(form.mobile).replace(/\D/g,''); if (digits.length < 8) return setError('Invalid mobile number');
+    setForm({
+      name: u.name || '',
       email: u.email || '',
-      phoneNo: u.phoneNo || '',
+      mobile: u.mobile || u.phoneNo || '',
       fullAddress: u.fullAddress || '',
       dob: u.dob ? new Date(u.dob).toISOString().slice(0,10) : '',
-          phoneNo: form.mobile || undefined,
+      gender: u.gender || '',
       emergencyContact: u.emergencyContact || '',
       profileImage: u.profileImage || '',
       nidNumber: u.nidNumber || ''
@@ -50,16 +50,16 @@ export function ProfilePage() {
   const cancel = () => { setEditing(false); setError(''); };
 
   const validateUrl = (s) => { try { const u = new URL(s); return ['http:','https:'].includes(u.protocol); } catch { return false; } };
-            <input value={form.mobile} onChange={e=>setForm({...form,mobile:e.target.value})} placeholder="Mobile" className="border p-2 rounded" />
+
   const save = async () => {
-            <div className="mb-4"><strong>Mobile:</strong> {user.mobile || user.phoneNo || '—'}</div>
-    if (form.phoneNo) {
-      const digits = String(form.phoneNo).replace(/\D/g,''); if (digits.length < 8) return setError('Invalid phone number');
+    if (!form.name?.trim()) return setError('Name is required');
+    if (form.mobile) {
+      const digits = String(form.mobile).replace(/\D/g,''); if (digits.length < 8) return setError('Invalid mobile number');
     }
 
     const payload = {
       name: form.name.trim(),
-      phoneNo: form.phoneNo || undefined,
+      phoneNo: form.mobile || undefined,
       fullAddress: form.fullAddress || undefined,
       dob: form.dob || undefined,
       gender: form.gender || undefined,
@@ -103,7 +103,7 @@ export function ProfilePage() {
 
         {!editing ? (
           <div>
-            <div className="mb-4"><strong>Phone:</strong> {user.phoneNo || '—'}</div>
+            <div className="mb-4"><strong>Mobile:</strong> {user.mobile || user.phoneNo || '—'}</div>
             <div className="mb-4"><strong>Address:</strong> {user.fullAddress || '—'}</div>
             <div className="mb-4"><strong>DOB:</strong> {user.dob ? new Date(user.dob).toLocaleDateString() : '—'}</div>
             <div className="mb-4"><strong>Gender:</strong> {user.gender || '—'}</div>
@@ -118,7 +118,7 @@ export function ProfilePage() {
           <div className="grid gap-3">
             <input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Full name" className="border p-2 rounded" />
             <input value={form.email} disabled placeholder="Email (read-only)" className="border p-2 rounded bg-gray-100 text-gray-700" />
-            <input value={form.phoneNo} onChange={e=>setForm({...form,phoneNo:e.target.value})} placeholder="Phone" className="border p-2 rounded" />
+            <input value={form.mobile} onChange={e=>setForm({...form,mobile:e.target.value})} placeholder="Mobile" className="border p-2 rounded" />
             <input value={form.fullAddress} onChange={e=>setForm({...form,fullAddress:e.target.value})} placeholder="Full address" className="border p-2 rounded" />
             <input type="date" value={form.dob} onChange={e=>setForm({...form,dob:e.target.value})} className="border p-2 rounded" />
             <select value={form.gender} onChange={e=>setForm({...form,gender:e.target.value})} className="border p-2 rounded">
