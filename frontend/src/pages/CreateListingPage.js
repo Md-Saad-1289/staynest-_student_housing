@@ -11,9 +11,14 @@ export const CreateListingPage = () => {
   // Basic Info
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [rules, setRules] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [type, setType] = useState('');
+  
+  // Meals
+  const [mealsAvailable, setMealsAvailable] = useState(false);
+  const [mealsType, setMealsType] = useState('none');
   
   // Pricing
   const [rent, setRent] = useState('');
@@ -58,6 +63,7 @@ export const CreateListingPage = () => {
           
           setTitle(listing.title || '');
           setDescription(listing.description || '');
+          setRules(listing.rules || '');
           setAddress(listing.address || '');
           setCity(listing.city || '');
           setType(listing.type || '');
@@ -68,6 +74,11 @@ export const CreateListingPage = () => {
           setRooms(listing.rooms?.toString() || '1');
           setCapacity(listing.capacity?.toString() || '1');
           setFurnished(listing.furnished || 'semi');
+          
+          if (listing.meals) {
+            setMealsAvailable(listing.meals.available || false);
+            setMealsType(listing.meals.type || 'none');
+          }
           
           if (listing.facilities) {
             setAmenities({
@@ -168,6 +179,7 @@ export const CreateListingPage = () => {
     const payload = {
       title,
       description,
+      rules,
       address,
       city,
       type,
@@ -179,6 +191,10 @@ export const CreateListingPage = () => {
       capacity: parseInt(capacity),
       furnished,
       facilities,
+      meals: {
+        available: mealsAvailable,
+        type: mealsType,
+      },
       photos: allPhotos.length > 0 ? allPhotos : [],
     };
 
@@ -289,8 +305,59 @@ export const CreateListingPage = () => {
                     onChange={(e) => setDescription(e.target.value)}
                     className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
                     rows="4"
-                    placeholder="Describe your property, rules, nearby areas, etc..."
+                    placeholder="Describe your property, nearby areas, etc..."
                   />
+                </div>
+
+                <div>
+                  <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
+                    <i className="fas fa-file-contract text-red-600"></i> House Rules
+                  </label>
+                  <textarea
+                    value={rules}
+                    onChange={(e) => setRules(e.target.value)}
+                    className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
+                    rows="3"
+                    placeholder="e.g., No smoking, Quiet hours after 10 PM, No loud music, No outside guests after 10 PM, etc..."
+                  />
+                </div>
+
+                <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-6 rounded-lg border-2 border-orange-200">
+                  <label className="flex text-sm font-semibold mb-4 text-gray-800 items-center gap-2">
+                    <i className="fas fa-utensils text-orange-600"></i> Meals
+                  </label>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id="mealsAvailable"
+                        checked={mealsAvailable}
+                        onChange={(e) => setMealsAvailable(e.target.checked)}
+                        className="w-5 h-5 text-orange-600 rounded cursor-pointer"
+                      />
+                      <label htmlFor="mealsAvailable" className="cursor-pointer font-medium text-gray-700">
+                        Meals Available
+                      </label>
+                    </div>
+                    
+                    {mealsAvailable && (
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                          Meal Type
+                        </label>
+                        <select
+                          value={mealsType}
+                          onChange={(e) => setMealsType(e.target.value)}
+                          className="w-full border-2 border-orange-200 rounded-lg px-4 py-2 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
+                        >
+                          <option value="breakfast">Breakfast Only</option>
+                          <option value="lunch">Lunch Only</option>
+                          <option value="dinner">Dinner Only</option>
+                          <option value="all">All Meals (Breakfast, Lunch & Dinner)</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>

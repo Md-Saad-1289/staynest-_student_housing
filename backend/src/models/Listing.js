@@ -74,6 +74,10 @@ const listingSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    description: {
+      type: String,
+      default: '',
+    },
     verified: {
       type: Boolean,
       default: false,

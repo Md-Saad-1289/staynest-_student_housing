@@ -254,6 +254,39 @@ export const ListingDetailPage = () => {
             </div>
           </div>
 
+          {/* Meals */}
+          {currentListing.meals && (
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><i className="fas fa-utensils text-orange-600"></i> Meals</h2>
+              <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-4 border-2 border-orange-200">
+                {currentListing.meals.available ? (
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="inline-block px-3 py-1 bg-green-200 text-green-800 rounded-full text-sm font-semibold">
+                        <i className="fas fa-check-circle mr-2"></i> Meals Available
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 mt-3">
+                      <span className="font-semibold text-orange-700">Meal Type:</span>
+                      <span className="ml-2 inline-block px-3 py-1 bg-white border border-orange-200 rounded-full text-sm font-medium text-orange-700">
+                        {currentListing.meals.type === 'breakfast' && '🍳 Breakfast Only'}
+                        {currentListing.meals.type === 'lunch' && '🥗 Lunch Only'}
+                        {currentListing.meals.type === 'dinner' && '🍽️ Dinner Only'}
+                        {currentListing.meals.type === 'all' && '🍽️ All Meals'}
+                      </span>
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold">
+                      <i className="fas fa-times-circle mr-2"></i> No Meals
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Location */}
           <div>
             <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><i className="fas fa-location-dot text-red-500"></i> Location</h2>
