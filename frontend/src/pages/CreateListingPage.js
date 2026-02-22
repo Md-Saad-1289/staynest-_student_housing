@@ -274,7 +274,7 @@ export const CreateListingPage = () => {
         )}
 
         {/* Form Container */}
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
           <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && step < 4) { e.preventDefault(); } }} className="p-8">
             {/* STEP 1: Basic Information */}
             {step === 1 && (
@@ -316,16 +316,18 @@ export const CreateListingPage = () => {
                   <textarea
                     value={rules}
                     onChange={(e) => setRules(e.target.value)}
-                    className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
+                    className="w-full border-2 border-red-300 rounded-lg px-4 py-3 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 transition bg-red-50"
                     rows="3"
                     placeholder="e.g., No smoking, Quiet hours after 10 PM, No loud music, No outside guests after 10 PM, etc..."
                   />
+                  <p className="text-xs text-gray-600 mt-2">Let renters know about your house rules and restrictions</p>
                 </div>
 
-                <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-6 rounded-lg border-2 border-orange-200">
-                  <label className="flex text-sm font-semibold mb-4 text-gray-800 items-center gap-2">
-                    <i className="fas fa-utensils text-orange-600"></i> Meals
+                <div className="border-t-2 border-b-2 border-orange-300 bg-orange-50 p-6 rounded-lg">
+                  <label className="flex text-sm font-bold mb-4 text-orange-900 items-center gap-2 text-base">
+                    <i className="fas fa-utensils text-orange-600"></i> Meals Offered (Optional)
                   </label>
+                  <p className="text-sm text-orange-800 mb-4">Do you provide meals to your tenants?</p>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <input
@@ -336,24 +338,24 @@ export const CreateListingPage = () => {
                         className="w-5 h-5 text-orange-600 rounded cursor-pointer"
                       />
                       <label htmlFor="mealsAvailable" className="cursor-pointer font-medium text-gray-700">
-                        Meals Available
+                        Yes, I provide meals
                       </label>
                     </div>
                     
                     {mealsAvailable && (
-                      <div>
-                        <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                          Meal Type
+                      <div className="ml-8 bg-white p-4 rounded-lg border-2 border-orange-200">
+                        <label className="text-sm font-semibold text-gray-700 mb-3 block">
+                          What type of meals? *
                         </label>
                         <select
                           value={mealsType}
                           onChange={(e) => setMealsType(e.target.value)}
-                          className="w-full border-2 border-orange-200 rounded-lg px-4 py-2 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
+                          className="w-full border-2 border-orange-300 rounded-lg px-4 py-2 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
                         >
-                          <option value="breakfast">Breakfast Only</option>
-                          <option value="lunch">Lunch Only</option>
-                          <option value="dinner">Dinner Only</option>
-                          <option value="all">All Meals (Breakfast, Lunch & Dinner)</option>
+                          <option value="breakfast">🍳 Breakfast Only</option>
+                          <option value="lunch">🥗 Lunch Only</option>
+                          <option value="dinner">🍽️ Dinner Only</option>
+                          <option value="all">🍽️ All Meals (Breakfast, Lunch & Dinner)</option>
                         </select>
                       </div>
                     )}
