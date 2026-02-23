@@ -34,7 +34,7 @@ const userSchema = new mongoose.Schema(
       }
     },
 
-    role: { type: String, enum: ['student', 'owner'], required: true, immutable: true },
+    role: { type: String, enum: ['student', 'owner', 'admin'], required: true, immutable: true },
     isVerified: { type: Boolean, default: false },
 
     // NID number (optional, for owners)

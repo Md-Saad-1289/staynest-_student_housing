@@ -17,7 +17,7 @@ const register = async (req, res) => {
     let userRole = role || 'student';
     
     if (userRole === 'admin') {
-      const expectedSecret = process.env.ADMIN_SECRET || 'admin-secret-key';
+      const expectedSecret = process.env.ADMIN_SECRET || process.env.ADMIN_PASSWORD || 'admin-secret-key';
       if (adminSecret !== expectedSecret) {
         return res.status(400).json({ error: 'Invalid role' });
       }
