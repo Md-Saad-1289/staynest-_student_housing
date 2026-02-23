@@ -356,7 +356,7 @@ export const UserManagement = () => {
       {/* Professional User Details Modal */}
       {showDetail && selectedUser && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-screen overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
             {/* Stunning Header with Gradient and Pattern */}
             <div className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 px-8 py-8 text-white">
               {/* Background Pattern */}
@@ -367,21 +367,31 @@ export const UserManagement = () => {
               
               {/* Header Content */}
               <div className="relative flex justify-between items-start">
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                      <i className="fas fa-user-circle text-white text-xl"></i>
-                    </div>
-                    <h3 className="text-3xl font-bold">{selectedUser.name}</h3>
+                <div className="flex items-start gap-6 flex-1">
+                  {/* Profile Avatar/Image */}
+                  <div className="w-24 h-24 rounded-2xl overflow-hidden bg-white/20 flex items-center justify-center shadow-lg flex-shrink-0 border-4 border-white/30 backdrop-blur-sm">
+                    {selectedUser.profileImage ? (
+                      <img src={selectedUser.profileImage} alt={selectedUser.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <i className="fas fa-user-circle text-white text-5xl"></i>
+                    )}
                   </div>
-                  <p className="text-blue-100 text-sm">User ID: {selectedUser._id}</p>
+                  <div>
+                    <h3 className="text-4xl font-bold mb-2">{selectedUser.name}</h3>
+                    <p className="text-blue-100 text-sm mb-1">
+                      <i className="fas fa-id-badge mr-2"></i>User ID: {selectedUser._id}
+                    </p>
+                    <p className="text-blue-100 text-sm">
+                      <i className="fas fa-calendar-alt mr-2"></i>Joined {new Date(selectedUser.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                  </div>
                 </div>
                 <button
                   onClick={() => {
                     setShowDetail(false);
                     setSelectedUser(null);
                   }}
-                  className="text-white hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center transition"
+                  className="text-white hover:bg-white/20 w-12 h-12 rounded-full flex items-center justify-center transition text-xl flex-shrink-0"
                 >
                   ✕
                 </button>
@@ -389,7 +399,7 @@ export const UserManagement = () => {
             </div>
 
             {/* Modal Content */}
-            <div className="p-8 space-y-6">
+            <div className="p-8 space-y-8">
               {/* Alert if user is banned */}
               {selectedUser.isBanned && (
                 <div className="p-4 bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 rounded-lg">
@@ -451,10 +461,60 @@ export const UserManagement = () => {
                     <p className="text-gray-600 text-xs font-bold uppercase tracking-wide mb-2">
                       <i className="fas fa-phone text-blue-600 mr-2"></i>Phone Number
                     </p>
-                    <p className="text-gray-900 font-medium group-hover:text-blue-600 transition">{selectedUser.phoneNo}</p>
+                    <p className="text-gray-900 font-medium group-hover:text-blue-600 transition">{selectedUser.phoneNo || 'Not provided'}</p>
                   </div>
                 </div>
               </div>
+
+              {/* Address & Personal Information Section */}
+              <div>
+                <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-teal-600 flex items-center gap-2">
+                  <i className="fas fa-map-marker-alt text-teal-600 bg-teal-50 w-8 h-8 flex items-center justify-center rounded-lg"></i>
+                  Address & Personal Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2 p-4 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl border border-teal-200 hover:border-teal-400 transition group">
+                    <p className="text-teal-600 text-xs font-bold uppercase tracking-wide mb-2">
+                      <i className="fas fa-home text-teal-600 mr-2"></i>Full Address
+                    </p>
+                    <p className="text-gray-900 font-medium group-hover:text-teal-700 transition">{selectedUser.fullAddress || 'Not provided'}</p>
+                  </div>
+
+                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-cyan-300 transition group">
+                    <p className="text-gray-600 text-xs font-bold uppercase tracking-wide mb-2">
+                      <i className="fas fa-birthday-cake text-cyan-600 mr-2"></i>Date of Birth
+                    </p>
+                    <p className="text-gray-900 font-medium group-hover:text-cyan-600 transition">
+                      {selectedUser.dob ? new Date(selectedUser.dob).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not provided'}
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-cyan-300 transition group">
+                    <p className="text-gray-600 text-xs font-bold uppercase tracking-wide mb-2">
+                      <i className="fas fa-venus-mars text-cyan-600 mr-2"></i>Gender
+                    </p>
+                    <p className="text-gray-900 font-medium group-hover:text-cyan-600 transition">
+                      {selectedUser.gender ? selectedUser.gender.charAt(0).toUpperCase() + selectedUser.gender.slice(1) : 'Not provided'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Emergency Contact Section */}
+              {selectedUser.emergencyContact && (
+                <div>
+                  <h4 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-rose-600 flex items-center gap-2">
+                    <i className="fas fa-phone-volume text-rose-600 bg-rose-50 w-8 h-8 flex items-center justify-center rounded-lg"></i>
+                    Emergency Contact
+                  </h4>
+                  <div className="p-4 bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl border border-rose-200 hover:border-rose-400 transition">
+                    <p className="text-gray-900 font-medium text-lg">
+                      <i className="fas fa-user-circle text-rose-600 mr-2"></i>
+                      {selectedUser.emergencyContact}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* NID Information Section */}
               {selectedUser.nidNumber && (
@@ -636,13 +696,13 @@ export const UserManagement = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="border-t pt-6 flex gap-3 flex-wrap">
+              <div className="border-t pt-8 grid grid-cols-2 md:grid-cols-4 gap-3">
                 <button
                   onClick={() => {
                     setShowDetail(false);
                     setSelectedUser(null);
                   }}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 rounded-lg hover:from-gray-300 hover:to-gray-400 transition font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:scale-105 duration-200"
+                  className="px-4 py-3 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 rounded-lg hover:from-gray-300 hover:to-gray-400 transition font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:scale-105 duration-200 col-span-2 md:col-span-1"
                 >
                   <i className="fas fa-times"></i> Close
                 </button>
@@ -650,7 +710,7 @@ export const UserManagement = () => {
                 {!selectedUser.isVerified && selectedUser.role === 'owner' && (
                   <button
                     onClick={() => handleVerify(selectedUser._id)}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 duration-200"
+                    className="px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 duration-200"
                   >
                     <i className="fas fa-check-circle"></i> Verify
                   </button>
@@ -659,7 +719,7 @@ export const UserManagement = () => {
                 {!selectedUser.isVerified && selectedUser.role === 'owner' && (
                   <button
                     onClick={() => setShowRejectModal(true)}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-lg hover:from-orange-600 hover:to-amber-700 transition font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 duration-200"
+                    className="px-4 py-3 bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-lg hover:from-orange-600 hover:to-amber-700 transition font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 duration-200"
                   >
                     <i className="fas fa-times-circle"></i> Reject
                   </button>
@@ -668,7 +728,7 @@ export const UserManagement = () => {
                 {!selectedUser.isBanned && selectedUser.role !== 'admin' && (
                   <button
                     onClick={() => setShowBanModal(true)}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg hover:from-red-600 hover:to-rose-700 transition font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 duration-200"
+                    className="px-4 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg hover:from-red-600 hover:to-rose-700 transition font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 duration-200"
                   >
                     <i className="fas fa-ban"></i> Ban
                   </button>
@@ -677,7 +737,7 @@ export const UserManagement = () => {
                 {selectedUser.isBanned && (
                   <button
                     onClick={() => handleUnban(selectedUser._id)}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 duration-200"
+                    className="px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 duration-200"
                   >
                     <i className="fas fa-undo"></i> Unban
                   </button>

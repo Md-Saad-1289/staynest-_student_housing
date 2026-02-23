@@ -7,19 +7,12 @@ export const ListingsManagement = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   
-  // Pending filter states (user input before applying)
-  const [pendingSearchQuery, setPendingSearchQuery] = useState('');
-  const [pendingStatusFilter, setPendingStatusFilter] = useState('');
-  const [pendingCityFilter, setPendingCityFilter] = useState('');
-  const [pendingSortBy, setPendingSortBy] = useState('createdAt');
-  const [pendingSortOrder, setPendingSortOrder] = useState('desc');
-  
-  // Applied filter states (used for actual API calls)
-  const [appliedSearchQuery, setAppliedSearchQuery] = useState('');
-  const [appliedStatusFilter, setAppliedStatusFilter] = useState('');
-  const [appliedCityFilter, setAppliedCityFilter] = useState('');
-  const [appliedSortBy, setAppliedSortBy] = useState('createdAt');
-  const [appliedSortOrder, setAppliedSortOrder] = useState('desc');
+  // Filter states (apply instantly)
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
   
   const [page, setPage] = useState(1);
   const [itemsPerPage] = useState(15);
@@ -33,7 +26,7 @@ export const ListingsManagement = () => {
   const [lastStatsUpdate, setLastStatsUpdate] = useState(null);
   const [statsAutoRefreshInterval, setStatsAutoRefreshInterval] = useState(null);
 
-  // Fetch all listings using applied filters
+  // Fetch all listings using current filters
   const fetchListings = useCallback(async () => {
     try {
       setLoading(true);
@@ -41,11 +34,11 @@ export const ListingsManagement = () => {
       const filterParams = {
         page,
         limit: itemsPerPage,
-        search: appliedSearchQuery || undefined,
-        isVerified: appliedStatusFilter === 'true' ? true : appliedStatusFilter === 'false' ? false : undefined,
-        city: appliedCityFilter || undefined,
-        sortBy: appliedSortBy,
-        sortOrder: appliedSortOrder,
+        search: search || undefined,
+        isVerified: statusFilter === 'true' ? true : statusFilter === 'false' ? false : undefined,
+        city: cityFilter || undefined,
+        sortBy,
+        sortOrder,
       };
 
       const res = await adminService.getAllListings(filterParams);
@@ -63,34 +56,23 @@ export const ListingsManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, appliedSearchQuery, appliedStatusFilter, appliedCityFilter, appliedSortBy, appliedSortOrder, itemsPerPage]);
+  }, [page, search, statusFilter, cityFilter, sortBy, sortOrder, itemsPerPage]);
+
+  useEffect(() => {
+    setPage(1); // Reset to first page when filters change
+  }, [search, statusFilter, cityFilter, sortBy, sortOrder]);
 
   useEffect(() => {
     fetchListings();
   }, [fetchListings]);
 
-  // Handle applying filters
-  const handleApplyFilters = () => {
-    setAppliedSearchQuery(pendingSearchQuery);
-    setAppliedStatusFilter(pendingStatusFilter);
-    setAppliedCityFilter(pendingCityFilter);
-    setAppliedSortBy(pendingSortBy);
-    setAppliedSortOrder(pendingSortOrder);
-    setPage(1); // Reset to first page when applying filters
-  };
-
   // Handle resetting all filters
   const handleResetFilters = () => {
-    setPendingSearchQuery('');
-    setPendingStatusFilter('');
-    setPendingCityFilter('');
-    setPendingSortBy('createdAt');
-    setPendingSortOrder('desc');
-    setAppliedSearchQuery('');
-    setAppliedStatusFilter('');
-    setAppliedCityFilter('');
-    setAppliedSortBy('createdAt');
-    setAppliedSortOrder('desc');
+    setSearch('');
+    setStatusFilter('');
+    setCityFilter('');
+    setSortBy('createdAt');
+    setSortOrder('desc');
     setPage(1);
   };
 
@@ -320,9 +302,9 @@ export const ListingsManagement = () => {
             <input
               type="text"
               placeholder="Title, owner, or ID..."
-              value={pendingSearchQuery}
-              onChange={(e) => setPendingSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
             />
           </div>
 
@@ -332,9 +314,9 @@ export const ListingsManagement = () => {
               <i className="fas fa-tag mr-2 text-purple-600"></i> Status
             </label>
             <select
-              value={pendingStatusFilter}
-              onChange={(e) => setPendingStatusFilter(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
             >
               <option value="">All Status</option>
               <option value="true">Approved</option>
@@ -348,9 +330,9 @@ export const ListingsManagement = () => {
               <i className="fas fa-map-marker-alt mr-2 text-red-600"></i> City
             </label>
             <select
-              value={pendingCityFilter}
-              onChange={(e) => setPendingCityFilter(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              value={cityFilter}
+              onChange={(e) => setCityFilter(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
             >
               <option value="">All Cities</option>
               {cities.map((city) => (
@@ -367,9 +349,9 @@ export const ListingsManagement = () => {
               <i className="fas fa-sort mr-2 text-green-600"></i> Sort By
             </label>
             <select
-              value={pendingSortBy}
-              onChange={(e) => setPendingSortBy(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
             >
               <option value="createdAt">Date Added</option>
               <option value="title">Title</option>
@@ -383,9 +365,9 @@ export const ListingsManagement = () => {
               <i className="fas fa-arrow-up-down mr-2 text-indigo-600"></i> Order
             </label>
             <select
-              value={pendingSortOrder}
-              onChange={(e) => setPendingSortOrder(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
             >
               <option value="desc">Descending</option>
               <option value="asc">Ascending</option>
@@ -393,17 +375,11 @@ export const ListingsManagement = () => {
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="mt-4 flex gap-2 flex-wrap">
-          <button
-            onClick={handleApplyFilters}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium flex items-center gap-2 shadow-md hover:shadow-lg"
-          >
-            <i className="fas fa-search"></i> Apply Filters
-          </button>
+        {/* Reset Button */}
+        <div className="mt-4 flex gap-2">
           <button
             onClick={handleResetFilters}
-            className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium flex items-center gap-2"
+            className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium flex items-center gap-2 shadow-sm hover:shadow-md"
           >
             <i className="fas fa-redo"></i> Reset Filters
           </button>
@@ -551,38 +527,67 @@ export const ListingsManagement = () => {
       {/* Detail Modal - Professional Design */}
       {showDetailModal && selectedListing && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto">
-            {/* Header with Status Badges */}
-            <div className="sticky top-0 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 px-8 py-6 text-white flex justify-between items-start gap-4 border-b-4 border-blue-900">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-3xl font-bold">{selectedListing.title}</h3>
-                  {selectedListing.isVerified ? (
-                    <span className="px-3 py-1 bg-green-400 text-green-900 rounded-full text-sm font-bold flex items-center gap-1">
-                      <i className="fas fa-check-circle"></i> Verified
-                    </span>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-y-auto">
+            {/* Header with Listing Image and Info */}
+            <div className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 px-8 py-8 text-white">
+              {/* Background Pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -mr-20 -mt-20"></div>
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full -ml-16 -mb-16"></div>
+              </div>
+              
+              {/* Header Content with Image */}
+              <div className="relative flex justify-between items-start gap-6">
+                {/* Featured Image */}
+                <div className="w-32 h-32 rounded-2xl overflow-hidden bg-white/20 flex items-center justify-center shadow-lg flex-shrink-0 border-4 border-white/30 backdrop-blur-sm">
+                  {selectedListing.photos && selectedListing.photos[0] ? (
+                    <img src={selectedListing.photos[0]} alt={selectedListing.title} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="px-3 py-1 bg-orange-400 text-orange-900 rounded-full text-sm font-bold flex items-center gap-1">
-                      <i className="fas fa-clock"></i> Pending
-                    </span>
+                    <i className="fas fa-image text-white text-5xl"></i>
                   )}
                 </div>
-                <p className="text-blue-100 text-sm"><i className="fas fa-id-badge mr-2"></i>ID: {selectedListing._id}</p>
+
+                <div className="flex-1">
+                  <div className="flex items-start gap-3 mb-2">
+                    <h3 className="text-4xl font-bold">{selectedListing.title}</h3>
+                    {selectedListing.isVerified ? (
+                      <span className="px-3 py-1 bg-green-400 text-green-900 rounded-full text-sm font-bold flex items-center gap-1 flex-shrink-0">
+                        <i className="fas fa-check-circle"></i> Verified
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 bg-orange-400 text-orange-900 rounded-full text-sm font-bold flex items-center gap-1 flex-shrink-0">
+                        <i className="fas fa-clock"></i> Pending
+                      </span>
+                    )}
+                    {selectedListing.isFeatured && (
+                      <span className="px-3 py-1 bg-yellow-400 text-yellow-900 rounded-full text-sm font-bold flex items-center gap-1 flex-shrink-0 animate-pulse">
+                        <i className="fas fa-crown"></i> Featured
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-blue-100 text-sm mb-1">
+                    <i className="fas fa-id-badge mr-2"></i>ID: {selectedListing._id}
+                  </p>
+                  <p className="text-blue-100 text-sm">
+                    <i className="fas fa-map-pin mr-2"></i>{selectedListing.city} • Posted {new Date(selectedListing.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    setLiveStats(null);
+                    setLastStatsUpdate(null);
+                  }}
+                  className="text-white hover:bg-white/20 w-12 h-12 rounded-full flex items-center justify-center transition text-xl font-bold flex-shrink-0"
+                >
+                  ✕
+                </button>
               </div>
-              <button
-                onClick={() => {
-                  setShowDetailModal(false);
-                  setLiveStats(null);
-                  setLastStatsUpdate(null);
-                }}
-                className="text-white hover:bg-white/20 w-12 h-12 rounded-full flex items-center justify-center transition text-xl font-bold"
-              >
-                ✕
-              </button>
             </div>
 
             {/* Content */}
-            <div className="p-8 space-y-7">
+            <div className="p-8 space-y-8">
               {/* Photos Gallery Section */}
               {selectedListing.photos && selectedListing.photos.length > 0 && (
                 <div className="rounded-xl overflow-hidden border-2 border-gray-200 shadow-lg">
@@ -649,52 +654,59 @@ export const ListingsManagement = () => {
               </div>
 
               {/* Statistics Section - LIVE AUTO-UPDATING (From DB) */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 rounded-xl p-6 border-2 border-indigo-200 relative overflow-hidden">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 rounded-2xl p-8 border-2 border-indigo-200 relative overflow-hidden shadow-lg">
                 {/* Live Update Indicator */}
-                <div className="absolute top-3 right-3 flex items-center gap-2 text-xs font-bold text-indigo-600">
+                <div className="absolute top-4 right-4 flex items-center gap-2 text-xs font-bold text-indigo-600">
                   <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  Live Stats from DB
+                  Live Stats
                 </div>
 
-                <div className="text-center">
+                <div className="text-center p-4 bg-white rounded-xl shadow-md border border-indigo-100">
                   <div className="text-4xl font-black text-indigo-600 mb-2">
-                    <i className="fas fa-eye"></i> {liveStats?.views ?? selectedListing.views ?? 0}
+                    <i className="fas fa-eye"></i>
                   </div>
-                  <p className="text-sm font-bold text-gray-600 uppercase tracking-wide">Page Views</p>
+                  <p className="text-3xl font-black text-gray-900 mb-1">{liveStats?.views ?? selectedListing.views ?? 0}</p>
+                  <p className="text-xs font-bold text-gray-600 uppercase tracking-widest">Views</p>
                 </div>
-                <div className="text-center">
+
+                <div className="text-center p-4 bg-white rounded-xl shadow-md border border-yellow-100">
                   <div className="text-4xl font-black text-yellow-500 mb-2">
-                    {liveStats?.averageRating ?? selectedListing.averageRating ? (liveStats?.averageRating ?? selectedListing.averageRating).toFixed(1) : '0.0'}
+                    <i className="fas fa-star"></i>
                   </div>
-                  <p className="text-sm font-bold text-gray-600 uppercase tracking-wide">
-                    Rating <i className="fas fa-star text-yellow-500"></i>
+                  <p className="text-3xl font-black text-gray-900 mb-1">
+                    {liveStats?.averageRating ?? selectedListing.averageRating ? (liveStats?.averageRating ?? selectedListing.averageRating).toFixed(1) : '0.0'}
+                  </p>
+                  <p className="text-xs font-bold text-gray-600 uppercase tracking-widest">Rating</p>
+                </div>
+
+                <div className="text-center p-4 bg-white rounded-xl shadow-md border border-rose-100">
+                  <div className="text-4xl font-black text-rose-600 mb-2">
+                    <i className="fas fa-heart"></i>
+                  </div>
+                  <p className="text-3xl font-black text-gray-900 mb-1">{liveStats?.totalRatings ?? selectedListing.totalRatings ?? 0}</p>
+                  <p className="text-xs font-bold text-gray-600 uppercase tracking-widest">Reviews</p>
+                </div>
+
+                <div className="text-center p-4 bg-white rounded-xl shadow-md border border-green-100">
+                  <div className="text-3xl font-black text-green-600 mb-2">{selectedListing.size}</div>
+                  <p className="text-xs font-bold text-gray-600 uppercase tracking-widest">
+                    <i className="fas fa-ruler-combined mr-1"></i>sqft
                   </p>
                 </div>
-                <div className="text-center">
-                  <div className="text-4xl font-black text-rose-600 mb-2">
-                    <i className="fas fa-heart"></i> {liveStats?.totalRatings ?? selectedListing.totalRatings ?? 0}
+
+                <div className="text-center p-4 bg-white rounded-xl shadow-md border border-purple-100">
+                  <div className={`text-2xl font-black mb-2 ${liveStats?.isFeatured ?? selectedListing.isFeatured ? 'text-yellow-500 animate-bounce' : 'text-gray-400'}`}>
+                    <i className="fas fa-crown"></i>
                   </div>
-                  <p className="text-sm font-bold text-gray-600 uppercase tracking-wide">Reviews</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-black mb-2">
-                    {liveStats?.isFeatured ?? selectedListing.isFeatured ? (
-                      <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-full text-lg animate-bounce">
-                        <i className="fas fa-crown"></i>
-                      </span>
-                    ) : (
-                      <span className="text-gray-400 text-lg">
-                        <i className="fas fa-crown"></i>
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm font-bold text-gray-600 uppercase tracking-wide">Featured</p>
+                  <p className="text-xs font-bold text-gray-600 uppercase tracking-widest">
+                    {liveStats?.isFeatured ?? selectedListing.isFeatured ? 'Featured' : 'Regular'}
+                  </p>
                 </div>
 
                 {/* Last Update Timestamp */}
                 {lastStatsUpdate && (
-                  <div className="absolute bottom-2 right-3 text-xs text-gray-500">
-                    Updated: {lastStatsUpdate.toLocaleTimeString()}
+                  <div className="absolute bottom-3 right-4 text-xs text-gray-500">
+                    <i className="fas fa-sync-alt mr-1"></i>Updated: {lastStatsUpdate.toLocaleTimeString()}
                   </div>
                 )}
               </div>
@@ -804,11 +816,11 @@ export const ListingsManagement = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="border-t-2 border-gray-200 pt-6 flex gap-3 flex-wrap">
+              <div className="border-t-2 border-gray-200 pt-8 grid grid-cols-2 md:grid-cols-3 gap-3">
                 <button
                   onClick={() => setShowDetailModal(false)}
                   disabled={isProcessing}
-                  className="flex-1 min-w-[140px] px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition font-bold flex items-center justify-center gap-2 shadow-md"
+                  className="px-6 py-3 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-800 rounded-lg hover:from-gray-300 hover:to-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition font-bold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:scale-105 duration-200"
                 >
                   <i className="fas fa-times"></i> Close
                 </button>
@@ -820,9 +832,9 @@ export const ListingsManagement = () => {
                       setShowDetailModal(false);
                     }}
                     disabled={isProcessing}
-                    className="flex-1 min-w-[140px] px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-bold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+                    className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-bold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 duration-200"
                   >
-                    <i className={`fas ${isProcessing ? 'fa-spinner fa-spin' : 'fa-check-circle'}`}></i> Approve Listing
+                    <i className={`fas ${isProcessing ? 'fa-spinner fa-spin' : 'fa-check-circle'}`}></i> Approve
                   </button>
                 )}
 
@@ -832,9 +844,9 @@ export const ListingsManagement = () => {
                     setShowDetailModal(false);
                   }}
                   disabled={isProcessing}
-                  className="flex-1 min-w-[140px] px-6 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg hover:from-red-600 hover:to-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-bold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+                  className="px-6 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg hover:from-red-600 hover:to-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-bold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 duration-200"
                 >
-                  <i className={`fas ${isProcessing ? 'fa-spinner fa-spin' : 'fa-trash'}`}></i> Delete Listing
+                  <i className={`fas ${isProcessing ? 'fa-spinner fa-spin' : 'fa-trash-alt'}`}></i> Delete
                 </button>
               </div>
             </div>

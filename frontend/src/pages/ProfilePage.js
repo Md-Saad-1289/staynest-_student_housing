@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { userService } from '../services/api';
 import { AuthContext } from '../context/AuthContext';
@@ -13,6 +13,7 @@ export function ProfilePage() {
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const phoneRef = useRef(null);
 
   useEffect(() => {
     let mounted = true;
@@ -47,7 +48,10 @@ export function ProfilePage() {
     });
     console.log('Starting edit with profile:', u);
     console.log('Phone number value:', u.phoneNo);
-    setEditing(true); 
+    setEditing(true);
+    setTimeout(() => {
+      try { phoneRef.current?.focus(); } catch (e) {}
+    }, 120);
     setError('');
   };
 
@@ -104,7 +108,15 @@ export function ProfilePage() {
 
         {!editing ? (
           <div>
-            <div className="mb-4"><strong>Phone Number:</strong> {user.phoneNo || '—'}</div>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="text-sm text-gray-700 font-semibold flex items-center gap-2"><i className="fas fa-phone text-sky-600"></i> Phone</div>
+                <div className="text-sm text-gray-600">{user.phoneNo || '—'}</div>
+              </div>
+              <div>
+                <button onClick={startEdit} className="text-sm px-3 py-1 bg-blue-600 text-white rounded">Edit</button>
+              </div>
+            </div>
             <div className="mb-4"><strong>Address:</strong> {user.fullAddress || '—'}</div>
             <div className="mb-4"><strong>DOB:</strong> {user.dob ? new Date(user.dob).toLocaleDateString() : '—'}</div>
             <div className="mb-4"><strong>Gender:</strong> {user.gender || '—'}</div>
@@ -117,9 +129,10 @@ export function ProfilePage() {
           </div>
         ) : (
           <div className="grid gap-3">
-            <input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Full name" className="border p-2 rounded" />
-            <input value={form.email} disabled placeholder="Email (read-only)" className="border p-2 rounded bg-gray-100 text-gray-700" />
-            <input value={form.mobile} onChange={e=>setForm({...form,mobile:e.target.value})} placeholder="Mobile" className="border p-2 rounded" />
+            <input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Full name" className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input value={form.email} disabled placeholder="Email (read-only)" className="border p-2 rounded bg-gray-100 text-gray-700 cursor-not-allowed" />
+            <input ref={phoneRef} inputMode="tel" pattern="[0-9+\-() ]{7,}" type="tel" value={form.mobile} onChange={e=>setForm({...form,mobile:e.target.value})} placeholder="e.g., +8801712345678" className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <p className="text-xs text-gray-500">Include country code where possible. Example: +8801712345678</p>
             <input value={form.fullAddress} onChange={e=>setForm({...form,fullAddress:e.target.value})} placeholder="Full address" className="border p-2 rounded" />
             <input type="date" value={form.dob} onChange={e=>setForm({...form,dob:e.target.value})} className="border p-2 rounded" />
             <select value={form.gender} onChange={e=>setForm({...form,gender:e.target.value})} className="border p-2 rounded">
@@ -129,7 +142,14 @@ export function ProfilePage() {
               <option value="other">Other</option>
             </select>
             <input value={form.emergencyContact} onChange={e=>setForm({...form,emergencyContact:e.target.value})} placeholder="Emergency contact (Name|Phone)" className="border p-2 rounded" />
-            <input value={form.profileImage} onChange={e=>setForm({...form,profileImage:e.target.value})} placeholder="Profile image URL" className="border p-2 rounded" />
+            <div>
+              <input value={form.profileImage} onChange={e=>setForm({...form,profileImage:e.target.value})} placeholder="Profile image URL" className="border p-2 rounded" />
+              <div className="mt-2">
+                {form.profileImage && (()=>{
+                  try { return <img src={form.profileImage} alt="preview" className="w-24 h-24 rounded-full object-cover border" onError={(e)=>{e.target.style.display='none'}} /> } catch { return null }
+                })()}
+              </div>
+            </div>
             {user.role === 'owner' && <input value={form.nidNumber} onChange={e=>setForm({...form,nidNumber:e.target.value})} placeholder="NID number" className="border p-2 rounded" />}
             {error && <div className="text-red-600">{error}</div>}
             <div className="flex gap-2">

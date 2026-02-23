@@ -997,46 +997,55 @@ export const AdminDashboardModernPage = ({ tab }) => {
           <div className="mt-10">
             <div className="mb-4">
               <h3 className="text-xl font-bold text-gray-900 mb-1">System Activity</h3>
-              <p className="text-sm text-gray-600">Recent admin actions and audit log</p>
+              <p className="text-sm text-gray-600">View recent admin actions, filters, and a quick activity feed.</p>
             </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start mb-3">
               <div className="lg:col-span-2">
-                <div className="flex items-center justify-between mb-4 p-4 bg-white rounded-xl border border-gray-200">
-                  <h3 className="text-lg font-bold text-gray-900">Recent Admin Actions</h3>
+                <div className="flex items-center justify-between mb-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">Recent Admin Actions</h3>
+                    <p className="text-xs text-gray-500">Audit log of admin operations</p>
+                  </div>
 
-              <div className="flex items-center gap-3">
-                <input value={actionsSearch} onChange={(e) => { setActionsPage(1); setActionsSearch(e.target.value); }} placeholder="Search actions..." className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                <select value={actionFilter} onChange={(e) => { setActionsPage(1); setActionFilter(e.target.value); }} className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition">
-                  <option value="">All actions</option>
-                  <option value="verify_owner">Verify Owner</option>
-                  <option value="reject_owner">Reject Owner</option>
-                  <option value="verify_listing">Verify Listing</option>
-                  <option value="resolve_flag">Resolve Flag</option>
-                </select>
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <span className="absolute left-3 top-2 text-gray-400"><i className="fas fa-search"></i></span>
+                      <input value={actionsSearch} onChange={(e) => { setActionsPage(1); setActionsSearch(e.target.value); }} placeholder="Search actions..." className="pl-10 pr-4 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition w-64" />
+                    </div>
 
-                <select value={actionTargetFilter} onChange={(e) => { setActionsPage(1); setActionTargetFilter(e.target.value); }} className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition">
-                  <option value="">All targets</option>
-                  <option value="user">User</option>
-                  <option value="listing">Listing</option>
-                  <option value="flag">Flag</option>
-                </select>
+                    <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg p-1">
+                      <select value={actionFilter} onChange={(e) => { setActionsPage(1); setActionFilter(e.target.value); }} className="bg-transparent text-sm outline-none px-3 py-2">
+                        <option value="">All actions</option>
+                        <option value="verify_owner">Verify Owner</option>
+                        <option value="reject_owner">Reject Owner</option>
+                        <option value="verify_listing">Verify Listing</option>
+                        <option value="resolve_flag">Resolve Flag</option>
+                      </select>
+                      <select value={actionTargetFilter} onChange={(e) => { setActionsPage(1); setActionTargetFilter(e.target.value); }} className="bg-transparent text-sm outline-none px-3 py-2">
+                        <option value="">All targets</option>
+                        <option value="user">User</option>
+                        <option value="listing">Listing</option>
+                        <option value="flag">Flag</option>
+                      </select>
+                    </div>
 
-                <div className="flex items-center gap-2">
-                  <select value={actionsLimit} onChange={(e) => { setActionsPage(1); setActionsLimit(Number(e.target.value)); }} className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition">
-                    <option value={5}>5 / page</option>
-                    <option value={10}>10 / page</option>
-                    <option value={25}>25 / page</option>
-                  </select>
-                  <button onClick={() => exportActionsCSV(actions)} className="px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all">Export CSV</button>
-                  <button disabled={actionsPage <= 1} onClick={() => setActionsPage((p) => Math.max(1, p - 1))} className="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors">← Prev</button>
-                  <span className="text-sm text-gray-600 font-medium">Page {actionsPage} / {Math.max(1, Math.ceil(actionsTotal / actionsLimit) || 1)}</span>
-                  <button disabled={actionsPage >= Math.ceil(actionsTotal / actionsLimit)} onClick={() => setActionsPage((p) => p + 1)} className="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors">Next →</button>
+                    <div className="flex items-center gap-2">
+                      <select value={actionsLimit} onChange={(e) => { setActionsPage(1); setActionsLimit(Number(e.target.value)); }} className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition">
+                        <option value={5}>5 / page</option>
+                        <option value={10}>10 / page</option>
+                        <option value={25}>25 / page</option>
+                      </select>
+                      <button onClick={() => exportActionsCSV(actions)} className="px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all">Export</button>
+                      <button disabled={actionsPage <= 1} onClick={() => setActionsPage((p) => Math.max(1, p - 1))} className="px-3 py-2 bg-white border rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors">←</button>
+                      <span className="text-sm text-gray-600 font-medium">{actionsPage} / {Math.max(1, Math.ceil(actionsTotal / actionsLimit) || 1)}</span>
+                      <button disabled={actionsPage >= Math.ceil(actionsTotal / actionsLimit)} onClick={() => setActionsPage((p) => p + 1)} className="px-3 py-2 bg-white border rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors">→</button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
                 {actions.length === 0 ? (
-                  <p className="text-sm text-gray-600">No recent actions</p>
+                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-md p-6 text-center text-sm text-gray-600">No recent actions</div>
                 ) : (
                   <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-md">
                     <table className="w-full text-sm">
@@ -1051,9 +1060,14 @@ export const AdminDashboardModernPage = ({ tab }) => {
                       <tbody>
                         {actions.map((f) => (
                           <tr key={f._id} className="border-t hover:bg-gray-50 transition-colors">
-                            <td className="p-3 capitalize">{f.action.replace('_', ' ')}</td>
-                            <td className="p-3">{f.adminId?.name || f.adminId?.email || 'Admin'}</td>
-                            <td className="p-3">{f.targetType} ({String(f.targetId).slice(0, 8)})</td>
+                            <td className="p-3 capitalize flex items-center gap-3">
+                              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${f.action?.includes('verify') ? 'bg-green-100 text-green-800' : f.action?.includes('reject') ? 'bg-red-100 text-red-800' : 'bg-indigo-100 text-indigo-800'}`}>{f.action.replace('_', ' ')}</span>
+                            </td>
+                            <td className="p-3 flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-700">{(f.adminId?.name || f.adminId?.email || 'A').charAt(0).toUpperCase()}</div>
+                              <div>{f.adminId?.name || f.adminId?.email || 'Admin'}</div>
+                            </td>
+                            <td className="p-3 text-sm text-gray-700">{f.targetType} <span className="text-xs text-gray-400">({String(f.targetId).slice(0, 8)})</span></td>
                             <td className="p-3 text-gray-500">{new Date(f.createdAt).toLocaleString()}</td>
                           </tr>
                         ))}
@@ -1068,14 +1082,14 @@ export const AdminDashboardModernPage = ({ tab }) => {
                 <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><i className="fas fa-clock text-blue-600"></i> Activity Feed</h4>
                 <div className="space-y-3 max-h-96 overflow-auto pr-2">
                   {actions.slice(0, 12).map((a) => (
-                    <div key={a._id} className="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 p-2 rounded transition-colors">
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">{(a.adminId?.name || a.adminId?.email || 'A').charAt(0).toUpperCase()}</div>
+                    <div key={a._id} className="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-0 p-2 rounded transition-colors hover:bg-gray-50">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-sm font-semibold text-white flex-shrink-0">{(a.adminId?.name || a.adminId?.email || 'A').charAt(0).toUpperCase()}</div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm text-gray-900">
-                          <strong>{a.adminId?.name || a.adminId?.email || 'Admin'}</strong>
-                          <span className="text-gray-500"> {a.action.replace('_', ' ')} </span>
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm text-gray-900 truncate"><strong>{a.adminId?.name || a.adminId?.email || 'Admin'}</strong> <span className="text-gray-500">{a.action.replace('_', ' ')}</span></div>
+                          <div className="text-xs text-gray-400">{new Date(a.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                         </div>
-                        <div className="text-xs text-gray-500 mt-0.5">{a.targetType} • {new Date(a.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</div>
+                        <div className="text-xs text-gray-500 mt-1 truncate">{a.targetType} • {a.details || String(a.targetId).slice(0, 12)}</div>
                       </div>
                     </div>
                   ))}

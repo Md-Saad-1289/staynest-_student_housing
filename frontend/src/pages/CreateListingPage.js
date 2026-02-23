@@ -616,6 +616,27 @@ export const CreateListingPage = () => {
                   </div>
                 </div>
 
+                {/* Image Previews */}
+                <div className="mt-4">
+                  <label className="text-sm font-semibold text-gray-700 mb-2 block">Preview</label>
+                  <div className="flex items-center gap-3">
+                    {photoUrl ? (
+                      <img src={photoUrl} alt="cover" className="w-28 h-20 object-cover rounded-lg border" onError={(e)=>{e.target.style.display='none'}} />
+                    ) : (
+                      <div className="w-28 h-20 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-500">No cover</div>
+                    )}
+                    <div className="flex gap-2">
+                      {additionalPhotos.map((p, i) => (
+                        p ? (
+                          <img key={i} src={p} alt={`photo-${i}`} className="w-20 h-14 object-cover rounded-md border" onError={(e)=>{e.target.style.display='none'}} />
+                        ) : (
+                          <div key={i} className="w-20 h-14 bg-gray-50 rounded-md border flex items-center justify-center text-xs text-gray-400">Empty</div>
+                        )
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Final Review */}
                 <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border-2 border-purple-200">
                   <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
@@ -658,11 +679,46 @@ export const CreateListingPage = () => {
                   disabled={loading}
                   className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-lg hover:shadow-lg disabled:opacity-50 font-semibold flex items-center justify-center gap-2 transition"
                 >
-                  <i className="fas fa-check-circle"></i> {loading ? 'Creating...' : 'Create Listing'}
+                  <i className="fas fa-check-circle"></i> {loading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Listing' : 'Create Listing')}
                 </button>
               )}
             </div>
           </form>
+        </div>
+
+        {/* Sticky Footer CTAs for wider screens */}
+        <div className="hidden lg:flex fixed z-40 left-0 right-0 bottom-6 justify-center pointer-events-none">
+          <div className="max-w-4xl w-full px-4 pointer-events-auto">
+            <div className="bg-white/90 backdrop-blur-md border border-gray-200 rounded-lg shadow-lg p-3 flex gap-3">
+              {step > 1 ? (
+                <button
+                  onClick={handlePrevious}
+                  className="px-5 py-3 bg-gray-100 rounded-lg font-semibold hover:bg-gray-200 transition"
+                >
+                  <i className="fas fa-chevron-left mr-2"></i> Previous
+                </button>
+              ) : (
+                <div className="w-24" />
+              )}
+
+              {step < 4 ? (
+                <button
+                  onClick={handleNext}
+                  className="ml-auto px-5 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition"
+                >
+                  Next <i className="fas fa-chevron-right ml-2"></i>
+                </button>
+              ) : (
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="ml-auto px-5 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-semibold hover:shadow-lg disabled:opacity-50 transition"
+                >
+                  {loading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Listing' : 'Create Listing')}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Help Text */}

@@ -172,14 +172,55 @@ export const ListingDetailPage = () => {
         </div>
       )}
 
-      {/* Image Gallery */}
-      <div className="lg:hidden">
-        <ImageSlider images={currentListing.photos} />
-      </div>
+      {/* Hero Banner */}
+      <div className="max-w-7xl mx-auto px-4 mt-6">
+        <div className="relative w-full h-64 lg:h-96 rounded-lg overflow-hidden bg-gray-100">
+          <img
+            src={currentListing.photos?.[0]}
+            alt={currentListing.title}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          <div className="absolute left-4 lg:left-12 bottom-4 text-white">
+            <h1 className="text-xl lg:text-4xl font-bold leading-tight">{currentListing.title}</h1>
+            <p className="mt-1 text-sm lg:text-base text-gray-100">{currentListing.area}, {currentListing.city}</p>
+          </div>
+          <div className="absolute right-4 top-4 flex items-center gap-2">
+            {currentListing.verified && (
+              <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold whitespace-nowrap">
+                ✓ Verified
+              </span>
+            )}
+          </div>
+        </div>
 
-      <div className="hidden lg:block">
-        <div className="max-w-7xl mx-auto px-4 mt-6">
+        {/* Mobile slider (kept for small screens) */}
+        <div className="lg:hidden mt-4">
           <ImageSlider images={currentListing.photos} />
+        </div>
+
+        {/* Stat Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-6">
+          <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
+            <p className="text-xs text-gray-500 font-semibold mb-1">Rating</p>
+            <p className="text-lg font-bold text-yellow-600">{(calculateRatings(currentReviews)?.averageRating) || currentListing.averageRating || '—'}</p>
+          </div>
+          <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
+            <p className="text-xs text-gray-500 font-semibold mb-1">Reviews</p>
+            <p className="text-lg font-bold text-gray-900">{currentReviews.length}</p>
+          </div>
+          <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
+            <p className="text-xs text-gray-500 font-semibold mb-1">Bookings</p>
+            <p className="text-lg font-bold text-gray-900">{bookings.length}</p>
+          </div>
+          <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
+            <p className="text-xs text-gray-500 font-semibold mb-1">Owner Lists</p>
+            <p className="text-lg font-bold text-gray-900">{currentListing.ownerId?.totalListings || 0}</p>
+          </div>
+          <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
+            <p className="text-xs text-gray-500 font-semibold mb-1">Rent</p>
+            <p className="text-lg font-bold text-gray-900">৳{currentListing.rent}</p>
+          </div>
         </div>
       </div>
 
@@ -369,88 +410,97 @@ export const ListingDetailPage = () => {
             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><i className="fas fa-user-circle text-blue-600"></i> Owner Information</h3>
 
             <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
-              <div className="w-14 h-14 rounded-full bg-sky-100 flex items-center justify-center text-lg font-bold text-sky-600">
-                {currentListing.ownerId?.name?.charAt(0) || 'O'}
+                <div className="w-14 h-14 rounded-full bg-sky-100 flex items-center justify-center text-lg font-bold text-sky-600">
+                  {currentListing.ownerId?.name?.charAt(0) || 'O'}
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-900">{currentListing.ownerId?.name}</p>
+                  {currentListing.ownerId?.isVerified && (
+                    <p className="text-xs text-green-600 font-semibold flex items-center gap-1"><i className="fas fa-badge-check"></i> Verified Owner</p>
+                  )}
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="font-semibold text-gray-900">{currentListing.ownerId?.name}</p>
-                {currentListing.ownerId?.isVerified && (
-                  <p className="text-xs text-green-600 font-semibold flex items-center gap-1"><i className="fas fa-badge-check"></i> Verified Owner</p>
+
+              <div className="mb-4">
+                {currentListing.ownerId?.totalListings && (
+                  <p className="text-sm text-gray-600 mb-2 flex items-center gap-2"><i className="fas fa-home text-gray-500"></i> <strong>{currentListing.ownerId.totalListings}</strong> active listings</p>
+                )}
+                <p className="text-sm text-gray-600 mb-2 flex items-center gap-2"><i className="fas fa-calendar-check text-gray-500"></i> <strong>{bookings.length}</strong> approved bookings</p>
+                {bookings[0] && bookings[0].startDate && (
+                  <p className="text-sm text-gray-600">Next booking: <strong>{new Date(bookings[0].startDate).toLocaleDateString()}</strong></p>
+                )}
+                {currentListing.ownerId?.createdAt && (
+                  <p className="text-sm text-gray-600 mt-2">Member since {new Date(currentListing.ownerId.createdAt).toLocaleDateString()}</p>
                 )}
               </div>
-            </div>
 
-            {currentListing.ownerId?.totalListings && (
-              <p className="text-sm text-gray-600 mb-4 flex items-center gap-2"><i className="fas fa-home text-gray-500"></i> <strong>{currentListing.ownerId.totalListings}</strong> active listings</p>
-            )}
-
-            <div className="space-y-2 mb-6">
-              <a
-                href={`mailto:${currentListing.ownerId?.email}`}
-                className="w-full bg-sky-600 text-white text-center py-3 rounded-lg font-semibold hover:bg-sky-700 text-sm flex items-center justify-center gap-2 transition"
-              >
-                <i className="fas fa-envelope"></i> Send Email
-              </a>
-              <a
-                href={`tel:${currentListing.ownerId?.phoneNo}`}
-                className="w-full border border-sky-600 text-sky-600 text-center py-3 rounded-lg font-semibold hover:bg-sky-50 text-sm flex items-center justify-center gap-2 transition"
-              >
-                <i className="fas fa-phone"></i> Call Owner
-              </a>
-              <a
-                href={`https://wa.me/${currentListing.ownerId?.phoneNo?.replace(/[^\d]/g, '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full bg-green-500 text-white text-center py-3 rounded-lg font-semibold hover:bg-green-600 text-sm flex items-center justify-center gap-2 transition"
-              >
-                <i className="fab fa-whatsapp"></i> WhatsApp
-              </a>
-            </div>
-
-            {/* Social Share */}
-            <div className="mb-6 pb-6 border-b border-gray-200">
-              <p className="text-sm font-semibold text-gray-700 mb-3"><i className="fas fa-share-alt text-gray-600"></i> Share This Listing</p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-2 mb-6">
                 <a
-                  href={`https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 text-center text-sm font-semibold transition flex items-center justify-center gap-1"
+                  href={`mailto:${currentListing.ownerId?.email}`}
+                  className="w-full bg-sky-600 text-white text-center py-3 rounded-lg font-semibold hover:bg-sky-700 text-sm flex items-center justify-center gap-2 transition"
                 >
-                  <i className="fab fa-facebook-f"></i>
+                  <i className="fas fa-envelope"></i> Email Owner
                 </a>
                 <a
-                  href={`https://twitter.com/intent/tweet?url=${window.location.href}&text=Check%20this%20listing:%20${currentListing.title}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-blue-400 text-white py-2 rounded-lg hover:bg-blue-500 text-center text-sm font-semibold transition flex items-center justify-center gap-1"
+                  href={`tel:${currentListing.ownerId?.phoneNo}`}
+                  className="w-full border border-gray-300 text-gray-700 text-center py-3 rounded-lg font-semibold hover:bg-gray-50 text-sm flex items-center justify-center gap-2 transition"
                 >
-                  <i className="fab fa-twitter"></i>
+                  <i className="fas fa-phone"></i> Call
                 </a>
                 <a
-                  href={`https://api.whatsapp.com/send?text=Check%20this%20listing:%20${currentListing.title}%20${window.location.href}`}
+                  href={`https://wa.me/${currentListing.ownerId?.phoneNo?.replace(/[^\\d]/g, '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 text-center text-sm font-semibold transition flex items-center justify-center gap-1"
+                  className="w-full bg-green-500 text-white text-center py-3 rounded-lg font-semibold hover:bg-green-600 text-sm flex items-center justify-center gap-2 transition"
                 >
-                  <i className="fab fa-whatsapp"></i>
+                  <i className="fab fa-whatsapp"></i> WhatsApp
                 </a>
               </div>
-            </div>
 
-            {/* Primary CTA */}
-            {isAuthenticated && user?.role === 'student' ? (
-              <button
-                onClick={() => setShowBookingModal(true)}
-                className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition mb-3 flex items-center justify-center gap-2"
-              >
-                <i className="fas fa-calendar-check"></i> Request Booking
-              </button>
-            ) : (
-              <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg text-center flex items-center justify-center gap-2">
-                <i className="fas fa-info-circle text-blue-500"></i> {isAuthenticated ? 'Only students can book' : 'Login as student to book'}
+              {/* Social Share */}
+              <div className="mb-6 pb-6 border-b border-gray-200">
+                <p className="text-sm font-semibold text-gray-700 mb-3"><i className="fas fa-share-alt text-gray-600"></i> Share</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <a
+                    href={`https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 text-center text-sm font-semibold transition flex items-center justify-center gap-1"
+                  >
+                    <i className="fab fa-facebook-f"></i>
+                  </a>
+                  <a
+                    href={`https://twitter.com/intent/tweet?url=${window.location.href}&text=Check%20this%20listing:%20${currentListing.title}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-blue-400 text-white py-2 rounded-lg hover:bg-blue-500 text-center text-sm font-semibold transition flex items-center justify-center gap-1"
+                  >
+                    <i className="fab fa-twitter"></i>
+                  </a>
+                  <a
+                    href={`https://api.whatsapp.com/send?text=Check%20this%20listing:%20${currentListing.title}%20${window.location.href}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 text-center text-sm font-semibold transition flex items-center justify-center gap-1"
+                  >
+                    <i className="fab fa-whatsapp"></i>
+                  </a>
+                </div>
               </div>
-            )}
+
+              {/* Primary CTA */}
+              {isAuthenticated && user?.role === 'student' ? (
+                <button
+                  onClick={() => setShowBookingModal(true)}
+                  className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition mb-3 flex items-center justify-center gap-2"
+                >
+                  <i className="fas fa-calendar-check"></i> Request Booking
+                </button>
+              ) : (
+                <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg text-center flex items-center justify-center gap-2">
+                  <i className="fas fa-info-circle text-blue-500"></i> {isAuthenticated ? 'Only students can book' : 'Login as student to book'}
+                </div>
+              )}
           </div>
         </div>
       </div>
