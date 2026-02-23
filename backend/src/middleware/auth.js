@@ -21,13 +21,15 @@ const auth = async (req, res, next) => {
     const userId = decoded.userId || decoded.id || decoded._id;
     let role = decoded.role || decoded.userRole || null;
 
-    // If token payload didn't include role (older tokens), fetch it from DB.
-    if (!role && userId) {
+    // Prefer the role stored in DB so direct DB changes take effect immediately.
+    if (userId) {
       try {
         const user = await User.findById(userId).select('role');
-        role = user?.role || null;
+        if (user && user.role) {
+          role = user.role;
+        }
       } catch (e) {
-        // noop - leave role null and let authorize handle permission denial
+        // noop - keep decoded role if DB lookup fails
       }
     }
 
@@ -51,7 +53,16 @@ const auth = async (req, res, next) => {
  */
 const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    if (!req.user || !req.user.userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const userRole = req.user.role || null;
+    if (!userRole) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    if (!roles.includes(userRole)) {
       return res.status(403).json({ error: 'Insufficient permissions' });
     }
     next();
