@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 // Hero search form removed from homepage per request
+import { HeroSearch } from '../components/HeroSearch';
 import { TrustSignals } from '../components/TrustSignals';
 import { FeaturedListingsPreview } from '../components/FeaturedListingsPreview';
 import { RecentlyViewed } from '../components/RecentlyViewed';
@@ -33,7 +34,7 @@ export const HomePage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <main>
-        {/* Search form removed */}
+        <HeroSearch hideForm />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-10 py-8">
           <TrustSignals />
 

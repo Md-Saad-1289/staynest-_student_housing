@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import heroImg from "../assets/images/hero-img.png";
 
-export const FriendlyHero = ({ onSearch }) => {
+export const FriendlyHero = ({ onSearch, hideForm = false }) => {
   const [query, setQuery] = useState('');
   const [city, setCity] = useState('');
 
@@ -31,25 +31,32 @@ export const FriendlyHero = ({ onSearch }) => {
           Discover trusted messes, hostels and shared flats near your campus — verified owners, transparent pricing, and real reviews.
         </p>
 
-        {/* Search Card */}
-        <form onSubmit={submit} className="mt-6 mx-auto max-w-3xl bg-white/95 rounded-xl p-4 sm:p-6 shadow-xl text-left flex flex-col sm:flex-row gap-3 items-center">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by title, area, or keyword"
-            className="flex-1 px-4 py-3 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-400"
-          />
-          <select value={city} onChange={(e) => setCity(e.target.value)} className="w-40 px-3 py-3 rounded-md border border-gray-200 bg-white focus:outline-none">
-            <option value="">All Cities</option>
-            <option value="Dhaka">Dhaka</option>
-            <option value="Chittagong">Chittagong</option>
-            <option value="Sylhet">Sylhet</option>
-          </select>
-          <div className="flex gap-2">
-            <button type="submit" className="px-5 py-3 bg-gradient-to-r from-sky-600 to-blue-600 text-white rounded-md font-semibold shadow-md">Search</button>
-            <Link to="/listings" className="px-4 py-3 border rounded-md bg-gray-50 text-gray-700 font-medium">Browse</Link>
+        {/* Search Card (optionally hidden) */}
+        {!hideForm ? (
+          <form onSubmit={submit} className="mt-6 mx-auto max-w-3xl bg-white/95 rounded-xl p-4 sm:p-6 shadow-xl text-left flex flex-col sm:flex-row gap-3 items-center">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by title, area, or keyword"
+              className="flex-1 px-4 py-3 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-400"
+            />
+            <select value={city} onChange={(e) => setCity(e.target.value)} className="w-40 px-3 py-3 rounded-md border border-gray-200 bg-white focus:outline-none">
+              <option value="">All Cities</option>
+              <option value="Dhaka">Dhaka</option>
+              <option value="Chittagong">Chittagong</option>
+              <option value="Sylhet">Sylhet</option>
+            </select>
+            <div className="flex gap-2">
+              <button type="submit" className="px-5 py-3 bg-gradient-to-r from-sky-600 to-blue-600 text-white rounded-md font-semibold shadow-md">Search</button>
+              <Link to="/listings" className="px-4 py-3 border rounded-md bg-gray-50 text-gray-700 font-medium">Browse</Link>
+            </div>
+          </form>
+        ) : (
+          <div className="mt-6 mx-auto max-w-3xl flex items-center justify-center gap-4">
+            <Link to="/listings" className="px-6 py-3 bg-gradient-to-r from-sky-600 to-blue-600 text-white rounded-md font-semibold shadow-md">Search Listings</Link>
+            <Link to="/listings?featured=1" className="px-5 py-3 border rounded-md bg-white text-gray-700 font-medium">Featured</Link>
           </div>
-        </form>
+        )}
       </div>
 
       {/* Decorative wave */}
