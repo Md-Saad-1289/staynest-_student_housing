@@ -21,12 +21,14 @@ export const getNotifications = async (req, res) => {
 export const markAsRead = async (req, res) => {
   try {
     const { notificationId } = req.params;
-    const notification = await Notification.findByIdAndUpdate(
-      notificationId,
-      { read: true, readAt: new Date() },
-      { new: true }
-    );
-
+    const notification = await Notification.findById(notificationId);
+    if (!notification) return res.status(404).json({ error: 'Notification not found' });
+    if (String(notification.userId) !== String(req.user.userId)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    notification.read = true;
+    notification.readAt = new Date();
+    await notification.save();
     res.json({ notification });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -48,6 +50,11 @@ export const markAllAsRead = async (req, res) => {
 export const deleteNotification = async (req, res) => {
   try {
     const { notificationId } = req.params;
+    const notification = await Notification.findById(notificationId);
+    if (!notification) return res.status(404).json({ error: 'Notification not found' });
+    if (String(notification.userId) !== String(req.user.userId)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     await Notification.findByIdAndDelete(notificationId);
     res.json({ message: 'Notification deleted' });
   } catch (error) {

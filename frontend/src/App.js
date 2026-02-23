@@ -19,6 +19,7 @@ import { OwnerDashboardModernPage } from './pages/OwnerDashboardModernPage';
 import { AdminDashboardModernPage } from './pages/AdminDashboardModernPage';
 import { UserProfilePage } from './pages/UserProfilePage';
 import { ProfilePage } from './pages/ProfilePage';
+import { NotificationsPage } from './pages/NotificationsPage';
 
 import './index.css';
 
@@ -149,6 +150,15 @@ function App() {
             element={
               <ProtectedRoute requiredRole="admin">
                 <AdminDashboardModernPage tab="listings-overview" />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <NotificationsPage />
               </ProtectedRoute>
             }
           />

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { notificationService } from '../services/api';
 
 export const NotificationCenter = () => {
@@ -132,10 +133,15 @@ export const NotificationCenter = () => {
                   onClick={() => !notif.read && handleMarkAsRead(notif._id)}
                 >
                   {/* Icon */}
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm ${
                     notif.read ? 'bg-gray-200' : 'bg-blue-200'
                   }`}>
-                    <i className={`fas ${getTypeIcon(notif.type).split(' ')[1]}`}></i>
+                    {(() => {
+                      const parts = getTypeIcon(notif.type).split(' ');
+                      const iconClass = parts[0] || 'fa-bell';
+                      const colorClass = parts[1] || 'text-gray-600';
+                      return <i className={`fas ${iconClass} ${colorClass}`}></i>;
+                    })()}
                   </div>
 
                   {/* Content */}
@@ -167,9 +173,9 @@ export const NotificationCenter = () => {
           {/* Footer */}
           {notifications.length > 0 && (
             <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
-              <button className="text-sm text-blue-600 hover:text-blue-700 font-semibold w-full text-center">
+              <Link to="/notifications" className="text-sm text-blue-600 hover:text-blue-700 font-semibold w-full text-center block">
                 View All Notifications
-              </button>
+              </Link>
             </div>
           )}
         </div>
