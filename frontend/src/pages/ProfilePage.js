@@ -13,7 +13,6 @@ export function ProfilePage() {
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const phoneRef = useRef(null);
 
   useEffect(() => {
     let mounted = true;
@@ -49,9 +48,6 @@ export function ProfilePage() {
     console.log('Starting edit with profile:', u);
     console.log('Phone number value:', u.phoneNo);
     setEditing(true);
-    setTimeout(() => {
-      try { phoneRef.current?.focus(); } catch (e) {}
-    }, 120);
     setError('');
   };
 
@@ -61,13 +57,10 @@ export function ProfilePage() {
 
   const save = async () => {
     if (!form.name?.trim()) return setError('Name is required');
-    if (form.mobile) {
-      const digits = String(form.mobile).replace(/\D/g,''); if (digits.length < 8) return setError('Invalid mobile number');
-    }
+    // Phone number is not editable via this profile page; do not validate or update it here.
 
     const payload = {
       name: form.name.trim(),
-      phoneNo: form.mobile || undefined,
       fullAddress: form.fullAddress || undefined,
       dob: form.dob || undefined,
       gender: form.gender || undefined,
@@ -131,8 +124,8 @@ export function ProfilePage() {
           <div className="grid gap-3">
             <input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Full name" className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
             <input value={form.email} disabled placeholder="Email (read-only)" className="border p-2 rounded bg-gray-100 text-gray-700 cursor-not-allowed" />
-            <input ref={phoneRef} inputMode="tel" pattern="[0-9+\-() ]{7,}" type="tel" value={form.mobile} onChange={e=>setForm({...form,mobile:e.target.value})} placeholder="e.g., +8801712345678" className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <p className="text-xs text-gray-500">Include country code where possible. Example: +8801712345678</p>
+            <input disabled inputMode="tel" pattern="[0-9+\-() ]{7,}" type="tel" value={form.mobile} placeholder="Phone cannot be changed here" className="border p-2 rounded bg-gray-100 text-gray-600 cursor-not-allowed" />
+            <p className="text-xs text-gray-500">Phone number is read-only on this page. To change it, contact support or use the dedicated account settings flow.</p>
             <input value={form.fullAddress} onChange={e=>setForm({...form,fullAddress:e.target.value})} placeholder="Full address" className="border p-2 rounded" />
             <input type="date" value={form.dob} onChange={e=>setForm({...form,dob:e.target.value})} className="border p-2 rounded" />
             <select value={form.gender} onChange={e=>setForm({...form,gender:e.target.value})} className="border p-2 rounded">
