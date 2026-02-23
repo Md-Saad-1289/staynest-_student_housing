@@ -9,21 +9,11 @@ import { authService } from '../services/api';
 // - When authenticated but role not allowed -> redirect to the user's own dashboard.
 export const ProtectedRoute = ({ children, requiredRole }) => {
   const { isAuthenticated, user, loading } = useContext(AuthContext);
+  // Normalize requiredRole to array for easier checks
+  const allowed = Array.isArray(requiredRole) ? requiredRole : (requiredRole ? [requiredRole] : null);
 
   const [checking, setChecking] = useState(false);
   const [allowedAfterCheck, setAllowedAfterCheck] = useState(null);
-
-  if (loading) {
-    // Keep simple loading placeholder while auth state hydrates
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Normalize requiredRole to array for easier checks
-  const allowed = Array.isArray(requiredRole) ? requiredRole : (requiredRole ? [requiredRole] : null);
 
   useEffect(() => {
     let mounted = true;
@@ -51,6 +41,15 @@ export const ProtectedRoute = ({ children, requiredRole }) => {
     check();
     return () => { mounted = false; };
   }, [isAuthenticated, user, allowed]);
+
+  if (loading) {
+    // Keep simple loading placeholder while auth state hydrates
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   if (checking) {
     return <div className="flex items-center justify-center min-h-screen">Checking permissions...</div>;
