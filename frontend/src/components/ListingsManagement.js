@@ -29,7 +29,7 @@ export const ListingsManagement = () => {
         page,
         limit: itemsPerPage,
         search: searchQuery || undefined,
-        isVerified: statusFilter || undefined,
+        isVerified: statusFilter === 'true' ? true : statusFilter === 'false' ? false : undefined,
         city: cityFilter || undefined,
         sortBy,
         sortOrder,
@@ -299,7 +299,10 @@ export const ListingsManagement = () => {
             </label>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setPage(1);
+              }}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             >
               <option value="createdAt">Date Added</option>
@@ -315,7 +318,10 @@ export const ListingsManagement = () => {
             </label>
             <select
               value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
+              onChange={(e) => {
+                setSortOrder(e.target.value);
+                setPage(1);
+              }}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             >
               <option value="desc">Descending</option>
@@ -361,9 +367,6 @@ export const ListingsManagement = () => {
                   <i className="fas fa-money-bill-wave mr-2 text-green-600"></i> Rent
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-gray-700">
-                  <i className="fas fa-badge-check mr-2 text-purple-600"></i> Status
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-gray-700">
                   <i className="fas fa-cogs mr-2 text-gray-600"></i> Actions
                 </th>
               </tr>
@@ -403,7 +406,6 @@ export const ListingsManagement = () => {
                   <td className="px-6 py-4">
                     <span className="font-bold text-green-600">৳{listing.rent.toLocaleString()}</span>
                   </td>
-                  <td className="px-6 py-4">{getStatusBadge(listing)}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <button
