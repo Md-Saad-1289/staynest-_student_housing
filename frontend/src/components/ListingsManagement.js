@@ -295,7 +295,32 @@ export const ListingsManagement = () => {
 
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span clapendingSearchQuery}
+            <span className="text-sm font-semibold text-gray-600">Pending Review</span>
+            <i className="fas fa-clock text-orange-600 text-xl"></i>
+          </div>
+          <p className="text-3xl font-black text-orange-600">
+            {listings.filter((l) => !l.isVerified).length}
+          </p>
+          <p className="text-xs text-gray-500 mt-2">Awaiting approval</p>
+        </div>
+      </div>
+
+      {/* Filters Section */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <i className="fas fa-filter text-blue-600"></i> Filters & Search
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {/* Search */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <i className="fas fa-search mr-2 text-blue-600"></i> Search
+            </label>
+            <input
+              type="text"
+              placeholder="Title, owner, or ID..."
+              value={pendingSearchQuery}
               onChange={(e) => setPendingSearchQuery(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             />
@@ -378,32 +403,7 @@ export const ListingsManagement = () => {
           </button>
           <button
             onClick={handleResetFilters}
-            className="px-6
-              value={sortOrder}
-              onChange={(e) => {
-                setSortOrder(e.target.value);
-                setPage(1);
-              }}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            >
-              <option value="desc">Descending</option>
-              <option value="asc">Ascending</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Reset Filters Button */}
-        <div className="mt-4 flex gap-2">
-          <button
-            onClick={() => {
-              setSearchQuery('');
-              setStatusFilter('');
-              setCityFilter('');
-              setSortBy('createdAt');
-              setSortOrder('desc');
-              setPage(1);
-            }}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium flex items-center gap-2"
+            className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium flex items-center gap-2"
           >
             <i className="fas fa-redo"></i> Reset Filters
           </button>
