@@ -423,26 +423,55 @@ export const ListingsManagement = () => {
                         setSelectedListing(listing);
                         setShowDetailModal(true);
                       }}
-                      className="cursor-pointer hover:text-blue-600 transition"
+                      className="cursor-pointer flex items-center gap-3"
                     >
-                      <p className="font-semibold text-gray-900">{listing.title}</p>
-                      <p className="text-xs text-gray-500">{listing._id.slice(0, 8)}...</p>
+                      <div className="w-16 h-12 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+                        <img
+                          src={listing.photos?.[0] || 'https://via.placeholder.com/160x120?text=No+Image'}
+                          alt={listing.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => (e.target.src = 'https://via.placeholder.com/160x120?text=No+Image')}
+                        />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900 truncate max-w-xs">{listing.title}</p>
+                        <div className="text-xs text-gray-500 flex items-center gap-2 mt-1">
+                          <span className="capitalize">{listing.type || '—'}</span>
+                          <span>•</span>
+                          <span className="capitalize">{listing.genderAllowed || 'any'}</span>
+                          {listing.averageRating !== undefined && (
+                            <span className="ml-2 inline-flex items-center gap-1 text-yellow-500"><i className="fas fa-star"></i> {Number(listing.averageRating).toFixed(1)}</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">ID: {String(listing._id).slice(0,8)}</p>
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div>
-                      <p className="font-medium text-gray-900">{listing.ownerId?.name || 'Unknown'}</p>
-                      <p className="text-xs text-gray-500">{listing.ownerId?.email || 'N/A'}</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-700">{(listing.ownerId?.name || listing.ownerId?.email || 'U').charAt(0).toUpperCase()}</div>
+                      <div>
+                        <p className="font-medium text-gray-900">{listing.ownerId?.name || 'Unknown'}</p>
+                        <p className="text-xs text-gray-500">{listing.ownerId?.email || 'N/A'}</p>
+                        {listing.ownerId?.isVerified ? (
+                          <span className="inline-block mt-1 text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">Verified</span>
+                        ) : (
+                          <span className="inline-block mt-1 text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded">Unverified</span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-1">
-                      <i className="fas fa-map-marker-alt text-red-600 text-sm"></i>
-                      <span className="text-gray-900 font-medium">{listing.city}</span>
+                    <div className="flex flex-col">
+                      <div className="text-sm text-gray-900 font-medium">{listing.city || listing.area || '—'}</div>
+                      <div className="text-xs text-gray-500">{listing.address ? String(listing.address).slice(0,40) : '—'}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="font-bold text-green-600">৳{listing.rent.toLocaleString()}</span>
+                    <div className="flex flex-col items-start">
+                      <span className="font-bold text-green-600">৳{Number(listing.rent || 0).toLocaleString()}</span>
+                      {listing.deposit !== undefined && <span className="text-xs text-gray-500">Deposit: ৳{Number(listing.deposit || 0).toLocaleString()}</span>}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
@@ -726,18 +755,27 @@ export const ListingsManagement = () => {
                   )}
 
                   {/* Facilities */}
-                  {selectedListing.facilities && selectedListing.facilities.length > 0 && (
+                  {(selectedListing.facilities && (Array.isArray(selectedListing.facilities) ? selectedListing.facilities.length > 0 : Object.keys(selectedListing.facilities || {}).length > 0)) && (
                     <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
                       <h4 className="text-lg font-bold text-gray-900 mb-4 pb-3 border-b-2 border-purple-600 flex items-center gap-2">
                         <i className="fas fa-home text-purple-600"></i> Amenities & Facilities
                       </h4>
                       <div className="grid grid-cols-2 gap-3">
-                        {selectedListing.facilities.map((facility, idx) => (
-                          <div key={idx} className="flex items-center gap-2 p-3 bg-white rounded-lg border border-purple-200">
-                            <i className="fas fa-check-circle text-purple-600"></i>
-                            <span className="text-gray-800 font-medium text-sm">{facility}</span>
-                          </div>
-                        ))}
+                            {Array.isArray(selectedListing.facilities)
+                              ? selectedListing.facilities.map((facility, idx) => (
+                                  <div key={idx} className="flex items-center gap-2 p-3 bg-white rounded-lg border border-purple-200">
+                                    <i className="fas fa-check-circle text-purple-600"></i>
+                                    <span className="text-gray-800 font-medium text-sm">{facility}</span>
+                                  </div>
+                                ))
+                              : Object.entries(selectedListing.facilities || {}).map(([key, val]) => (
+                                  val ? (
+                                    <div key={key} className="flex items-center gap-2 p-3 bg-white rounded-lg border border-purple-200">
+                                      <i className="fas fa-check-circle text-purple-600"></i>
+                                      <span className="text-gray-800 font-medium text-sm">{key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}</span>
+                                    </div>
+                                  ) : null
+                                ))}
                       </div>
                     </div>
                   )}
