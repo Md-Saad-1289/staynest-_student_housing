@@ -30,24 +30,25 @@ const userSchema = new mongoose.Schema(
         validator: function (v) {
           return v === '' || validator.isURL(v, { protocols: ['http', 'https'], require_protocol: true });
         },
-        ,
-        role: { type: String, enum: ['student', 'owner', 'admin'], required: true, immutable: true },
+        message: 'profileImage must be a valid http(s) URL'
+      }
+    },
 
-
-        // Admin/verification metadata
-        verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-        verifiedAt: { type: Date, default: null },
-        rejectionReason: { type: String, default: '' },
-        rejectedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-        rejectedAt: { type: Date, default: null },
-
-        // Account moderation
-        isBanned: { type: Boolean, default: false },
-        bannedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-        bannedAt: { type: Date, default: null },
-        banReason: { type: String, default: '' },
     role: { type: String, enum: ['student', 'owner', 'admin'], required: true, immutable: true },
     isVerified: { type: Boolean, default: false },
+
+    // Admin/verification metadata
+    verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    verifiedAt: { type: Date, default: null },
+    rejectionReason: { type: String, default: '' },
+    rejectedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    rejectedAt: { type: Date, default: null },
+
+    // Account moderation
+    isBanned: { type: Boolean, default: false },
+    bannedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    bannedAt: { type: Date, default: null },
+    banReason: { type: String, default: '' },
 
     // NID number (optional, for owners)
     nidNumber: { type: String, trim: true, default: '' },
