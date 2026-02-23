@@ -583,6 +583,51 @@ export const ListingsManagement = () => {
 
             {/* Content */}
             <div className="p-8 space-y-7">
+              {/* Photos Gallery Section */}
+              {selectedListing.photos && selectedListing.photos.length > 0 && (
+                <div className="rounded-xl overflow-hidden border-2 border-gray-200 shadow-lg">
+                  <div className="bg-gray-100 relative">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+                      {/* Main Photo */}
+                      <div className="md:col-span-2 bg-gray-900 flex items-center justify-center min-h-80">
+                        <img
+                          src={selectedListing.photos[0]}
+                          alt="Main listing photo"
+                          className="w-full h-full object-cover"
+                          onError={(e) => (e.target.src = 'https://via.placeholder.com/500x300?text=Photo')}
+                        />
+                      </div>
+                      {/* Thumbnail strip */}
+                      <div className="md:col-span-2 bg-gray-50 p-4 border-t border-gray-200">
+                        <p className="text-sm font-bold text-gray-600 mb-2">
+                          <i className="fas fa-images mr-2 text-blue-600"></i> Photos ({selectedListing.photos.length})
+                        </p>
+                        <div className="flex gap-2 overflow-x-auto pb-2">
+                          {selectedListing.photos.map((photo, idx) => (
+                            <div key={idx} className="flex-shrink-0 w-20 h-20 rounded-lg border-2 border-gray-300 overflow-hidden hover:border-blue-500 transition cursor-pointer">
+                              <img
+                                src={photo}
+                                alt={`Photo ${idx + 1}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => (e.target.src = 'https://via.placeholder.com/80?text=Img')}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* No Photos Message */}
+              {(!selectedListing.photos || selectedListing.photos.length === 0) && (
+                <div className="rounded-xl border-2 border-dashed border-gray-300 p-8 text-center bg-gray-50">
+                  <i className="fas fa-image text-4xl text-gray-300 mb-3"></i>
+                  <p className="text-gray-500 font-medium">No photos available for this listing</p>
+                </div>
+              )}
+
               {/* Quick Stats Row */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-l-4 border-blue-600">
@@ -603,12 +648,12 @@ export const ListingsManagement = () => {
                 </div>
               </div>
 
-              {/* Statistics Section - LIVE AUTO-UPDATING */}
+              {/* Statistics Section - LIVE AUTO-UPDATING (From DB) */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 rounded-xl p-6 border-2 border-indigo-200 relative overflow-hidden">
                 {/* Live Update Indicator */}
                 <div className="absolute top-3 right-3 flex items-center gap-2 text-xs font-bold text-indigo-600">
                   <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  Live Stats
+                  Live Stats from DB
                 </div>
 
                 <div className="text-center">
