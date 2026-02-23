@@ -61,16 +61,7 @@ export const HomePage = () => {
           <Testimonials />
         </div>
 
-        {/* Mobile quick action bar */}
-        <div className="fixed bottom-4 left-0 right-0 flex justify-center lg:hidden z-40">
-          <div className="max-w-3xl w-full px-4">
-            <div className="bg-white rounded-full shadow-lg p-2 flex items-center gap-3">
-              <a href="/listings" className="flex-1 text-center py-2 px-4 bg-gradient-to-r from-sky-600 to-blue-600 text-white rounded-full font-semibold">Search Listings</a>
-              <a href="/listings?featured=1" className="px-3 py-2 rounded-full text-sm bg-gray-100">Featured</a>
-              <a href="/register" className="px-3 py-2 rounded-full text-sm bg-green-600 text-white">List</a>
-            </div>
-          </div>
-        </div>
+        {/* Mobile quick action bar removed */}
       </main>
 
       <SimpleFooter />
