@@ -37,18 +37,42 @@ export const HomePage = () => {
     <div className="min-h-screen bg-gray-50">
       <main>
         <HeroSearch onSearch={handleSearch} />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-10 py-8">
+          <TrustSignals />
 
-        <TrustSignals />
+          {/* Featured Listings (responsive card grid) */}
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">Popular Mess & Hostels</h2>
+            {loading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {Array.from({ length: 6 }).map((_,i)=>(
+                  <div key={i} className="h-40 bg-white rounded-lg border border-gray-100 animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              <FeaturedListingsPreview listings={featuredListings} />
+            )}
+          </section>
 
-        {!loading && <FeaturedListingsPreview listings={featuredListings} />}
+          <RecentlyViewed />
 
-        <RecentlyViewed />
+          <HowItWorks />
 
-        <HowItWorks />
+          <OwnerCTA />
 
-        <OwnerCTA />
+          <Testimonials />
+        </div>
 
-        <Testimonials />
+        {/* Mobile quick action bar */}
+        <div className="fixed bottom-4 left-0 right-0 flex justify-center lg:hidden z-40">
+          <div className="max-w-3xl w-full px-4">
+            <div className="bg-white rounded-full shadow-lg p-2 flex items-center gap-3">
+              <a href="/listings" className="flex-1 text-center py-2 px-4 bg-gradient-to-r from-sky-600 to-blue-600 text-white rounded-full font-semibold">Search Listings</a>
+              <a href="/listings?featured=1" className="px-3 py-2 rounded-full text-sm bg-gray-100">Featured</a>
+              <a href="/register" className="px-3 py-2 rounded-full text-sm bg-green-600 text-white">List</a>
+            </div>
+          </div>
+        </div>
       </main>
 
       <SimpleFooter />
