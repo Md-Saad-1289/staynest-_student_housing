@@ -150,10 +150,14 @@ const toggleFavoriteListing = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const isFavorited = user.favorites.includes(listingId);
+    // Ensure arrays exist
+    if (!Array.isArray(user.favorites)) user.favorites = [];
+
+    const listingIdStr = String(listingId);
+    const isFavorited = user.favorites.some((id) => String(id) === listingIdStr);
 
     if (isFavorited) {
-      user.favorites = user.favorites.filter((id) => id.toString() !== listingId);
+      user.favorites = user.favorites.filter((id) => String(id) !== listingIdStr);
     } else {
       user.favorites.push(listingId);
     }
@@ -184,8 +188,11 @@ const addViewHistory = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    // Remove if already exists
-    user.viewHistory = user.viewHistory.filter((v) => v.listingId.toString() !== listingId);
+    if (!Array.isArray(user.viewHistory)) user.viewHistory = [];
+
+    const listingIdStr = String(listingId);
+    // Remove existing entry for the listing
+    user.viewHistory = user.viewHistory.filter((v) => String(v.listingId) !== listingIdStr);
 
     // Add to front
     user.viewHistory.unshift({ listingId, viewedAt: new Date() });

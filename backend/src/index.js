@@ -69,6 +69,29 @@ app.use(express.json());
 let server;
 const startServer = async () => {
   await connectDB();
+  // Ensure an admin user exists when the server starts (convenience for dev/seed-less setups)
+  try {
+    if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
+      const User = (await import('./models/User.js')).default;
+      const adminEmail = process.env.ADMIN_EMAIL.toLowerCase();
+      const existing = await User.findOne({ email: adminEmail });
+      if (!existing) {
+        await User.create({
+          name: 'Admin User',
+          email: adminEmail,
+          mobile: '',
+          passwordHash: process.env.ADMIN_PASSWORD,
+          role: 'admin',
+          isVerified: true,
+        });
+        console.log('Admin user created from env credentials');
+      } else if (existing.role !== 'admin') {
+        console.warn('Admin email is present but associated user is not admin. Role is immutable; please create a separate admin account.');
+      }
+    }
+  } catch (err) {
+    console.error('Error ensuring admin user exists:', err.message || err);
+  }
   const PORT = process.env.PORT || 5000;
   server = app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

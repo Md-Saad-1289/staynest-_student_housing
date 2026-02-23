@@ -30,15 +30,36 @@ const userSchema = new mongoose.Schema(
         validator: function (v) {
           return v === '' || validator.isURL(v, { protocols: ['http', 'https'], require_protocol: true });
         },
-        message: 'profileImage must be a valid http(s) URL'
-      }
-    },
+        ,
+        role: { type: String, enum: ['student', 'owner', 'admin'], required: true, immutable: true },
 
+
+        // Admin/verification metadata
+        verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+        verifiedAt: { type: Date, default: null },
+        rejectionReason: { type: String, default: '' },
+        rejectedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+        rejectedAt: { type: Date, default: null },
+
+        // Account moderation
+        isBanned: { type: Boolean, default: false },
+        bannedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+        bannedAt: { type: Date, default: null },
+        banReason: { type: String, default: '' },
     role: { type: String, enum: ['student', 'owner', 'admin'], required: true, immutable: true },
     isVerified: { type: Boolean, default: false },
 
     // NID number (optional, for owners)
     nidNumber: { type: String, trim: true, default: '' },
+
+    // User favorites and view history
+    favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Listing' }],
+    viewHistory: [
+      {
+        listingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Listing' },
+        viewedAt: { type: Date, default: Date.now },
+      }
+    ],
 
     // password hash storage
     passwordHash: { type: String, required: true, select: false }
