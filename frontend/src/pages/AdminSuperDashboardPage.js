@@ -20,8 +20,11 @@ export const AdminSuperDashboardPage = () => {
   const [confirmModal, setConfirmModal] = useState({ open: false });
   const [searchQuery, setSearchQuery] = useState('');
   const [filterVerified, setFilterVerified] = useState('');
-  const [newTestimonial, setNewTestimonial] = useState({ name: '', tag: '', text: '', rating: 5, approved: false });
+  const [newTestimonial, setNewTestimonial] = useState({ name: '', tag: '', text: '', rating: 5, approved: false, avatar: '' });
   const [editingTestimonial, setEditingTestimonial] = useState(null);
+  const [testimonialSubmitting, setTestimonialSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [avatarPreview, setAvatarPreview] = useState('');
 
   // Tab color mapping
   const getTabClasses = (tabId) => {
@@ -137,34 +140,42 @@ export const AdminSuperDashboardPage = () => {
 
   // Testimonial handlers with improved error handling
   const handleCreateTestimonial = async () => {
+    if (!newTestimonial.name || !newTestimonial.tag || !newTestimonial.text) {
+      setError('Please fill all required fields');
+      return;
+    }
+    setTestimonialSubmitting(true);
+    setError('');
     try {
-      if (!newTestimonial.name || !newTestimonial.tag || !newTestimonial.text) {
-        setError('Please fill all required fields');
-        return;
-      }
       await adminService.createTestimonial(newTestimonial);
-      alert('✓ Testimonial created successfully!');
-      setNewTestimonial({ name: '', tag: '', text: '', rating: 5, approved: false });
-      setError('');
+      setSuccessMessage('Testimonial created successfully!');
+      setNewTestimonial({ name: '', tag: '', text: '', rating: 5, approved: false, avatar: '' });
+      setAvatarPreview('');
       fetchData();
     } catch (err) {
       setError('Failed to create testimonial: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setTestimonialSubmitting(false);
     }
   };
 
   const handleUpdateTestimonial = async () => {
+    if (!editingTestimonial.name || !editingTestimonial.tag || !editingTestimonial.text) {
+      setError('Please fill all required fields');
+      return;
+    }
+    setTestimonialSubmitting(true);
+    setError('');
     try {
-      if (!editingTestimonial.name || !editingTestimonial.tag || !editingTestimonial.text) {
-        setError('Please fill all required fields');
-        return;
-      }
       await adminService.updateTestimonial(editingTestimonial._id, editingTestimonial);
-      alert('✓ Testimonial updated successfully!');
+      setSuccessMessage('Testimonial updated successfully!');
       setEditingTestimonial(null);
-      setError('');
+      setAvatarPreview('');
       fetchData();
     } catch (err) {
       setError('Failed to update testimonial: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setTestimonialSubmitting(false);
     }
   };
 
@@ -201,6 +212,25 @@ export const AdminSuperDashboardPage = () => {
     } catch (err) {
       setError('Failed to toggle featured: ' + (err.response?.data?.error || err.message));
     }
+  };
+
+  // File input and rating helpers for testimonials
+  const handleTestimonialFileChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const data = reader.result;
+      setAvatarPreview(data);
+      if (editingTestimonial) setEditingTestimonial({ ...editingTestimonial, avatar: data });
+      else setNewTestimonial({ ...newTestimonial, avatar: data });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const setTestimonialRating = (value) => {
+    if (editingTestimonial) setEditingTestimonial({ ...editingTestimonial, rating: value });
+    else setNewTestimonial({ ...newTestimonial, rating: value });
   };
 
   // Table Columns
@@ -661,107 +691,147 @@ export const AdminSuperDashboardPage = () => {
             <p className="text-gray-600 mb-4">Control what students say about your platform on the homepage. Create, edit, approve, and feature testimonials.</p>
           </div>
 
-          {/* Create New Testimonial Form */}
+          {/* Create / Edit Testimonial */}
           <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-6 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              <i className="fas fa-plus text-purple-600 mr-2"></i>
-              {editingTestimonial ? 'Edit Testimonial' : 'Add New Testimonial'}
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <input
-                type="text"
-                placeholder="Student name"
-                value={editingTestimonial ? editingTestimonial.name : newTestimonial.name}
-                onChange={(e) => {
-                  if (editingTestimonial) {
-                    setEditingTestimonial({ ...editingTestimonial, name: e.target.value });
-                  } else {
-                    setNewTestimonial({ ...newTestimonial, name: e.target.value });
-                  }
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-              <input
-                type="text"
-                placeholder="Tag (e.g., BUET Student)"
-                value={editingTestimonial ? editingTestimonial.tag : newTestimonial.tag}
-                onChange={(e) => {
-                  if (editingTestimonial) {
-                    setEditingTestimonial({ ...editingTestimonial, tag: e.target.value });
-                  } else {
-                    setNewTestimonial({ ...newTestimonial, tag: e.target.value });
-                  }
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-            <textarea
-              placeholder="What did they say? (Testimonial text)"
-              value={editingTestimonial ? editingTestimonial.text : newTestimonial.text}
-              onChange={(e) => {
-                if (editingTestimonial) {
-                  setEditingTestimonial({ ...editingTestimonial, text: e.target.value });
-                } else {
-                  setNewTestimonial({ ...newTestimonial, text: e.target.value });
-                }
-              }}
-              rows="3"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4"
-            />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
-                <select
-                  value={editingTestimonial ? editingTestimonial.rating : newTestimonial.rating}
-                  onChange={(e) => {
-                    if (editingTestimonial) {
-                      setEditingTestimonial({ ...editingTestimonial, rating: parseInt(e.target.value) });
-                    } else {
-                      setNewTestimonial({ ...newTestimonial, rating: parseInt(e.target.value) });
-                    }
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="1">1 Star</option>
-                  <option value="2">2 Stars</option>
-                  <option value="3">3 Stars</option>
-                  <option value="4">4 Stars</option>
-                  <option value="5">5 Stars</option>
-                </select>
-              </div>
-              <div className="flex items-end">
-                <label className="flex items-center gap-2 cursor-pointer mb-2">
+            <div className="flex items-start justify-between gap-6">
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <i className="fas fa-plus text-purple-600 mr-2"></i>
+                  {editingTestimonial ? 'Edit Testimonial' : 'Add New Testimonial'}
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">Add a student testimonial to be shown on the homepage. Preview updates on the right.</p>
+
+                {successMessage && (
+                  <div className="mb-3 p-2 bg-green-50 text-green-700 rounded flex items-center justify-between">
+                    <div className="text-sm">{successMessage}</div>
+                    <button onClick={() => setSuccessMessage('')} className="text-green-600 font-bold">✕</button>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                   <input
-                    type="checkbox"
-                    checked={editingTestimonial ? editingTestimonial.approved : newTestimonial.approved}
+                    type="text"
+                    placeholder="Student name"
+                    value={editingTestimonial ? editingTestimonial.name : newTestimonial.name}
                     onChange={(e) => {
                       if (editingTestimonial) {
-                        setEditingTestimonial({ ...editingTestimonial, approved: e.target.checked });
+                        setEditingTestimonial({ ...editingTestimonial, name: e.target.value });
                       } else {
-                        setNewTestimonial({ ...newTestimonial, approved: e.target.checked });
+                        setNewTestimonial({ ...newTestimonial, name: e.target.value });
                       }
                     }}
-                    className="w-4 h-4"
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                   />
-                  <span className="text-sm font-medium">Approve immediately</span>
-                </label>
-              </div>
-              <div className="flex gap-2 items-end">
-                <button
-                  onClick={editingTestimonial ? handleUpdateTestimonial : handleCreateTestimonial}
-                  className="flex-1 px-4 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                  <i className={`fas fa-${editingTestimonial ? 'save' : 'plus'} mr-1`}></i>
-                  {editingTestimonial ? 'Update' : 'Create'}
-                </button>
-                {editingTestimonial && (
+                  <input
+                    type="text"
+                    placeholder="Tag (e.g., BUET Student)"
+                    value={editingTestimonial ? editingTestimonial.tag : newTestimonial.tag}
+                    onChange={(e) => {
+                      if (editingTestimonial) {
+                        setEditingTestimonial({ ...editingTestimonial, tag: e.target.value });
+                      } else {
+                        setNewTestimonial({ ...newTestimonial, tag: e.target.value });
+                      }
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+
+                <textarea
+                  placeholder="Write the testimonial (short and honest)"
+                  value={editingTestimonial ? editingTestimonial.text : newTestimonial.text}
+                  onChange={(e) => {
+                    if (editingTestimonial) setEditingTestimonial({ ...editingTestimonial, text: e.target.value });
+                    else setNewTestimonial({ ...newTestimonial, text: e.target.value });
+                  }}
+                  rows="4"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4"
+                />
+
+                <div className="flex items-center gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                    <div className="flex items-center gap-1">
+                      {[1,2,3,4,5].map((s) => {
+                        const active = (editingTestimonial ? editingTestimonial.rating : newTestimonial.rating) >= s;
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => setTestimonialRating(s)}
+                            className={`text-lg ${active ? 'text-yellow-400' : 'text-gray-300'} hover:text-yellow-400`}
+                            aria-label={`${s} star`}
+                          >
+                            <i className="fas fa-star"></i>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer mb-0">
+                      <input
+                        type="checkbox"
+                        checked={editingTestimonial ? editingTestimonial.approved : newTestimonial.approved}
+                        onChange={(e) => {
+                          if (editingTestimonial) setEditingTestimonial({ ...editingTestimonial, approved: e.target.checked });
+                          else setNewTestimonial({ ...newTestimonial, approved: e.target.checked });
+                        }}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm font-medium">Approve immediately</span>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-gray-700">Student Photo</label>
+                    <input type="file" accept="image/*" onChange={handleTestimonialFileChange} className="text-sm" />
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
                   <button
-                    onClick={() => setEditingTestimonial(null)}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-400 transition-colors"
+                    onClick={editingTestimonial ? handleUpdateTestimonial : handleCreateTestimonial}
+                    disabled={testimonialSubmitting}
+                    className={`flex-1 px-4 py-2 bg-purple-600 text-white font-medium rounded-lg transition-colors ${testimonialSubmitting ? 'opacity-70 cursor-wait' : 'hover:bg-purple-700'}`}
                   >
-                    Cancel
+                    {testimonialSubmitting ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className={`fas fa-${editingTestimonial ? 'save' : 'plus'} mr-2`}></i>}
+                    {editingTestimonial ? 'Update Testimonial' : 'Create Testimonial'}
                   </button>
-                )}
+                  {editingTestimonial && (
+                    <button
+                      onClick={() => { setEditingTestimonial(null); setAvatarPreview(''); }}
+                      className="px-4 py-2 bg-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-400 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Live Preview */}
+              <div className="w-80 bg-white border border-gray-100 rounded-lg p-4 flex-shrink-0">
+                <p className="text-xs text-gray-500 mb-2">Preview</p>
+                <div className="flex items-start gap-3">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center">
+                    {avatarPreview || (editingTestimonial && editingTestimonial.avatar) || newTestimonial.avatar ? (
+                      <img src={avatarPreview || (editingTestimonial && editingTestimonial.avatar) || newTestimonial.avatar} alt="avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <i className="fas fa-user text-2xl text-gray-300"></i>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-900">{editingTestimonial ? editingTestimonial.name || 'Student Name' : newTestimonial.name || 'Student Name'}</p>
+                    <p className="text-xs text-gray-500 mb-1">{editingTestimonial ? editingTestimonial.tag || 'Tag' : newTestimonial.tag || 'Tag'}</p>
+                    <div className="flex gap-1 mb-2">
+                      {([...Array(5)].map((_, i) => (
+                        <i key={i} className={`fas fa-star text-sm ${i < (editingTestimonial ? editingTestimonial.rating : newTestimonial.rating) ? 'text-yellow-400' : 'text-gray-200'}`}></i>
+                      )))}
+                    </div>
+                    <p className="text-sm text-gray-700 truncate">"{(editingTestimonial ? editingTestimonial.text : newTestimonial.text) || 'Testimonial text will appear here.'}"</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -832,7 +902,7 @@ export const AdminSuperDashboardPage = () => {
                       <td className="px-4 py-3">
                         <div className="flex gap-2 flex-col">
                           <button
-                            onClick={() => setEditingTestimonial(t)}
+                            onClick={() => { setEditingTestimonial(t); setAvatarPreview(t.avatar || ''); }}
                             className="px-2 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 rounded font-medium transition-colors"
                           >
                             <i className="fas fa-edit mr-1"></i>Edit

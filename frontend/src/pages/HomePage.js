@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { HeroSearch } from '../components/HeroSearch';
+// Hero search form removed from homepage per request
 import { TrustSignals } from '../components/TrustSignals';
 import { FeaturedListingsPreview } from '../components/FeaturedListingsPreview';
 import { RecentlyViewed } from '../components/RecentlyViewed';
@@ -28,15 +28,12 @@ export const HomePage = () => {
     fetchFeatured();
   }, []);
 
-  const handleSearch = (values) => {
-    // TODO: wire to listing fetch (future API integration)
-    console.log('Search values', values);
-  };
+  // search handler removed because search form was removed from homepage
 
   return (
     <div className="min-h-screen bg-gray-50">
       <main>
-        <HeroSearch onSearch={handleSearch} />
+        {/* Search form removed */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-10 py-8">
           <TrustSignals />
 
