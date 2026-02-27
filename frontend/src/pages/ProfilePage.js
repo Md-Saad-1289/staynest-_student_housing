@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { userService } from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 
-export default function ProfilePage() {
-  const { user: authUser, logout, setUser } = useContext(AuthContext);
+function ProfilePage() {
+  const { logout, setUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState(null);
@@ -36,18 +36,12 @@ export default function ProfilePage() {
     fetchProfile();
   }, [fetchProfile]);
 
-  /* ---------------- Edit Handlers ---------------- */
-  const handleChange = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  };
-
+  /* ---------------- Edit ---------------- */
   const startEdit = () => {
     if (!profile) return;
 
     setForm({
       name: profile.name || "",
-      email: profile.email || "",
-      phoneNo: profile.phoneNo || "",
       fullAddress: profile.fullAddress || "",
       dob: profile.dob
         ? new Date(profile.dob).toISOString().slice(0, 10)
@@ -67,14 +61,8 @@ export default function ProfilePage() {
     setError("");
   };
 
-  /* ---------------- Validation ---------------- */
-  const isValidUrl = (value) => {
-    try {
-      const url = new URL(value);
-      return ["http:", "https:"].includes(url.protocol);
-    } catch {
-      return false;
-    }
+  const handleChange = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   /* ---------------- Save ---------------- */
@@ -89,14 +77,21 @@ export default function ProfilePage() {
       dob: form.dob || undefined,
       gender: form.gender || undefined,
       emergencyContact: form.emergencyContact || undefined,
+      profileImage: form.profileImage || undefined,
     };
-
-    if (form.profileImage && isValidUrl(form.profileImage)) {
-      payload.profileImage = form.profileImage;
-    }
 
     if (profile?.role === "owner" && form.nidNumber) {
       payload.nidNumber = form.nidNumber;
+    }
+
+    // small client-side validation for image URL
+    if (form.profileImage) {
+      try {
+        new URL(form.profileImage);
+      } catch (_e) {
+        setError("Profile image must be a valid URL.");
+        return;
+      }
     }
 
     try {
@@ -117,13 +112,10 @@ export default function ProfilePage() {
     }
   };
 
-  /* ---------------- Loading State ---------------- */
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-600 text-lg animate-pulse">
-          Loading profile...
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <p className="text-gray-500 animate-pulse">Loading profile...</p>
       </div>
     );
   }
@@ -131,42 +123,53 @@ export default function ProfilePage() {
   const user = profile || {};
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-6">
-      <div className="max-w-3xl mx-auto bg-white shadow-xl rounded-2xl p-8">
-        
+    <div className="min-h-screen bg-gray-100 py-12 px-6">
+      <div className="max-w-4xl mx-auto bg-white shadow-md rounded-xl p-10">
+
         {/* Header */}
-        <div className="flex items-center gap-6 mb-8">
-          <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border">
-            {user.profileImage ? (
-              <img
-                src={user.profileImage}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-                No Image
-              </div>
-            )}
+        <div className="flex items-center justify-between border-b pb-6 mb-8">
+          <div className="flex items-center gap-6">
+            <div className="w-24 h-24 rounded-full overflow-hidden border bg-gray-50">
+              {user.profileImage ? (
+                <img
+                  src={user.profileImage}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+                  No Image
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-semibold text-gray-800">
+                {user.name}
+              </h2>
+              <p className="text-gray-500 text-sm">{user.email}</p>
+              <span className="mt-2 inline-block text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded-full capitalize">
+                {user.role}
+              </span>
+            </div>
           </div>
 
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-800">
-              {user.name || "User Profile"}
-            </h2>
-            <p className="text-gray-500 text-sm">{user.email}</p>
-            <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full mt-1 inline-block">
-              {user.role}
-            </span>
-          </div>
+          {!editing && (
+            <button
+              onClick={startEdit}
+              className="px-5 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition"
+            >
+              Edit Profile
+            </button>
+          )}
         </div>
 
-        {/* View Mode */}
         {!editing ? (
-          <div className="space-y-4 text-gray-700">
-            <InfoRow label="Phone" value={user.phoneNo} />
-            <InfoRow label="Address" value={user.fullAddress} />
-            <InfoRow
+          /* VIEW MODE */
+          <div className="grid md:grid-cols-2 gap-x-10 gap-y-6 text-sm text-gray-700">
+            <Info label="Phone Number" value={user.phoneNo} locked />
+            <Info label="Address" value={user.fullAddress} />
+            <Info
               label="Date of Birth"
               value={
                 user.dob
@@ -174,43 +177,33 @@ export default function ProfilePage() {
                   : "—"
               }
             />
-            <InfoRow label="Gender" value={user.gender} />
-            <InfoRow
-              label="Emergency Contact"
-              value={user.emergencyContact}
-            />
-            <InfoRow
+            <Info label="Gender" value={user.gender} />
+            <Info label="Emergency Contact" value={user.emergencyContact} />
+            <Info
               label="Verified"
               value={user.isVerified ? "Yes" : "No"}
             />
             {user.role === "owner" && (
-              <InfoRow label="NID Number" value={user.nidNumber} />
+              <Info label="NID Number" value={user.nidNumber} />
             )}
-
-            <div className="pt-4">
-              <button
-                onClick={startEdit}
-                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
-              >
-                Edit Profile
-              </button>
-            </div>
           </div>
         ) : (
-          /* Edit Mode */
-          <div className="space-y-4">
+          /* EDIT MODE */
+          <div className="space-y-6 max-w-2xl">
             <Input
               label="Full Name"
               value={form.name}
               onChange={(v) => handleChange("name", v)}
             />
 
-            <Input label="Email" value={form.email} disabled />
+            <ReadOnlyInput
+              label="Email"
+              value={user.email}
+            />
 
-            <Input
-              label="Phone"
-              value={form.phoneNo}
-              disabled
+            <ReadOnlyInput
+              label="Phone Number"
+              value={user.phoneNo}
             />
 
             <Input
@@ -220,22 +213,16 @@ export default function ProfilePage() {
             />
 
             <Input
+              label="Profile Image URL"
+              value={form.profileImage}
+              onChange={(v) => handleChange("profileImage", v)}
+            />
+
+            <Input
               label="Date of Birth"
               type="date"
               value={form.dob}
               onChange={(v) => handleChange("dob", v)}
-            />
-
-            <Select
-              label="Gender"
-              value={form.gender}
-              onChange={(v) => handleChange("gender", v)}
-              options={[
-                { value: "", label: "Prefer not to say" },
-                { value: "male", label: "Male" },
-                { value: "female", label: "Female" },
-                { value: "other", label: "Other" },
-              ]}
             />
 
             <Input
@@ -243,14 +230,6 @@ export default function ProfilePage() {
               value={form.emergencyContact}
               onChange={(v) =>
                 handleChange("emergencyContact", v)
-              }
-            />
-
-            <Input
-              label="Profile Image URL"
-              value={form.profileImage}
-              onChange={(v) =>
-                handleChange("profileImage", v)
               }
             />
 
@@ -265,21 +244,21 @@ export default function ProfilePage() {
             )}
 
             {error && (
-              <div className="text-red-600 text-sm">{error}</div>
+              <p className="text-sm text-red-600">{error}</p>
             )}
 
-            <div className="flex gap-3 pt-3">
+            <div className="flex gap-4 pt-4">
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition disabled:opacity-60"
+                className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition disabled:opacity-50"
               >
                 {saving ? "Saving..." : "Save Changes"}
               </button>
 
               <button
                 onClick={cancelEdit}
-                className="px-5 py-2 border rounded-lg hover:bg-gray-100"
+                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition"
               >
                 Cancel
               </button>
@@ -291,55 +270,57 @@ export default function ProfilePage() {
   );
 }
 
-/* ---------------- Reusable Components ---------------- */
+/* ---------------- Components ---------------- */
 
-function InfoRow({ label, value }) {
+function Info({ label, value, locked }) {
   return (
-    <div className="flex justify-between border-b pb-2">
-      <span className="font-medium text-gray-600">{label}</span>
-      <span>{value || "—"}</span>
+    <div>
+      <p className="text-gray-500">{label}</p>
+      <div className="flex items-center gap-2">
+        <p className="font-medium">
+          {value || "—"}
+        </p>
+        {locked && (
+          <span className="text-xs bg-gray-200 px-2 py-0.5 rounded">
+            Locked
+          </span>
+        )}
+      </div>
     </div>
   );
 }
 
-function Input({ label, value, onChange, type = "text", disabled }) {
+function Input({ label, value, onChange, type = "text" }) {
   return (
     <div>
-      <label className="block text-sm font-medium mb-1 text-gray-600">
+      <label className="block text-sm text-gray-600 mb-1">
         {label}
       </label>
       <input
         type={type}
         value={value || ""}
-        disabled={disabled}
-        onChange={(e) => onChange?.(e.target.value)}
-        className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none ${
-          disabled
-            ? "bg-gray-100 cursor-not-allowed"
-            : ""
-        }`}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 outline-none transition"
       />
     </div>
   );
 }
 
-function Select({ label, value, onChange, options }) {
+function ReadOnlyInput({ label, value }) {
   return (
     <div>
-      <label className="block text-sm font-medium mb-1 text-gray-600">
+      <label className="block text-sm text-gray-600 mb-1">
         {label}
       </label>
-      <select
+      <input
         value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+        disabled
+        className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-gray-500 cursor-not-allowed"
+      />
     </div>
   );
 }
+
+// exports for both default and named imports
+export default ProfilePage;
+export { ProfilePage };
