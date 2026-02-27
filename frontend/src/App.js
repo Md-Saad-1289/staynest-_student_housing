@@ -18,7 +18,7 @@ import { StudentDashboardModernPage } from './pages/StudentDashboardModernPage';
 import { OwnerDashboardModernPage } from './pages/OwnerDashboardModernPage';
 import { AdminDashboardModernPage } from './pages/AdminDashboardModernPage';
 import { UserProfilePage } from './pages/UserProfilePage';
-import { ProfilePage } from './pages/ProfilePage';
+import ProfilePage from './pages/ProfilePage';
 import { NotificationsPage } from './pages/NotificationsPage';
 
 import './index.css';
