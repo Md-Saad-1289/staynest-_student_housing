@@ -1,63 +1,87 @@
-import React, { useEffect, useState, useContext, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { userService } from '../services/api';
-import { AuthContext } from '../context/AuthContext';
+import React, { useEffect, useState, useContext, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { userService } from "../services/api";
+import { AuthContext } from "../context/AuthContext";
 
-export function ProfilePage() {
-  const { user: authUser, logout, setUser } = useContext(AuthContext);
+export default function ProfilePage() {
+  const { logout, setUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState(null);
+  const [form, setForm] = useState({});
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    let mounted = true;
-    const fetch = async () => {
-      try {
-        const res = await userService.getProfile();
-        const data = res?.data?.user || res?.data;
-        console.log('Fetched profile data:', data);
-        if (mounted) setProfile(data);
-      } catch (err) {
-        if (err?.response?.status === 401) { logout(); navigate('/login'); }
-        else console.error('Error fetching profile:', err);
-      } finally { if (mounted) setLoading(false); }
-    };
+  /* ================= Fetch Profile ================= */
 
-    fetch();
-    return () => (mounted = false);
+  const fetchProfile = useCallback(async () => {
+    try {
+      const res = await userService.getProfile();
+      const data = res?.data?.user || res?.data;
+      setProfile(data);
+    } catch (err) {
+      if (err?.response?.status === 401) {
+        logout();
+        navigate("/login");
+      } else {
+        setError("Failed to load profile.");
+      }
+    } finally {
+      setLoading(false);
+    }
   }, [logout, navigate]);
 
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  /* ================= Handlers ================= */
+
   const startEdit = () => {
-    const u = profile || {};
+    if (!profile) return;
+
     setForm({
-      name: u.name || '',
-      email: u.email || '',
-      mobile: u.phoneNo || '',
-      fullAddress: u.fullAddress || '',
-      dob: u.dob ? new Date(u.dob).toISOString().slice(0,10) : '',
-      gender: u.gender || '',
-      emergencyContact: u.emergencyContact || '',
-      profileImage: u.profileImage || '',
-      nidNumber: u.nidNumber || ''
+      name: profile.name || "",
+      email: profile.email || "",
+      phoneNo: profile.phoneNo || "",
+      fullAddress: profile.fullAddress || "",
+      dob: profile.dob
+        ? new Date(profile.dob).toISOString().slice(0, 10)
+        : "",
+      gender: profile.gender || "",
+      emergencyContact: profile.emergencyContact || "",
+      profileImage: profile.profileImage || "",
+      nidNumber: profile.nidNumber || "",
     });
-    console.log('Starting edit with profile:', u);
-    console.log('Phone number value:', u.phoneNo);
+
     setEditing(true);
-    setError('');
+    setError("");
   };
 
-  const cancel = () => { setEditing(false); setError(''); };
+  const cancelEdit = () => {
+    setEditing(false);
+    setError("");
+  };
 
-  const validateUrl = (s) => { try { const u = new URL(s); return ['http:','https:'].includes(u.protocol); } catch { return false; } };
+  const handleChange = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
 
-  const save = async () => {
-    if (!form.name?.trim()) return setError('Name is required');
-    // Phone number is not editable via this profile page; do not validate or update it here.
+  const isValidUrl = (value) => {
+    try {
+      const url = new URL(value);
+      return ["http:", "https:"].includes(url.protocol);
+    } catch {
+      return false;
+    }
+  };
+
+  const handleSave = async () => {
+    if (!form.name?.trim()) {
+      return setError("Full name is required.");
+    }
 
     const payload = {
       name: form.name.trim(),
@@ -67,93 +91,236 @@ export function ProfilePage() {
       emergencyContact: form.emergencyContact || undefined,
     };
 
-    if (form.profileImage && validateUrl(form.profileImage)) payload.profileImage = form.profileImage;
-    if (form.nidNumber && profile?.role === 'owner') payload.nidNumber = form.nidNumber;
+    if (form.profileImage && isValidUrl(form.profileImage)) {
+      payload.profileImage = form.profileImage;
+    }
+
+    if (profile?.role === "owner" && form.nidNumber) {
+      payload.nidNumber = form.nidNumber;
+    }
 
     try {
-      setSaving(true); setError('');
+      setSaving(true);
+      setError("");
+
       const res = await userService.updateProfile(payload);
-      const updated = res?.data?.user || res?.data;
-      if (updated) { setProfile(updated); if (setUser) setUser(updated); }
+      const updatedUser = res?.data?.user || res?.data;
+
+      setProfile(updatedUser);
+      setUser?.(updatedUser);
+
       setEditing(false);
     } catch (err) {
-      setError(err?.response?.data?.error || err?.message || 'Update failed');
-    } finally { setSaving(false); }
+      setError(err?.response?.data?.error || "Update failed.");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  /* ================= Loading ================= */
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-slate-600 animate-pulse text-lg">
+          Loading profile...
+        </div>
+      </div>
+    );
+  }
 
   const user = profile || {};
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-lg">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100">
-            {user.profileImage ? <img src={user.profileImage} alt="avatar" className="w-full h-full object-cover" /> : <div className="text-gray-400 p-4">No Image</div>}
+    <div className="min-h-screen bg-slate-50 py-10 px-6">
+      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
+
+        {/* Header */}
+        <div className="flex items-center gap-6 mb-8">
+          <div className="w-24 h-24 rounded-full overflow-hidden bg-slate-100 border">
+            {user.profileImage ? (
+              <img
+                src={user.profileImage}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-slate-400 text-sm">
+                No Image
+              </div>
+            )}
           </div>
+
           <div>
-            <h2 className="text-2xl font-semibold">{user.name || 'Profile'}</h2>
-            <p className="text-sm text-gray-600">{user.email}</p>
-            <p className="text-sm text-gray-600">Role: {user.role}</p>
+            <h2 className="text-2xl font-semibold text-slate-800">
+              {user.name || "User Profile"}
+            </h2>
+            <p className="text-slate-500 text-sm">{user.email}</p>
+            <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full mt-2 inline-block">
+              {user.role}
+            </span>
           </div>
         </div>
 
         {!editing ? (
-          <div>
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="text-sm text-gray-700 font-semibold flex items-center gap-2"><i className="fas fa-phone text-sky-600"></i> Phone</div>
-                <div className="text-sm text-gray-600">{user.phoneNo || '—'}</div>
-              </div>
-              <div>
-                <button onClick={startEdit} className="text-sm px-3 py-1 bg-blue-600 text-white rounded">Edit</button>
-              </div>
+          <>
+            <div className="grid md:grid-cols-2 gap-6 text-sm text-slate-700">
+              <InfoRow label="Phone" value={user.phoneNo} />
+              <InfoRow label="Address" value={user.fullAddress} />
+              <InfoRow
+                label="Date of Birth"
+                value={
+                  user.dob
+                    ? new Date(user.dob).toLocaleDateString()
+                    : "—"
+                }
+              />
+              <InfoRow label="Gender" value={user.gender} />
+              <InfoRow
+                label="Emergency Contact"
+                value={user.emergencyContact}
+              />
+              {user.role === "owner" && (
+                <InfoRow label="NID Number" value={user.nidNumber} />
+              )}
             </div>
-            <div className="mb-4"><strong>Address:</strong> {user.fullAddress || '—'}</div>
-            <div className="mb-4"><strong>DOB:</strong> {user.dob ? new Date(user.dob).toLocaleDateString() : '—'}</div>
-            <div className="mb-4"><strong>Gender:</strong> {user.gender || '—'}</div>
-            <div className="mb-4"><strong>Emergency Contact:</strong> {user.emergencyContact || '—'}</div>
-            <div className="mb-4"><strong>Verified:</strong> {user.isVerified ? 'Yes' : 'No'}</div>
-            {user.role === 'owner' && <div className="mb-4"><strong>NID:</strong> {user.nidNumber || '—'}</div>}
-            <div className="flex gap-2">
-              <button onClick={startEdit} className="px-4 py-2 bg-blue-600 text-white rounded">Edit Profile</button>
+
+            <div className="mt-8 flex justify-end">
+              <button
+                onClick={startEdit}
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition shadow-sm"
+              >
+                Edit Profile
+              </button>
             </div>
-          </div>
+          </>
         ) : (
-          <div className="grid gap-3">
-            <input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Full name" className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <input value={form.email} disabled placeholder="Email (read-only)" className="border p-2 rounded bg-gray-100 text-gray-700 cursor-not-allowed" />
-            <input disabled inputMode="tel" pattern="[0-9+\-() ]{7,}" type="tel" value={form.mobile} placeholder="Phone cannot be changed here" className="border p-2 rounded bg-gray-100 text-gray-600 cursor-not-allowed" />
-            <p className="text-xs text-gray-500">Phone number is read-only on this page. To change it, contact support or use the dedicated account settings flow.</p>
-            <input value={form.fullAddress} onChange={e=>setForm({...form,fullAddress:e.target.value})} placeholder="Full address" className="border p-2 rounded" />
-            <input type="date" value={form.dob} onChange={e=>setForm({...form,dob:e.target.value})} className="border p-2 rounded" />
-            <select value={form.gender} onChange={e=>setForm({...form,gender:e.target.value})} className="border p-2 rounded">
-              <option value="">Prefer not to say</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-            </select>
-            <input value={form.emergencyContact} onChange={e=>setForm({...form,emergencyContact:e.target.value})} placeholder="Emergency contact (Name|Phone)" className="border p-2 rounded" />
-            <div>
-              <input value={form.profileImage} onChange={e=>setForm({...form,profileImage:e.target.value})} placeholder="Profile image URL" className="border p-2 rounded" />
-              <div className="mt-2">
-                {form.profileImage && (()=>{
-                  try { return <img src={form.profileImage} alt="preview" className="w-24 h-24 rounded-full object-cover border" onError={(e)=>{e.target.style.display='none'}} /> } catch { return null }
-                })()}
-              </div>
+          <>
+            <div className="grid md:grid-cols-2 gap-6">
+
+              <Input label="Full Name" value={form.name}
+                onChange={(v)=>handleChange("name",v)} />
+
+              <Input label="Email" value={form.email} disabled />
+
+              <Input label="Phone" value={form.phoneNo} disabled />
+
+              <Input label="Address" value={form.fullAddress}
+                onChange={(v)=>handleChange("fullAddress",v)} />
+
+              <Input type="date" label="Date of Birth"
+                value={form.dob}
+                onChange={(v)=>handleChange("dob",v)} />
+
+              <Select
+                label="Gender"
+                value={form.gender}
+                onChange={(v)=>handleChange("gender",v)}
+                options={[
+                  { value: "", label: "Prefer not to say" },
+                  { value: "male", label: "Male" },
+                  { value: "female", label: "Female" },
+                  { value: "other", label: "Other" }
+                ]}
+              />
+
+              <Input
+                label="Emergency Contact"
+                value={form.emergencyContact}
+                onChange={(v)=>handleChange("emergencyContact",v)}
+              />
+
+              <Input
+                label="Profile Image URL"
+                value={form.profileImage}
+                onChange={(v)=>handleChange("profileImage",v)}
+              />
+
+              {user.role === "owner" && (
+                <Input
+                  label="NID Number"
+                  value={form.nidNumber}
+                  onChange={(v)=>handleChange("nidNumber",v)}
+                />
+              )}
             </div>
-            {user.role === 'owner' && <input value={form.nidNumber} onChange={e=>setForm({...form,nidNumber:e.target.value})} placeholder="NID number" className="border p-2 rounded" />}
-            {error && <div className="text-red-600">{error}</div>}
-            <div className="flex gap-2">
-              <button onClick={save} disabled={saving} className="px-4 py-2 bg-green-600 text-white rounded">{saving ? 'Saving...' : 'Save'}</button>
-              <button onClick={cancel} className="px-4 py-2 border rounded">Cancel</button>
+
+            {error && (
+              <div className="mt-4 text-red-600 text-sm">{error}</div>
+            )}
+
+            <div className="mt-8 flex justify-end gap-3">
+              <button
+                onClick={cancelEdit}
+                className="px-6 py-2.5 border border-slate-300 rounded-xl hover:bg-slate-100 transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition disabled:opacity-60"
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>
   );
 }
 
-export default ProfilePage;
+/* ================= Reusable UI ================= */
+
+function InfoRow({ label, value }) {
+  return (
+    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+      <p className="text-xs uppercase text-slate-500 mb-1 tracking-wide">
+        {label}
+      </p>
+      <p className="font-medium text-slate-800">{value || "—"}</p>
+    </div>
+  );
+}
+
+function Input({ label, value, onChange, type="text", disabled }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-1 text-slate-600">
+        {label}
+      </label>
+      <input
+        type={type}
+        value={value || ""}
+        disabled={disabled}
+        onChange={(e)=>onChange?.(e.target.value)}
+        className={`w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none ${
+          disabled ? "bg-slate-100 cursor-not-allowed" : ""
+        }`}
+      />
+    </div>
+  );
+}
+
+function Select({ label, value, onChange, options }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-1 text-slate-600">
+        {label}
+      </label>
+      <select
+        value={value || ""}
+        onChange={(e)=>onChange(e.target.value)}
+        className="w-full border rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
+      >
+        {options.map((opt)=>(
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
