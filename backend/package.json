@@ -1,7 +1,7 @@
 {
-  "name": "stu-housing-backend",
+  "name": "nestforstay-backend",
   "version": "1.0.0",
-  "description": "Student Housing Platform MVP Backend",
+  "description": "nestforstay backend for student housing platform MVP",
   "main": "src/index.js",
   "type": "module",
   "scripts": {

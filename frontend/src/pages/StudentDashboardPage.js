@@ -149,7 +149,7 @@ export const StudentDashboardPage = () => {
           </h3>
           <p className="text-sm text-gray-700 mb-4">Get in touch with our support team for any questions or assistance.</p>
           <a
-            href="mailto:support@nestrostay.com"
+            href="mailto:support@nestforstay.com"
             className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
           >
             <i className="fas fa-envelope"></i> Contact Support

@@ -65,7 +65,7 @@ export const Testimonials = () => {
     <section className="py-12 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4">
         <h2 className="text-3xl font-bold mb-2 flex items-center gap-2"><i className="fas fa-comment-dots text-blue-600"></i> What Students Say</h2>
-        <p className="text-gray-600 mb-8">Real reviews from NestroStay users</p>
+        <p className="text-gray-600 mb-8">Real reviews from nestforstay users</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {testimonials.map((t, i) => (
             <Testimonial key={i} {...t} />

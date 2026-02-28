@@ -18,7 +18,7 @@ export const HowItWorks = () => (
   <section id="how" className="py-12 bg-gray-50">
     <div className="max-w-7xl mx-auto px-4">
       <div className="text-center mb-10">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2"><i className="fas fa-lightbulb text-yellow-500"></i> How NestroStay Works</h2>
+        <h2 className="text-3xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2"><i className="fas fa-lightbulb text-yellow-500"></i> How nestforstay Works</h2>
         <p className="text-gray-600 max-w-2xl mx-auto">Finding your perfect student housing is easy with our simple 3-step process</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">

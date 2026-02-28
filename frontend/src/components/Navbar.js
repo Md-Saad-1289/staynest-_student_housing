@@ -60,7 +60,7 @@ export const Navbar = () => {
         <div className="flex items-center gap-2 sm:gap-4">
           <Link to="/" className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-1 sm:gap-2 hover:opacity-90 transition">
             <i className="fas fa-home text-sky-600 text-2xl sm:text-3xl"></i>
-            <span className="hidden sm:inline">NestroStay</span>
+            <span className="hidden sm:inline">nestforstay</span>
           </Link>
         </div>
 
