@@ -123,37 +123,13 @@ export const ListingDetailPage = () => {
         </div>
       )}
 
-   
 
-        {/* Mobile slider (kept for small screens) */}
+        {/*slider*/}
         <div className="mt-4">
           <ImageSlider images={currentListing.photos} />
         </div>
 
-        {/* Stat Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-6">
-          <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
-            <p className="text-xs text-gray-500 font-semibold mb-1">Rating</p>
-            <p className="text-lg font-bold text-yellow-600">{(calculateRatings(currentReviews)?.averageRating) || currentListing.averageRating || '—'}</p>
-          </div>
-          <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
-            <p className="text-xs text-gray-500 font-semibold mb-1">Reviews</p>
-            <p className="text-lg font-bold text-gray-900">{currentReviews.length}</p>
-          </div>
-          <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
-            <p className="text-xs text-gray-500 font-semibold mb-1">Bookings</p>
-            <p className="text-lg font-bold text-gray-900">{bookings.length}</p>
-          </div>
-          <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
-            <p className="text-xs text-gray-500 font-semibold mb-1">Owner Lists</p>
-            <p className="text-lg font-bold text-gray-900">{currentListing.ownerId?.totalListings || 0}</p>
-          </div>
-          <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
-            <p className="text-xs text-gray-500 font-semibold mb-1">Rent</p>
-            <p className="text-lg font-bold text-gray-900">৳{currentListing.rent}</p>
-          </div>
-        </div>
-      </div>
+
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -196,12 +172,6 @@ export const ListingDetailPage = () => {
 
           {/* About This Place */}
           <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><i className="fas fa-info-circle text-blue-600"></i> About This Place</h2>
-            {/* Availability Calendar */}
-            <AvailabilityCalendar 
-              listingId={currentListing._id} 
-              bookings={bookings || []}
-            />
 
             <p className="text-gray-700 leading-relaxed mb-4">{currentListing.description}</p>
             {currentListing.rules && (
