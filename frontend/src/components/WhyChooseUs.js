@@ -26,7 +26,7 @@ export const WhyChooseUs = () => (
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto mb-14">
         <h2 className="text-4xl font-bold text-gray-900 mb-4">
-          Why Students Trust StayNest
+          Why Students Trust NestForStay
         </h2>
         <p className="text-gray-600 text-lg">
           We’re building the safest and most transparent student housing platform in Bangladesh.

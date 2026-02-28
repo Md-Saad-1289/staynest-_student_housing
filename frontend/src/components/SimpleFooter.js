@@ -11,7 +11,7 @@ export const SimpleFooter = () => {
         {/* Brand */}
         <div>
           <h2 className="text-2xl font-bold text-white mb-4">
-            StayNest
+            NestForStay
           </h2>
           <p className="text-sm leading-relaxed">
             A trusted student housing marketplace in Bangladesh.
@@ -80,7 +80,7 @@ export const SimpleFooter = () => {
       <div className="border-t border-gray-800">
         <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500">
           <p>
-            © {new Date().getFullYear()} StayNest. All rights reserved.
+            © {new Date().getFullYear()} NestForStay. All rights reserved.
           </p>
 
           <div className="flex gap-6 mt-4 md:mt-0">

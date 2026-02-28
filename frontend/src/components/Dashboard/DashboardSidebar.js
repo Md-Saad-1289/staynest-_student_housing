@@ -66,7 +66,7 @@ export const DashboardSidebar = ({ userRole, mobile = false, onClose }) => {
             SN
           </div>
           <div>
-            <div className="font-bold text-white leading-tight">StayNest</div>
+            <div className="font-bold text-white leading-tight">NestForStay</div>
             <div className="text-xs text-blue-400">{userRole?.toUpperCase()} PANEL</div>
           </div>
         </Link>
