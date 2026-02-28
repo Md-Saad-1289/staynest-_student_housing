@@ -11,14 +11,6 @@ export const FeaturedListingsPreview = ({ listings = [] }) => {
 
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-              Featured Listings
-            </h2>
-            <p className="text-gray-500 mt-2 text-lg">
-              Handpicked verified stays for students
-            </p>
-          </div>
 
           <Link
             to="/listings"
