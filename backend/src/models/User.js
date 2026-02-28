@@ -9,10 +9,8 @@ const userSchema = new mongoose.Schema(
     // core identifier — immutable
     email: { type: String, required: true, unique: true, lowercase: true, trim: true, immutable: true },
 
-    // phone number (preferred name)
-    // legacy field kept for compatibility; new canonical field `mobile`
+    // mobile/phoneNo are kept in sync via pre-save hook for flexibility
     phoneNo: { type: String, trim: true, default: '' },
-    mobile: { type: String, trim: true, default: '' },
 
     // single address string
     fullAddress: { type: String, trim: true, default: '' },

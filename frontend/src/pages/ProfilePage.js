@@ -74,6 +74,7 @@ function ProfilePage() {
 
     const payload = {
       name: form.name.trim(),
+      phoneNo: form.phoneNo.trim() || undefined,
       fullAddress: form.fullAddress || undefined,
       dob: form.dob || undefined,
       gender: form.gender || undefined,
