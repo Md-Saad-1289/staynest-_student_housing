@@ -9,17 +9,6 @@ export const FeaturedListingsPreview = ({ listings = [] }) => {
     <section className="py-20 bg-gradient-to-b from-sky-50 to-white">
       <div className="max-w-7xl mx-auto px-6">
 
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12">
-
-          <Link
-            to="/listings"
-            className="mt-6 md:mt-0 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-sky-600 text-white font-semibold shadow-md hover:bg-sky-700 hover:shadow-lg transition-all duration-300"
-          >
-            View All
-            <i className="fas fa-arrow-right text-sm"></i>
-          </Link>
-        </div>
 
         {/* Listings Grid */}
         {preview.length > 0 ? (
@@ -33,6 +22,7 @@ export const FeaturedListingsPreview = ({ listings = [] }) => {
               </div>
             ))}
           </div>
+          
         ) : (
           <div className="text-center py-20 bg-white rounded-2xl shadow-sm border">
             <h3 className="text-xl font-semibold text-gray-800">
@@ -44,6 +34,13 @@ export const FeaturedListingsPreview = ({ listings = [] }) => {
           </div>
         )}
       </div>
+                <Link
+            to="/listings"
+            className="mt-6 md:mt-0 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-sky-600 text-white font-semibold shadow-md hover:bg-sky-700 hover:shadow-lg transition-all duration-300"
+          >
+            View All
+            <i className="fas fa-arrow-right text-sm"></i>
+          </Link>
     </section>
   );
 };
