@@ -40,7 +40,7 @@ export const HomePage = () => {
 
           {/* Featured Listings (responsive card grid) */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">Popular Mess & Hostels == </h2>
+            <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-2"><i className="fas fa-fire text-orange-500"></i> Popular Mess & Hostels</h2>
             {loading ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {Array.from({ length: 6 }).map((_,i)=>(

@@ -43,7 +43,6 @@ export const FeaturedListingsPreview = ({ listings = [] }) => {
     <section className="py-12 bg-white">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-2"><i className="fas fa-fire text-orange-500"></i> Popular Mess & Hostels</h2>
           <Link to="/listings" className="text-sky-600 font-semibold hover:text-sky-700 flex items-center gap-1">
             View All <i className="fas fa-arrow-right"></i>
           </Link>
