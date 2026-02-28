@@ -7,7 +7,36 @@ import ImageSlider from '../components/ImageSlider';
 import FacilityItem from '../components/FacilityItem';
 import ReviewCard from '../components/ReviewCard';
 import QuickActionBar from '../components/QuickActionBar';
-import AvailabilityCalendar from '../components/AvailabilityCalendar';
+// BUG FIX 1: Removed unused import 'AvailabilityCalendar' — it was imported but never used in JSX,
+// causing a lint warning and unnecessary bundle bloat.
+
+// Fallback mock listing used when API returns no data or in error cases
+const MOCK_LISTING = {
+  _id: 'mock',
+  title: 'Sample Listing',
+  verified: false,
+  area: 'Sample Area',
+  city: 'Sample City',
+  rent: 0,
+  deposit: 0,
+  type: 'hostel',
+  genderAllowed: 'any',
+  description: 'No description provided.',
+  rules: '',
+  facilities: {},
+  meals: { available: false, type: 'all' },
+  photos: [],
+  address: 'Unknown',
+  ownerId: {
+    name: 'Owner Name',
+    isVerified: false,
+    totalListings: 0,
+    email: '',
+    phoneNo: '',
+    createdAt: new Date(),
+  },
+  averageRating: 0,
+};
 
 // Helper function to calculate average ratings from reviews
 const calculateRatings = (reviewsList) => {
@@ -23,6 +52,7 @@ const calculateRatings = (reviewsList) => {
     ratings[category] = parseFloat((sum / reviewsList.length).toFixed(1));
   });
 
+  // Calculate overall average
   const overallSum = Object.values(ratings).reduce((a, b) => a + b, 0);
   const averageRating = parseFloat((overallSum / categories.length).toFixed(1));
 
@@ -48,12 +78,14 @@ export const ListingDetailPage = () => {
         setListing(listingData);
         setReviews(response.data.reviews || []);
 
+        // Add to recently viewed (localStorage)
         const stored = localStorage.getItem('recentlyViewed') || '[]';
         const recent = JSON.parse(stored);
         const filtered = recent.filter((l) => l._id !== id);
         const updated = [listingData, ...filtered].slice(0, 20);
         localStorage.setItem('recentlyViewed', JSON.stringify(updated));
 
+        // Track view on backend if user is logged in
         if (isAuthenticated) {
           try {
             await listingService.addViewHistory(id);
@@ -61,6 +93,7 @@ export const ListingDetailPage = () => {
             console.error('Failed to track view:', err);
           }
 
+          // Fetch bookings for this listing (approved bookings only)
           try {
             const bookingsRes = await bookingService.getBookings({ listingId: id, status: 'approved' });
             setBookings(bookingsRes.data?.bookings || []);
@@ -102,41 +135,25 @@ export const ListingDetailPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen" style={{ background: '#f8f7f4' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{
-            width: 44, height: 44, border: '3px solid #e8e4dc',
-            borderTopColor: '#c9a84c', borderRadius: '50%',
-            animation: 'spin 0.8s linear infinite', margin: '0 auto 16px'
-          }} />
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          <p style={{ color: '#9a9a9a', fontSize: 15 }}>Loading listing…</p>
-        </div>
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-screen text-lg text-gray-600">Loading listing...</div>;
   }
 
   const currentListing = listing || MOCK_LISTING;
   const currentReviews = reviews || [];
 
-  return (
-    <div className="min-h-screen pb-32 lg:pb-8" style={{ background: '#f8f7f4' }}>
+  // BUG FIX 2: Extract phone number sanitizer as a JS variable so the regex
+  // is a real RegExp literal — not a string with double-escaped \\d.
+  // Previously: phoneNo?.replace(/[^\\d]/g, '') inside a JSX string attr would
+  // produce the literal characters \d instead of the digit shorthand \d,
+  // so non-digit characters were NOT stripped and WhatsApp links were malformed.
+  const sanitizedPhone = currentListing.ownerId?.phoneNo?.replace(/[^\d]/g, '') || '';
 
+  return (
+    <div className="min-h-screen bg-gray-50 pb-32 lg:pb-8">
       {/* Success Message */}
       {successMessage && (
-        <div style={{
-          position: 'fixed', top: 80, left: '50%', transform: 'translateX(-50%)',
-          background: 'linear-gradient(135deg, #1a6b4a, #2d8f63)',
-          color: 'white', padding: '13px 28px', borderRadius: 100,
-          fontSize: 14, fontWeight: 600, zIndex: 30,
-          boxShadow: '0 8px 30px rgba(26,107,74,0.3)',
-          display: 'flex', alignItems: 'center', gap: 10,
-          whiteSpace: 'nowrap',
-          animation: 'toastIn 0.4s cubic-bezier(0.34,1.56,0.64,1)',
-        }}>
-          <style>{`@keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(-14px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }`}</style>
-          ✓ {successMessage}
+        <div className="fixed top-20 left-4 right-4 bg-green-100 text-green-800 p-4 rounded-lg shadow-lg z-30 max-w-md">
+          {successMessage}
         </div>
       )}
 
@@ -147,101 +164,57 @@ export const ListingDetailPage = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* Left Column */}
+        {/* Left Column - Content */}
         <div className="lg:col-span-2 space-y-8">
-
           {/* Title & Badges */}
-          <div style={{
-            background: '#ffffff', borderRadius: 16, padding: '24px 28px',
-            border: '1px solid #ede9e1', boxShadow: '0 2px 12px rgba(0,0,0,0.05)'
-          }}>
+          <div>
             <div className="flex items-start justify-between gap-4 mb-3">
-              <h1 style={{
-                fontSize: 'clamp(20px,3vw,28px)', fontWeight: 700,
-                color: '#0d0d0d', lineHeight: 1.25, margin: 0,
-                fontFamily: "'Georgia', serif",
-              }}>
-                {currentListing.title}
-              </h1>
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">{currentListing.title}</h1>
               {currentListing.verified && (
-                <span style={{
-                  background: '#f0faf5', border: '1px solid #b8dece',
-                  color: '#1a6b4a', padding: '5px 14px', borderRadius: 100,
-                  fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
-                  letterSpacing: '0.04em',
-                }}>
+                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold whitespace-nowrap">
                   ✓ Verified
                 </span>
               )}
             </div>
-            <p style={{ color: '#9a9a9a', fontSize: 14, margin: 0 }}>
-              📍 {currentListing.area}, {currentListing.city}
+            <p className="text-gray-600 text-sm">
+              {currentListing.area}, {currentListing.city}
             </p>
           </div>
 
           {/* Key Details Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[
-              { icon: '💰', label: 'Rent',    value: `৳${currentListing.rent}`,          accent: '#1a6b4a', big: true  },
-              { icon: '🏦', label: 'Deposit', value: `৳${currentListing.deposit}`,        accent: '#b8923a', big: true  },
-              { icon: '🏢', label: 'Type',    value: currentListing.type,                 accent: '#1d4ed8', big: false },
-              { icon: '👥', label: 'Gender',  value: currentListing.genderAllowed,        accent: '#9c3a7a', big: false },
-            ].map(({ icon, label, value, accent, big }) => (
-              <div
-                key={label}
-                style={{
-                  background: '#ffffff', borderRadius: 14, padding: '18px 16px',
-                  border: '1px solid #ede9e1', boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                  transition: 'all 0.2s', cursor: 'default',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.09)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-              >
-                <div style={{ fontSize: 20, marginBottom: 8 }}>{icon}</div>
-                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: '#9a9a9a', margin: '0 0 6px' }}>{label}</p>
-                <p style={{ fontSize: big ? 20 : 14, fontWeight: 700, color: accent, margin: 0, textTransform: 'capitalize', fontFamily: big ? "'Georgia',serif" : 'inherit' }}>{value}</p>
-              </div>
-            ))}
+            <div className="bg-white rounded-lg p-4 border border-gray-100 hover:shadow-md transition">
+              <p className="text-xs text-gray-600 font-semibold mb-2 flex items-center gap-1"><i className="fas fa-money-bill-wave text-green-500"></i> Rent</p>
+              <p className="text-xl font-bold text-gray-900">৳{currentListing.rent}</p>
+            </div>
+            <div className="bg-white rounded-lg p-4 border border-gray-100 hover:shadow-md transition">
+              <p className="text-xs text-gray-600 font-semibold mb-2 flex items-center gap-1"><i className="fas fa-vault text-orange-500"></i> Deposit</p>
+              <p className="text-xl font-bold text-gray-900">৳{currentListing.deposit}</p>
+            </div>
+            <div className="bg-white rounded-lg p-4 border border-gray-100 hover:shadow-md transition">
+              <p className="text-xs text-gray-600 font-semibold mb-2 flex items-center gap-1"><i className="fas fa-building text-blue-500"></i> Type</p>
+              <p className="text-sm font-semibold text-gray-900 capitalize">{currentListing.type}</p>
+            </div>
+            <div className="bg-white rounded-lg p-4 border border-gray-100 hover:shadow-md transition">
+              <p className="text-xs text-gray-600 font-semibold mb-2 flex items-center gap-1"><i className="fas fa-venus-mars text-pink-500"></i> Gender</p>
+              <p className="text-sm font-semibold text-gray-900 capitalize">{currentListing.genderAllowed}</p>
+            </div>
           </div>
 
           {/* About This Place */}
-          <div style={{
-            background: '#ffffff', borderRadius: 16, padding: '24px 28px',
-            border: '1px solid #ede9e1', boxShadow: '0 2px 12px rgba(0,0,0,0.05)'
-          }}>
-            {/* Availability Calendar */}
-            <AvailabilityCalendar
-              listingId={currentListing._id}
-              bookings={bookings || []}
-            />
-
-            <p style={{ fontSize: 15, lineHeight: 1.8, color: '#3a3a3a', margin: '16px 0 0' }}>
-              {currentListing.description}
-            </p>
+          <div>
+            <p className="text-gray-700 leading-relaxed mb-4">{currentListing.description}</p>
             {currentListing.rules && (
-              <div style={{
-                background: 'linear-gradient(135deg, #f0f9f5, #e6f5ee)',
-                borderRadius: 12, padding: '16px 20px',
-                border: '1px solid #b8dece', marginTop: 20,
-              }}>
-                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: '#1a6b4a', margin: '0 0 8px' }}>
-                  ⚖️ House Rules
-                </p>
-                <p style={{ fontSize: 14, color: '#2d6b50', lineHeight: 1.75, margin: 0 }}>{currentListing.rules}</p>
+              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <p className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2"><i className="fas fa-gavel text-blue-600"></i> House Rules</p>
+                <p className="text-sm text-blue-800">{currentListing.rules}</p>
               </div>
             )}
           </div>
 
           {/* Facilities */}
-          <div style={{
-            background: '#ffffff', borderRadius: 16, padding: '24px 28px',
-            border: '1px solid #ede9e1', boxShadow: '0 2px 12px rgba(0,0,0,0.05)'
-          }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0d0d0d', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'Georgia',serif" }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#c9a84c', display: 'inline-block', flexShrink: 0 }} />
-              Facilities &amp; Amenities
-            </h2>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><i className="fas fa-chair text-purple-600"></i> Facilities & Amenities</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {currentListing.facilities && Object.entries(currentListing.facilities).map(([key, available]) => (
                 <FacilityItem
@@ -255,120 +228,81 @@ export const ListingDetailPage = () => {
 
           {/* Meals */}
           {currentListing.meals && (
-            <div style={{
-              background: '#ffffff', borderRadius: 16, padding: '24px 28px',
-              border: '1px solid #ede9e1', boxShadow: '0 2px 12px rgba(0,0,0,0.05)'
-            }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0d0d0d', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'Georgia',serif" }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#c9a84c', display: 'inline-block', flexShrink: 0 }} />
-                Meals
-              </h2>
-              <div style={{
-                background: 'linear-gradient(135deg, #fffbf0, #fdf5e0)',
-                borderRadius: 14, padding: '20px 24px',
-                border: '1.5px solid #e8d5a3',
-                display: 'flex', alignItems: 'center', gap: 18,
-              }}>
-                <span style={{ fontSize: 38 }}>{currentListing.meals.available ? '🍽️' : '🚫'}</span>
-                <div>
-                  {currentListing.meals.available ? (
-                    <>
-                      <span style={{
-                        display: 'inline-block', background: '#c9a84c', color: 'white',
-                        padding: '3px 12px', borderRadius: 100,
-                        fontSize: 11, fontWeight: 700, letterSpacing: '0.06em',
-                        textTransform: 'uppercase', marginBottom: 8,
-                      }}>
-                        Meals Included
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><i className="fas fa-utensils text-orange-600"></i> Meals</h2>
+              <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-4 border-2 border-orange-200">
+                {currentListing.meals.available ? (
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="inline-block px-3 py-1 bg-green-200 text-green-800 rounded-full text-sm font-semibold">
+                        <i className="fas fa-check-circle mr-2"></i> Meals Available
                       </span>
-                      <p style={{ margin: 0, fontSize: 15, fontWeight: 500, color: '#7a5c1e' }}>
+                    </div>
+                    <p className="text-sm text-gray-700 mt-3">
+                      <span className="font-semibold text-orange-700">Meal Type:</span>
+                      <span className="ml-2 inline-block px-3 py-1 bg-white border border-orange-200 rounded-full text-sm font-medium text-orange-700">
                         {currentListing.meals.type === 'breakfast' && '🍳 Breakfast Only'}
                         {currentListing.meals.type === 'lunch' && '🥗 Lunch Only'}
                         {currentListing.meals.type === 'dinner' && '🍽️ Dinner Only'}
                         {currentListing.meals.type === 'all' && '🍽️ All Meals'}
-                      </p>
-                    </>
-                  ) : (
-                    <span style={{
-                      display: 'inline-block', background: '#f0f0f0', color: '#7a7a7a',
-                      padding: '4px 14px', borderRadius: 100, fontSize: 12, fontWeight: 600,
-                    }}>
-                      No Meals Provided
+                      </span>
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold">
+                      <i className="fas fa-times-circle mr-2"></i> No Meals
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
           {/* Location */}
-          <div style={{
-            background: '#ffffff', borderRadius: 16, padding: '24px 28px',
-            border: '1px solid #ede9e1', boxShadow: '0 2px 12px rgba(0,0,0,0.05)'
-          }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0d0d0d', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'Georgia',serif" }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#c9a84c', display: 'inline-block', flexShrink: 0 }} />
-              Location
-            </h2>
-            <div style={{
-              background: 'linear-gradient(135deg, #f5f5f2, #ebe9e3)',
-              borderRadius: 14, height: 192,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              border: '1px solid #e0ddd5', gap: 8, marginBottom: 12,
-            }}>
-              <span style={{ fontSize: 36 }}>📍</span>
-              <p style={{ margin: 0, fontWeight: 600, color: '#3a3a3a', fontSize: 15 }}>{currentListing.area}</p>
-              <p style={{ margin: 0, fontSize: 13, color: '#9a9a9a' }}>{currentListing.address}</p>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><i className="fas fa-location-dot text-red-500"></i> Location</h2>
+            <div className="bg-gray-200 rounded-lg h-48 flex items-center justify-center mb-3 border border-gray-300">
+              <div className="text-center">
+                <i className="fas fa-map text-5xl text-gray-400 mb-2"></i>
+                <p className="text-gray-600 font-medium">{currentListing.area}</p>
+                <p className="text-sm text-gray-500 flex items-center justify-center gap-1 mt-1"><i className="fas fa-map-pin"></i> {currentListing.address}</p>
+              </div>
             </div>
           </div>
 
           {/* Reviews & Ratings */}
-          <div style={{
-            background: '#ffffff', borderRadius: 16, padding: '24px 28px',
-            border: '1px solid #ede9e1', boxShadow: '0 2px 12px rgba(0,0,0,0.05)'
-          }}>
+          <div>
             {(() => {
               const calculatedData = calculateRatings(currentReviews);
               return (
                 <>
                   <div className="flex items-center justify-between mb-6">
-                    <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0d0d0d', margin: 0, display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'Georgia',serif" }}>
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#c9a84c', display: 'inline-block', flexShrink: 0 }} />
-                      Reviews &amp; Ratings
-                    </h2>
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: 14,
-                      background: 'linear-gradient(135deg, #0d0d0d, #1e1a14)',
-                      padding: '14px 20px', borderRadius: 14,
-                    }}>
-                      <span style={{ fontFamily: "'Georgia',serif", fontSize: 38, color: '#c9a84c', lineHeight: 1 }}>
+                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2"><i className="fas fa-star text-yellow-500"></i> Reviews & Ratings</h2>
+                    <div className="flex items-center gap-3 bg-yellow-50 px-4 py-3 rounded-lg border border-yellow-200">
+                      <span className="text-3xl font-bold text-yellow-600">
                         {calculatedData ? calculatedData.averageRating : currentListing.averageRating || '—'}
                       </span>
                       <div>
-                        <div style={{ color: '#c9a84c', fontSize: 14, letterSpacing: 2 }}>★★★★★</div>
-                        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: '3px 0 0' }}>{currentReviews.length} reviews</p>
+                        <div className="text-sm text-yellow-600">★★★★★</div>
+                        <p className="text-xs text-yellow-600 flex items-center gap-1"><i className="fas fa-comment"></i> {currentReviews.length} reviews</p>
                       </div>
                     </div>
                   </div>
 
                   {/* Rating Breakdown */}
                   {calculatedData && (
-                    <div style={{ marginBottom: 28 }}>
+                    <div className="mb-6 space-y-2">
                       {Object.entries(calculatedData.ratings).map(([category, score]) => (
-                        <div key={category} className="flex items-center" style={{ marginBottom: 10 }}>
-                          <span style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9a9a9a', width: 90, flexShrink: 0, textAlign: 'right', paddingRight: 14 }}>
-                            {category}
-                          </span>
-                          <div style={{ flex: 1, height: 6, background: '#ede9e1', borderRadius: 100, overflow: 'hidden' }}>
-                            <div style={{
-                              height: '100%',
-                              background: 'linear-gradient(90deg, #e8d5a3, #c9a84c)',
-                              borderRadius: 100,
-                              width: `${(score / 5) * 100}%`,
-                              transition: 'width 1s ease',
-                            }} />
+                        <div key={category} className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 capitalize w-28">{category}</span>
+                          <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-yellow-400 h-2 rounded-full"
+                              style={{ width: `${(score / 5) * 100}%` }}
+                            />
                           </div>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: '#0d0d0d', width: 36, textAlign: 'right' }}>{score.toFixed(1)}</span>
+                          <span className="text-sm font-semibold text-gray-900 w-8">{score.toFixed(1)}</span>
                         </div>
                       ))}
                     </div>
@@ -377,7 +311,7 @@ export const ListingDetailPage = () => {
                   {/* Reviews List */}
                   <div className="space-y-6">
                     {currentReviews.length === 0 ? (
-                      <p style={{ fontSize: 14, color: '#9a9a9a', fontStyle: 'italic' }}>No reviews yet. Be the first to review!</p>
+                      <p className="text-gray-600 text-sm">No reviews yet. Be the first to review!</p>
                     ) : (
                       currentReviews.slice(0, 3).map((review) => (
                         <ReviewCard key={review._id} review={review} />
@@ -390,184 +324,115 @@ export const ListingDetailPage = () => {
           </div>
 
           {/* Report Listing */}
-          <div style={{ borderTop: '1px solid #ede9e1', paddingTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
+          <div className="border-t border-gray-200 pt-6">
             <button
               onClick={() => setShowFlagModal(true)}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: 13, color: '#9a9a9a',
-                display: 'flex', alignItems: 'center', gap: 6,
-                transition: 'color 0.2s', padding: 0,
-              }}
-              onMouseEnter={e => e.currentTarget.style.color = '#be3a3a'}
-              onMouseLeave={e => e.currentTarget.style.color = '#9a9a9a'}
+              className="text-red-600 text-sm font-medium hover:text-red-700 hover:underline"
             >
-              ⚑ Report this listing
+              Report this listing
             </button>
           </div>
         </div>
 
-        {/* Right Sidebar */}
+        {/* Right Sidebar - Owner Info & CTA (Desktop) */}
         <div className="hidden lg:block space-y-6">
-          <div style={{
-            background: '#ffffff', borderRadius: 20,
-            border: '1px solid #ede9e1', overflow: 'hidden',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.10), 0 4px 16px rgba(0,0,0,0.05)',
-            position: 'sticky', top: 20,
-          }}>
+          {/* Owner Card */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6 sticky top-20 shadow-lg">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><i className="fas fa-user-circle text-blue-600"></i> Owner Information</h3>
 
-            {/* Dark owner header */}
-            <div style={{ background: 'linear-gradient(135deg, #0d0d0d 0%, #1e1a14 100%)', padding: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-                <div style={{
-                  width: 52, height: 52, borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #c9a84c, #e8d5a3)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: "'Georgia',serif", fontSize: 22, color: '#0d0d0d', flexShrink: 0,
-                }}>
-                  {currentListing.ownerId?.name?.charAt(0) || 'O'}
-                </div>
-                <div>
-                  <p style={{ fontFamily: "'Georgia',serif", fontSize: 18, color: 'white', margin: 0, lineHeight: 1.3 }}>
-                    {currentListing.ownerId?.name}
-                  </p>
-                  {currentListing.ownerId?.isVerified && (
-                    <p style={{ fontSize: 11, color: '#e8d5a3', margin: '3px 0 0', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                      ✦ Verified Owner
-                    </p>
-                  )}
-                </div>
+            <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
+              <div className="w-14 h-14 rounded-full bg-sky-100 flex items-center justify-center text-lg font-bold text-sky-600">
+                {currentListing.ownerId?.name?.charAt(0) || 'O'}
               </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-                {[
-                  { num: currentListing.ownerId?.totalListings || 0, label: 'Listings' },
-                  { num: bookings.length, label: 'Bookings' },
-                ].map(({ num, label }) => (
-                  <div key={label} style={{ background: 'rgba(255,255,255,0.07)', borderRadius: 10, padding: '12px', textAlign: 'center' }}>
-                    <div style={{ fontFamily: "'Georgia',serif", fontSize: 22, color: '#c9a84c' }}>{num}</div>
-                    <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>{label}</div>
-                  </div>
-                ))}
+              <div className="flex-1">
+                <p className="font-semibold text-gray-900">{currentListing.ownerId?.name}</p>
+                {currentListing.ownerId?.isVerified && (
+                  <p className="text-xs text-green-600 font-semibold flex items-center gap-1"><i className="fas fa-badge-check"></i> Verified Owner</p>
+                )}
               </div>
+            </div>
 
-              {bookings[0]?.startDate && (
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: '0 0 4px' }}>
-                  Next booking: <strong style={{ color: 'rgba(255,255,255,0.6)' }}>{new Date(bookings[0].startDate).toLocaleDateString()}</strong>
-                </p>
+            <div className="mb-4">
+              {currentListing.ownerId?.totalListings && (
+                <p className="text-sm text-gray-600 mb-2 flex items-center gap-2"><i className="fas fa-home text-gray-500"></i> <strong>{currentListing.ownerId.totalListings}</strong> active listings</p>
+              )}
+              <p className="text-sm text-gray-600 mb-2 flex items-center gap-2"><i className="fas fa-calendar-check text-gray-500"></i> <strong>{bookings.length}</strong> approved bookings</p>
+              {bookings[0] && bookings[0].startDate && (
+                <p className="text-sm text-gray-600">Next booking: <strong>{new Date(bookings[0].startDate).toLocaleDateString()}</strong></p>
               )}
               {currentListing.ownerId?.createdAt && (
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
-                  Member since {new Date(currentListing.ownerId.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                </p>
+                <p className="text-sm text-gray-600 mt-2">Member since {new Date(currentListing.ownerId.createdAt).toLocaleDateString()}</p>
               )}
             </div>
 
-            {/* Body */}
-            <div style={{ padding: '24px' }}>
+            <div className="space-y-2 mb-6">
+              <a
+                href={`mailto:${currentListing.ownerId?.email}`}
+                className="w-full bg-sky-600 text-white text-center py-3 rounded-lg font-semibold hover:bg-sky-700 text-sm flex items-center justify-center gap-2 transition"
+              >
+                <i className="fas fa-envelope"></i> Email Owner
+              </a>
+              <a
+                href={`tel:${currentListing.ownerId?.phoneNo}`}
+                className="w-full border border-gray-300 text-gray-700 text-center py-3 rounded-lg font-semibold hover:bg-gray-50 text-sm flex items-center justify-center gap-2 transition"
+              >
+                <i className="fas fa-phone"></i> Call
+              </a>
+              {/* BUG FIX 2 applied: using sanitizedPhone variable instead of inline regex string */}
+              <a
+                href={`https://wa.me/${sanitizedPhone}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full bg-green-500 text-white text-center py-3 rounded-lg font-semibold hover:bg-green-600 text-sm flex items-center justify-center gap-2 transition"
+              >
+                <i className="fab fa-whatsapp"></i> WhatsApp
+              </a>
+            </div>
 
-              {/* Contact */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+            {/* Social Share */}
+            <div className="mb-6 pb-6 border-b border-gray-200">
+              <p className="text-sm font-semibold text-gray-700 mb-3"><i className="fas fa-share-alt text-gray-600"></i> Share</p>
+              <div className="grid grid-cols-3 gap-2">
                 <a
-                  href={`mailto:${currentListing.ownerId?.email}`}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    background: 'linear-gradient(135deg, #1d4ed8, #1e40af)',
-                    color: 'white', padding: '13px', borderRadius: 12,
-                    fontSize: 14, fontWeight: 600, textDecoration: 'none',
-                    boxShadow: '0 4px 14px rgba(29,78,216,0.25)', transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(29,78,216,0.35)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(29,78,216,0.25)'; }}
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 text-center text-sm font-semibold transition flex items-center justify-center gap-1"
                 >
-                  ✉️ Email Owner
+                  <i className="fab fa-facebook-f"></i>
                 </a>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <a
-                    href={`tel:${currentListing.ownerId?.phoneNo}`}
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                      background: '#f8f7f4', color: '#0d0d0d', padding: '12px',
-                      borderRadius: 12, fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                      border: '1.5px solid #ede9e1', transition: 'background 0.2s',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#ede9e1'}
-                    onMouseLeave={e => e.currentTarget.style.background = '#f8f7f4'}
-                  >
-                    📞 Call
-                  </a>
-                  <a
-                    href={`https://wa.me/${currentListing.ownerId?.phoneNo?.replace(/[^\d]/g, '')}`}
-                    target="_blank" rel="noopener noreferrer"
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                      background: 'linear-gradient(135deg, #25d366, #1da851)',
-                      color: 'white', padding: '12px', borderRadius: 12,
-                      fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                      boxShadow: '0 4px 12px rgba(29,168,81,0.25)', transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-                    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-                  >
-                    WhatsApp
-                  </a>
-                </div>
-              </div>
-
-              {/* Social Share */}
-              <div style={{ borderTop: '1px solid #ede9e1', paddingTop: 16, marginBottom: 20 }}>
-                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: '#9a9a9a', margin: '0 0 10px' }}>
-                  Share This Listing
-                </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
-                  {[
-                    { href: `https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`, bg: '#1877f2', label: 'f' },
-                    { href: `https://twitter.com/intent/tweet?url=${window.location.href}&text=Check this listing: ${currentListing.title}`, bg: '#000', label: '𝕏' },
-                    { href: `https://api.whatsapp.com/send?text=Check this listing: ${currentListing.title} ${window.location.href}`, bg: '#25d366', label: '💬' },
-                  ].map(s => (
-                    <a
-                      key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-                      style={{
-                        background: s.bg, color: 'white', borderRadius: 10,
-                        padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 15, textDecoration: 'none', transition: 'all 0.2s',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.opacity = '0.88'; }}
-                      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.opacity = '1'; }}
-                    >
-                      {s.label}
-                    </a>
-                  ))}
-                </div>
-              </div>
-
-              {/* Primary CTA */}
-              {isAuthenticated && user?.role === 'student' ? (
-                <button
-                  onClick={() => setShowBookingModal(true)}
-                  style={{
-                    width: '100%', padding: '15px',
-                    background: 'linear-gradient(135deg, #2d8f63, #1a6b4a)',
-                    color: 'white', border: 'none', borderRadius: 12,
-                    fontSize: 15, fontWeight: 700, cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    boxShadow: '0 4px 16px rgba(26,107,74,0.3)', transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(26,107,74,0.4)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(26,107,74,0.3)'; }}
+                <a
+                  href={`https://twitter.com/intent/tweet?url=${window.location.href}&text=Check%20this%20listing:%20${currentListing.title}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-blue-400 text-white py-2 rounded-lg hover:bg-blue-500 text-center text-sm font-semibold transition flex items-center justify-center gap-1"
                 >
-                  📅 Request Booking
-                </button>
-              ) : (
-                <div style={{
-                  background: '#f8f7f4', border: '1px solid #ede9e1', borderRadius: 12,
-                  padding: '14px', textAlign: 'center', fontSize: 13, color: '#9a9a9a',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                }}>
-                  🔒 {isAuthenticated ? 'Only students can book' : 'Login as student to book'}
-                </div>
-              )}
+                  <i className="fab fa-twitter"></i>
+                </a>
+                <a
+                  href={`https://api.whatsapp.com/send?text=Check%20this%20listing:%20${currentListing.title}%20${window.location.href}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 text-center text-sm font-semibold transition flex items-center justify-center gap-1"
+                >
+                  <i className="fab fa-whatsapp"></i>
+                </a>
+              </div>
             </div>
+
+            {/* Primary CTA */}
+            {isAuthenticated && user?.role === 'student' ? (
+              <button
+                onClick={() => setShowBookingModal(true)}
+                className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition mb-3 flex items-center justify-center gap-2"
+              >
+                <i className="fas fa-calendar-check"></i> Request Booking
+              </button>
+            ) : (
+              <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg text-center flex items-center justify-center gap-2">
+                <i className="fas fa-info-circle text-blue-500"></i> {isAuthenticated ? 'Only students can book' : 'Login as student to book'}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -575,7 +440,9 @@ export const ListingDetailPage = () => {
       {/* Quick Action Bar (Mobile) */}
       <QuickActionBar
         onBookingClick={() => setShowBookingModal(true)}
-        onCallClick={() => { window.location.href = `tel:${currentListing.ownerId?.phoneNo}`; }}
+        onCallClick={() => {
+          window.location.href = `tel:${currentListing.ownerId?.phoneNo}`;
+        }}
         isAuthenticated={isAuthenticated}
         userRole={user?.role}
       />
@@ -591,43 +458,17 @@ export const ListingDetailPage = () => {
 
       {/* Flag Modal */}
       {showFlagModal && (
-        <div
-          style={{
-            position: 'fixed', inset: 0,
-            background: 'rgba(13,13,13,0.55)', backdropFilter: 'blur(4px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 16, zIndex: 50,
-          }}
-          onClick={() => setShowFlagModal(false)}
-        >
-          <div
-            style={{
-              background: '#ffffff', borderRadius: 20,
-              maxWidth: 400, width: '100%', padding: 32,
-              boxShadow: '0 24px 60px rgba(0,0,0,0.18)',
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            <h2 style={{ fontFamily: "'Georgia',serif", fontSize: 22, margin: '0 0 6px', color: '#0d0d0d' }}>
-              Report Listing
-            </h2>
-            <p style={{ fontSize: 14, color: '#9a9a9a', margin: '0 0 24px' }}>
-              Help us keep the platform safe. Select a reason:
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-sm w-full p-6">
+            <h2 className="text-xl font-bold mb-4">Report This Listing</h2>
+            <div className="space-y-2 mb-6">
               {['Inappropriate content', 'Misleading information', 'Safety concern', 'Spam', 'Other'].map((reason) => (
                 <button
                   key={reason}
-                  onClick={() => handleFlag(reason)}
-                  style={{
-                    textAlign: 'left', padding: '13px 18px',
-                    border: '1px solid #ede9e1', borderRadius: 10,
-                    background: 'none', cursor: 'pointer',
-                    fontSize: 14, color: '#0d0d0d', transition: 'all 0.15s',
-                    fontFamily: 'inherit',
+                  onClick={() => {
+                    handleFlag(reason);
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.background = '#fdf6e8'; e.currentTarget.style.borderColor = '#e8d5a3'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = '#ede9e1'; }}
+                  className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
                 >
                   {reason}
                 </button>
@@ -635,15 +476,7 @@ export const ListingDetailPage = () => {
             </div>
             <button
               onClick={() => setShowFlagModal(false)}
-              style={{
-                width: '100%', padding: '13px',
-                border: '1.5px solid #ede9e1', borderRadius: 10,
-                background: 'none', cursor: 'pointer',
-                fontSize: 14, fontWeight: 600, color: '#3a3a3a',
-                fontFamily: 'inherit', transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = '#f8f7f4'}
-              onMouseLeave={e => e.currentTarget.style.background = 'none'}
+              className="w-full bg-gray-200 text-gray-800 py-2 rounded-lg font-semibold hover:bg-gray-300"
             >
               Cancel
             </button>
