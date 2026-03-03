@@ -89,6 +89,20 @@ const seedData = async () => {
         meals: { available: true, type: 'all' },
         facilities: { wifi: true, tv: true, ac: false, studyTable: true, balcony: true },
         photos: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80'],
+        rooms: [
+          {
+            name: 'Room A',
+            type: 'Shared',
+            description: 'Spacious room with 4 beds and study table.',
+            images: ['https://example.com/roomA.jpg'],
+            beds: [
+              { bedNumber: 1, rent: 8000, status: 'Booked', studentName: 'Karim Student', contact: '+880123456789', advancePaid: true },
+              { bedNumber: 2, rent: 8000, status: 'Available' },
+              { bedNumber: 3, rent: 8000, status: 'Vacant', vacantDate: new Date('2025-05-01') },
+              { bedNumber: 4, rent: 8000, status: 'Available' },
+            ],
+          },
+        ],
         rules: 'No noise after 11 PM. Keep room clean.',
         verified: true,
         badges: ['verified'],
@@ -105,6 +119,17 @@ const seedData = async () => {
         meals: { available: true, type: 'breakfast' },
         facilities: { wifi: true, tv: true, ac: true, studyTable: true, security: true },
         photos: ['https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80'],
+        rooms: [
+          {
+            name: 'Room 101',
+            type: 'AC',
+            description: 'Single occupancy AC room.',
+            images: ['https://example.com/room101.jpg'],
+            beds: [
+              { bedNumber: 1, rent: 6500, status: 'Booked', studentName: 'Nadia Ahmed', advancePaid: true },
+            ],
+          },
+        ],
         rules: 'Curfew at 10 PM. Common area cleaning roster.',
         verified: true,
         badges: ['verified', 'femaleFriendly'],
@@ -121,6 +146,7 @@ const seedData = async () => {
         meals: { available: false, type: 'none' },
         facilities: { wifi: true, studyTable: true },
         photos: ['https://images.unsplash.com/photo-1549187774-b4f0f0e7a2d0?auto=format&fit=crop&w=1200&q=80'],
+        rooms: [],
         rules: 'Self-catering allowed. Keep kitchen clean.',
         verified: false,
         badges: [],

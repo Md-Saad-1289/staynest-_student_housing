@@ -90,15 +90,7 @@ function App() {
             }
           />
 
-          <Route
-            path="/dashboard/owner/:tab"
-            element={
-              <ProtectedRoute requiredRole="owner">
-                <OwnerDashboardModernPage />
-              </ProtectedRoute>
-            }
-          />
-
+          {/* Make sure more specific owner routes appear before the generic tab route */}
           <Route
             path="/dashboard/owner/create-listing"
             element={
@@ -113,6 +105,15 @@ function App() {
             element={
               <ProtectedRoute requiredRole="owner">
                 <CreateListingPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/owner/:tab"
+            element={
+              <ProtectedRoute requiredRole="owner">
+                <OwnerDashboardModernPage />
               </ProtectedRoute>
             }
           />
