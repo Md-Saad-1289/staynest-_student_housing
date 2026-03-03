@@ -18,14 +18,14 @@ export const StatCard = ({ icon, label, value, subtext, color = 'blue', trend })
   };
 
   return (
-    <div className={`p-6 rounded-xl border bg-gradient-to-br ${colorClasses[color]} hover:shadow-lg transition-all duration-300`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">{label}</p>
-          <p className="text-4xl font-black text-gray-900 mt-2">{value}</p>
-          {subtext && <p className="text-xs text-gray-600 mt-1 font-medium">{subtext}</p>}
+    <div className={`p-4 sm:p-6 rounded-xl border bg-gradient-to-br ${colorClasses[color]} hover:shadow-lg transition-all duration-300`}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide truncate">{label}</p>
+          <p className="text-2xl sm:text-4xl font-black text-gray-900 mt-1 sm:mt-2">{value}</p>
+          {subtext && <p className="text-xs text-gray-600 mt-1 font-medium line-clamp-1">{subtext}</p>}
         </div>
-        <div className={`w-14 h-14 rounded-lg bg-gradient-to-br ${iconBgClasses[color]} flex items-center justify-center text-2xl text-white shadow-lg`}>
+        <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-gradient-to-br ${iconBgClasses[color]} flex items-center justify-center text-xl sm:text-2xl text-white shadow-lg flex-shrink-0`}>
           <i className={icon}></i>
         </div>
       </div>

@@ -24,7 +24,7 @@ export const DashboardLayout = ({ children, title }) => {
         />
 
         {/* Content - Mobile friendly padding */}
-        <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8">
+        <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 pb-24 lg:pb-8">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
@@ -48,9 +48,6 @@ export const DashboardLayout = ({ children, title }) => {
       <div className="lg:hidden fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white z-30 max-h-20 overflow-y-auto">
         <DashboardSidebar userRole={user?.role} mobile={true} />
       </div>
-
-      {/* Main content padding for mobile bottom nav */}
-      <div className="lg:hidden h-20" />
     </div>
   );
 };
