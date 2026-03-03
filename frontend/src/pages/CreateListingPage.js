@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { listingService } from '../services/api';
+import { ConfirmModal } from '../components/Dashboard/ConfirmModal';
 
 export const CreateListingPage = () => {
   const { id } = useParams();
@@ -38,6 +39,15 @@ export const CreateListingPage = () => {
   const [selectedRoomIndex, setSelectedRoomIndex] = useState(null);
   const [bedFormData, setBedFormData] = useState({ status: 'Available', rent: '', vacantDate: '', studentName: '', contact: '', advancePaid: false });
   const [editingBedIndex, setEditingBedIndex] = useState(null);
+
+  // confirmation modal state
+  const [confirmModal, setConfirmModal] = useState({ open: false });
+
+  const openConfirm = ({ title, message, confirmText = 'Confirm', isDangerous = false, onConfirm }) => {
+    setConfirmModal({ open: true, title, message, confirmText, isDangerous, onConfirm });
+  };
+
+  const closeConfirm = () => setConfirmModal({ open: false });
   
   // Details
   const [genderAllowed, setGenderAllowed] = useState('both');
@@ -83,7 +93,11 @@ export const CreateListingPage = () => {
           setDeposit(listing.deposit?.toString() || '');
           setUtilities(listing.utilities || []);
           setGenderAllowed(listing.genderAllowed || 'both');
-          setRoomsList(listing.rooms || []);
+          if (Array.isArray(listing.rooms)) {
+            setRoomsList(listing.rooms);
+          } else {
+            setRoomsList([]);
+          }
           setFurnished(listing.furnished || 'semi');
           
           if (listing.meals) {
@@ -160,6 +174,9 @@ export const CreateListingPage = () => {
 
   const totalMonthly = (parseFloat(rent) || 0) + totalUtilities;
 
+  // compute room statistics on each render
+  const roomStats = calculateRoomStats();
+
   // Room Management Functions
   const addRoom = () => {
     const newRoom = {
@@ -179,9 +196,16 @@ export const CreateListingPage = () => {
   };
 
   const deleteRoom = (index) => {
-    if (window.confirm('Are you sure you want to delete this room?')) {
-      setRoomsList(roomsList.filter((_, i) => i !== index));
-    }
+    openConfirm({
+      title: 'Delete Room',
+      message: 'Are you sure you want to delete this room and all its beds?',
+      confirmText: 'Delete',
+      isDangerous: true,
+      onConfirm: () => {
+        setRoomsList(roomsList.filter((_, i) => i !== index));
+        closeConfirm();
+      }
+    });
   };
 
   const openRoomModal = (index = null) => {
@@ -258,11 +282,18 @@ export const CreateListingPage = () => {
   };
 
   const deleteBed = (roomIndex, bedIndex) => {
-    if (window.confirm('Are you sure you want to delete this bed?')) {
-      const newRooms = [...roomsList];
-      newRooms[roomIndex].beds = newRooms[roomIndex].beds.filter((_, i) => i !== bedIndex);
-      setRoomsList(newRooms);
-    }
+    openConfirm({
+      title: 'Delete Bed',
+      message: 'Are you sure you want to delete this bed?',
+      confirmText: 'Delete',
+      isDangerous: true,
+      onConfirm: () => {
+        const newRooms = [...roomsList];
+        newRooms[roomIndex].beds = newRooms[roomIndex].beds.filter((_, i) => i !== bedIndex);
+        setRoomsList(newRooms);
+        closeConfirm();
+      }
+    });
   };
 
   // Room Statistics
@@ -632,7 +663,7 @@ export const CreateListingPage = () => {
                   {num <= step - 1 ? <i className="fas fa-check"></i> : num}
                 </div>
                 <span className={`text-sm font-semibold ${num <= step ? 'text-blue-600' : 'text-gray-500'}`}>
-                  {['Basic Info', 'Pricing', 'Details', 'Amenities'][num - 1]}
+                  {['Basic Info', 'Pricing', 'Rooms & Beds', 'Amenities'][num - 1]}
                 </span>
               </div>
             ))}
@@ -1128,13 +1159,31 @@ export const CreateListingPage = () => {
                   <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
                     <i className="fas fa-check-circle text-green-600"></i> Review Your Listing
                   </h3>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <p><strong>Type:</strong> {type ? type.charAt(0).toUpperCase() + type.slice(1) : ''}</p>
-                    <p><strong>City:</strong> {city}</p>
-                    <p><strong>Rooms:</strong> {rooms}</p>
-                    <p><strong>Capacity:</strong> {capacity}</p>
-                    <p><strong>Rent:</strong> ৳{rent}</p>
-                    <p><strong>Amenities:</strong> {Object.values(amenities).filter(Boolean).length}</p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-sm">
+                    <div>
+                      <p><strong>Type:</strong> {type ? type.charAt(0).toUpperCase() + type.slice(1) : ''}</p>
+                    </div>
+                    <div>
+                      <p><strong>City:</strong> {city}</p>
+                    </div>
+                    <div>
+                      <p><strong>Total Rooms:</strong> {roomsList.length}</p>
+                    </div>
+                    <div>
+                      <p><strong>Total Beds:</strong> {roomStats.totalBeds}</p>
+                    </div>
+                    <div>
+                      <p><strong>Booked Beds:</strong> {roomStats.bookedBeds}</p>
+                    </div>
+                    <div>
+                      <p><strong>Occupancy:</strong> {roomStats.occupancy}%</p>
+                    </div>
+                    <div>
+                      <p><strong>Monthly Revenue:</strong> ৳{roomStats.expectedRevenue.toLocaleString()}</p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p><strong>Amenities:</strong> {Object.values(amenities).filter(Boolean).length}</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1194,6 +1243,17 @@ export const CreateListingPage = () => {
 
         {/* Bed Modal */}
         <BedModal />
+
+        {/* Confirm Modal */}
+        <ConfirmModal
+          isOpen={confirmModal.open}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          confirmText={confirmModal.confirmText}
+          isDangerous={confirmModal.isDangerous}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={closeConfirm}
+        />
         </>
         )}
       </div>
