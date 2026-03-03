@@ -25,10 +25,22 @@ export const CreateListingPage = () => {
   const [deposit, setDeposit] = useState('');
   const [utilities, setUtilities] = useState([]);
   
+  // Room-wise bed management
+  const [roomsList, setRoomsList] = useState([]);
+  
+  // Room modal states
+  const [showRoomModal, setShowRoomModal] = useState(false);
+  const [editingRoomIndex, setEditingRoomIndex] = useState(null);
+  const [roomFormData, setRoomFormData] = useState({ name: '', type: 'Shared', description: '', images: [''] });
+  
+  // Bed modal states
+  const [showBedModal, setShowBedModal] = useState(false);
+  const [selectedRoomIndex, setSelectedRoomIndex] = useState(null);
+  const [bedFormData, setBedFormData] = useState({ status: 'Available', rent: '', vacantDate: '', studentName: '', contact: '', advancePaid: false });
+  const [editingBedIndex, setEditingBedIndex] = useState(null);
+  
   // Details
   const [genderAllowed, setGenderAllowed] = useState('both');
-  const [rooms, setRooms] = useState('1');
-  const [capacity, setCapacity] = useState('1');
   const [furnished, setFurnished] = useState('semi');
   
   // Amenities
@@ -69,10 +81,9 @@ export const CreateListingPage = () => {
           setType(listing.type || '');
           setRent(listing.rent?.toString() || '');
           setDeposit(listing.deposit?.toString() || '');
-          setUtilities(listing.utilities?.toString() || '');
+          setUtilities(listing.utilities || []);
           setGenderAllowed(listing.genderAllowed || 'both');
-          setRooms(listing.rooms?.toString() || '1');
-          setCapacity(listing.capacity?.toString() || '1');
+          setRoomsList(listing.rooms || []);
           setFurnished(listing.furnished || 'semi');
           
           if (listing.meals) {
@@ -149,6 +160,129 @@ export const CreateListingPage = () => {
 
   const totalMonthly = (parseFloat(rent) || 0) + totalUtilities;
 
+  // Room Management Functions
+  const addRoom = () => {
+    const newRoom = {
+      name: `Room ${roomsList.length + 1}`,
+      type: 'Shared',
+      description: '',
+      images: [''],
+      beds: []
+    };
+    setRoomsList([...roomsList, newRoom]);
+  };
+
+  const updateRoom = (index, updatedRoom) => {
+    const newRooms = [...roomsList];
+    newRooms[index] = { ...newRooms[index], ...updatedRoom };
+    setRoomsList(newRooms);
+  };
+
+  const deleteRoom = (index) => {
+    if (window.confirm('Are you sure you want to delete this room?')) {
+      setRoomsList(roomsList.filter((_, i) => i !== index));
+    }
+  };
+
+  const openRoomModal = (index = null) => {
+    if (index !== null) {
+      setEditingRoomIndex(index);
+      const room = roomsList[index];
+      setRoomFormData({ name: room.name, type: room.type, description: room.description, images: room.images || [''] });
+    } else {
+      setEditingRoomIndex(null);
+      setRoomFormData({ name: '', type: 'Shared', description: '', images: [''] });
+    }
+    setShowRoomModal(true);
+  };
+
+  const saveRoom = () => {
+    if (!roomFormData.name.trim()) {
+      setError('Room name is required');
+      return;
+    }
+    if (editingRoomIndex !== null) {
+      updateRoom(editingRoomIndex, roomFormData);
+    } else {
+      const newRoom = {
+        ...roomFormData,
+        beds: []
+      };
+      setRoomsList([...roomsList, newRoom]);
+    }
+    setShowRoomModal(false);
+    setError('');
+  };
+
+  const openBedModal = (roomIndex, bedIndex = null) => {
+    setSelectedRoomIndex(roomIndex);
+    if (bedIndex !== null) {
+      setEditingBedIndex(bedIndex);
+      const bed = roomsList[roomIndex].beds[bedIndex];
+      setBedFormData({ ...bed });
+    } else {
+      setEditingBedIndex(null);
+      setBedFormData({ status: 'Available', rent: '', vacantDate: '', studentName: '', contact: '', advancePaid: false });
+    }
+    setShowBedModal(true);
+  };
+
+  const saveBed = () => {
+    if (!bedFormData.rent || isNaN(bedFormData.rent)) {
+      setError('Bed rent must be a valid number');
+      return;
+    }
+    if (bedFormData.status === 'Booked' && !bedFormData.studentName.trim()) {
+      setError('Student name is required for booked beds');
+      return;
+    }
+    if (bedFormData.status === 'Vacant' && !bedFormData.vacantDate) {
+      setError('Vacant date is required');
+      return;
+    }
+    
+    const newRooms = [...roomsList];
+    const beds = newRooms[selectedRoomIndex].beds || [];
+    
+    if (editingBedIndex !== null) {
+      beds[editingBedIndex] = bedFormData;
+    } else {
+      const bedNumber = beds.length + 1;
+      beds.push({ ...bedFormData, bedNumber });
+    }
+    
+    newRooms[selectedRoomIndex].beds = beds;
+    setRoomsList(newRooms);
+    setShowBedModal(false);
+    setError('');
+  };
+
+  const deleteBed = (roomIndex, bedIndex) => {
+    if (window.confirm('Are you sure you want to delete this bed?')) {
+      const newRooms = [...roomsList];
+      newRooms[roomIndex].beds = newRooms[roomIndex].beds.filter((_, i) => i !== bedIndex);
+      setRoomsList(newRooms);
+    }
+  };
+
+  // Room Statistics
+  const calculateRoomStats = () => {
+    let totalBeds = 0;
+    let bookedBeds = 0;
+    let expectedRevenue = 0;
+
+    roomsList.forEach(room => {
+      room.beds.forEach(bed => {
+        totalBeds += 1;
+        expectedRevenue += parseFloat(bed.rent) || 0;
+        if (bed.status === 'Booked') bookedBeds += 1;
+      });
+    });
+
+    const occupancy = totalBeds > 0 ? Math.round((bookedBeds / totalBeds) * 100) : 0;
+    return { totalBeds, bookedBeds, occupancy, expectedRevenue };
+  };
+
   const validateStep = (currentStep) => {
     setError('');
     if (currentStep === 1) {
@@ -162,8 +296,13 @@ export const CreateListingPage = () => {
         return false;
       }
     } else if (currentStep === 3) {
-      if (!rooms || !capacity) {
-        setError('Step 3: Please fill all required fields');
+      if (roomsList.length === 0) {
+        setError('Step 3: Please add at least one room with beds');
+        return false;
+      }
+      const hasBedsInAllRooms = roomsList.every(room => room.beds && room.beds.length > 0);
+      if (!hasBedsInAllRooms) {
+        setError('Step 3: Each room must have at least one bed');
         return false;
       }
     }
@@ -212,8 +351,21 @@ export const CreateListingPage = () => {
         price: parseFloat(u.price)
       })),
       genderAllowed,
-      rooms: parseInt(rooms),
-      capacity: parseInt(capacity),
+      rooms: roomsList.map(room => ({
+        name: room.name,
+        type: room.type,
+        description: room.description,
+        images: room.images ? room.images.filter(img => img.trim()) : [],
+        beds: room.beds ? room.beds.map(bed => ({
+          bedNumber: bed.bedNumber,
+          rent: parseFloat(bed.rent),
+          status: bed.status,
+          vacantDate: bed.vacantDate || null,
+          studentName: bed.studentName || null,
+          contact: bed.contact || null,
+          advancePaid: bed.advancePaid || false
+        })) : []
+      })),
       furnished,
       facilities,
       meals: {
@@ -238,6 +390,211 @@ export const CreateListingPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Room Modal Component
+  const RoomModal = () => {
+    if (!showRoomModal) return null;
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6 flex items-center justify-between sticky top-0">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <i className="fas fa-door-open"></i>
+              {editingRoomIndex !== null ? 'Edit Room' : 'Add New Room'}
+            </h2>
+            <button
+              onClick={() => setShowRoomModal(false)}
+              className="text-white hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center"
+            >
+              <i className="fas fa-times text-xl"></i>
+            </button>
+          </div>
+
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-gray-800">Room Name *</label>
+              <input
+                value={roomFormData.name}
+                onChange={(e) => setRoomFormData({ ...roomFormData, name: e.target.value })}
+                placeholder="e.g., Room A, Room 101, Master Bedroom"
+                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-gray-800">Room Type *</label>
+              <select
+                value={roomFormData.type}
+                onChange={(e) => setRoomFormData({ ...roomFormData, type: e.target.value })}
+                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+              >
+                <option value="Single">Single</option>
+                <option value="Shared">Shared</option>
+                <option value="AC">AC</option>
+                <option value="Non-AC">Non-AC</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-gray-800">Room Description</label>
+              <textarea
+                value={roomFormData.description}
+                onChange={(e) => setRoomFormData({ ...roomFormData, description: e.target.value })}
+                placeholder="Describe the room, furniture, amenities, etc..."
+                rows="3"
+                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-gray-800">Room Image URL</label>
+              <input
+                value={roomFormData.images[0]}
+                onChange={(e) => setRoomFormData({ ...roomFormData, images: [e.target.value] })}
+                placeholder="https://example.com/room-image.jpg"
+                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+              />
+              {roomFormData.images[0] && (
+                <img
+                  src={roomFormData.images[0]}
+                  alt="room preview"
+                  className="mt-3 h-32 object-cover rounded-lg border"
+                  onError={(e) => (e.target.style.display = 'none')}
+                />
+              )}
+            </div>
+
+            <div className="flex gap-3 pt-4 border-t">
+              <button
+                type="button"
+                onClick={() => setShowRoomModal(false)}
+                className="flex-1 bg-gray-200 text-gray-800 px-4 py-3 rounded-lg hover:bg-gray-300 font-semibold transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveRoom}
+                className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 py-3 rounded-lg hover:shadow-lg font-semibold transition"
+              >
+                <i className="fas fa-save mr-2"></i> Save Room
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Bed Modal Component
+  const BedModal = () => {
+    if (!showBedModal) return null;
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 flex items-center justify-between sticky top-0">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <i className="fas fa-bed"></i>
+              {editingBedIndex !== null ? 'Edit Bed' : 'Add New Bed'}
+            </h2>
+            <button
+              onClick={() => setShowBedModal(false)}
+              className="text-white hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center"
+            >
+              <i className="fas fa-times text-xl"></i>
+            </button>
+          </div>
+
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-gray-800">Rent (৳) *</label>
+              <input
+                type="number"
+                value={bedFormData.rent}
+                onChange={(e) => setBedFormData({ ...bedFormData, rent: e.target.value })}
+                placeholder="e.g., 8000"
+                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-gray-800">Bed Status *</label>
+              <select
+                value={bedFormData.status}
+                onChange={(e) => setBedFormData({ ...bedFormData, status: e.target.value })}
+                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              >
+                <option value="Available">Available</option>
+                <option value="Booked">Booked</option>
+                <option value="Vacant">Vacant from date</option>
+              </select>
+            </div>
+
+            {bedFormData.status === 'Booked' && (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-gray-800">Student Name *</label>
+                  <input
+                    value={bedFormData.studentName}
+                    onChange={(e) => setBedFormData({ ...bedFormData, studentName: e.target.value })}
+                    placeholder="Full name of the student"
+                    className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-gray-800">Contact Number</label>
+                  <input
+                    value={bedFormData.contact}
+                    onChange={(e) => setBedFormData({ ...bedFormData, contact: e.target.value })}
+                    placeholder="e.g., +880123456789"
+                    className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={bedFormData.advancePaid}
+                    onChange={(e) => setBedFormData({ ...bedFormData, advancePaid: e.target.checked })}
+                    className="w-5 h-5 text-blue-600 cursor-pointer"
+                  />
+                  <label className="text-sm font-semibold text-gray-800 cursor-pointer">Advance Paid</label>
+                </div>
+              </>
+            )}
+
+            {bedFormData.status === 'Vacant' && (
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-gray-800">Vacant From Date *</label>
+                <input
+                  type="date"
+                  value={bedFormData.vacantDate}
+                  onChange={(e) => setBedFormData({ ...bedFormData, vacantDate: e.target.value })}
+                  className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-4 border-t">
+              <button
+                type="button"
+                onClick={() => setShowBedModal(false)}
+                className="flex-1 bg-gray-200 text-gray-800 px-4 py-3 rounded-lg hover:bg-gray-300 font-semibold transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveBed}
+                className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 rounded-lg hover:shadow-lg font-semibold transition"
+              >
+                <i className="fas fa-save mr-2"></i> Save Bed
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -508,70 +865,165 @@ export const CreateListingPage = () => {
 
   </div>
 )}
-            {/* STEP 3: Property Details */}
+            {/* STEP 3: Room & Bed Management */}
             {step === 3 && (
               <div className="space-y-6 animate-fadeIn">
-                <div className="flex items-center gap-3 mb-8 pb-4 border-b-2 border-purple-200">
-                  <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold">3</div>
-                  <h2 className="text-2xl font-bold text-gray-800">Property Details</h2>
+                <div className="flex items-center justify-between mb-8 pb-4 border-b-2 border-purple-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold">3</div>
+                    <h2 className="text-2xl font-bold text-gray-800">Room & Bed Management</h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addRoom}
+                    className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 py-2 rounded-lg hover:shadow-lg transition flex items-center gap-2 font-semibold"
+                  >
+                    <i className="fas fa-plus"></i> Add Room
+                  </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
-                      <i className="fas fa-door-open text-blue-600"></i> Number of Rooms *
-                    </label>
-                    <select
-                      value={rooms}
-                      onChange={(e) => setRooms(e.target.value)}
-                      className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                    >
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => <option key={n} value={n}>{n}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
-                      <i className="fas fa-users text-green-600"></i> Total Capacity *
-                    </label>
-                    <select
-                      value={capacity}
-                      onChange={(e) => setCapacity(e.target.value)}
-                      className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                    >
-                      {[1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20].map(n => <option key={n} value={n}>{n}</option>)}
-                    </select>
-                  </div>
+                {/* Info Box */}
+                <div className="bg-purple-50 border-l-4 border-purple-500 p-4 rounded-lg">
+                  <p className="text-purple-700 font-semibold flex items-center gap-2">
+                    <i className="fas fa-lightbulb"></i>
+                    Define individual rooms and beds with pricing, status, and student details
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
-                      <i className="fas fa-venus-mars text-pink-600"></i> Gender Allowed *
-                    </label>
-                    <select
-                      value={genderAllowed}
-                      onChange={(e) => setGenderAllowed(e.target.value)}
-                      className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                    >
-                      <option value="both">Mixed (Any gender)</option>
-                      <option value="male">Male Only</option>
-                      <option value="female">Female Only</option>
-                    </select>
+                {/* Room Stats Summary */}
+                {roomsList.length > 0 && (() => {
+                  const stats = calculateRoomStats();
+                  return (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
+                        <p className="text-sm text-blue-700 font-semibold">Total Beds</p>
+                        <p className="text-3xl font-bold text-blue-600">{stats.totalBeds}</p>
+                      </div>
+                      <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
+                        <p className="text-sm text-green-700 font-semibold">Booked Beds</p>
+                        <p className="text-3xl font-bold text-green-600">{stats.bookedBeds}</p>
+                      </div>
+                      <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-xl border border-orange-200">
+                        <p className="text-sm text-orange-700 font-semibold">Occupancy</p>
+                        <p className="text-3xl font-bold text-orange-600">{stats.occupancy}%</p>
+                      </div>
+                      <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-4 rounded-xl border border-indigo-200">
+                        <p className="text-sm text-indigo-700 font-semibold">Monthly Revenue</p>
+                        <p className="text-3xl font-bold text-indigo-600">৳{stats.expectedRevenue.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Rooms Grid */}
+                {roomsList.length === 0 ? (
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center bg-gray-50">
+                    <i className="fas fa-door-open text-4xl text-gray-300 mb-4"></i>
+                    <p className="text-gray-600 font-semibold text-lg">No rooms added yet</p>
+                    <p className="text-gray-500">Click "Add Room" to start managing your rooms and beds</p>
                   </div>
-                  <div>
-                    <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
-                      <i className="fas fa-couch text-amber-600"></i> Furnishing *
-                    </label>
-                    <select
-                      value={furnished}
-                      onChange={(e) => setFurnished(e.target.value)}
-                      className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                    >
-                      <option value="unfurnished">Unfurnished</option>
-                      <option value="semi">Semi-Furnished</option>
-                      <option value="furnished">Fully Furnished</option>
-                    </select>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {roomsList.map((room, roomIndex) => (
+                      <div key={roomIndex} className="bg-white border-2 border-purple-200 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition">
+                        {/* Room Header */}
+                        <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-4 flex items-center justify-between">
+                          <div>
+                            <h3 className="text-xl font-bold">{room.name}</h3>
+                            <p className="text-sm text-purple-200">{room.type} • {room.beds ? room.beds.length : 0} beds</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openRoomModal(roomIndex)}
+                              className="bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded transition"
+                              title="Edit room"
+                            >
+                              <i className="fas fa-edit"></i>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => deleteRoom(roomIndex)}
+                              className="bg-red-500/20 hover:bg-red-500/30 text-white px-3 py-2 rounded transition"
+                              title="Delete room"
+                            >
+                              <i className="fas fa-trash"></i>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Room Description */}
+                        {room.description && (
+                          <div className="bg-gray-50 px-4 py-2 border-b text-sm text-gray-600">
+                            {room.description}
+                          </div>
+                        )}
+
+                        {/* Beds Grid */}
+                        <div className="p-4">
+                          {room.beds && room.beds.length > 0 ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                              {room.beds.map((bed, bedIndex) => {
+                                let statusColor = 'bg-green-100 text-green-800 border-green-300';
+                                let statusIcon = 'fa-check-circle';
+                                if (bed.status === 'Booked') {
+                                  statusColor = 'bg-red-100 text-red-800 border-red-300';
+                                  statusIcon = 'fa-times-circle';
+                                } else if (bed.status === 'Vacant') {
+                                  statusColor = 'bg-yellow-100 text-yellow-800 border-yellow-300';
+                                  statusIcon = 'fa-clock';
+                                }
+
+                                return (
+                                  <div
+                                    key={bedIndex}
+                                    onClick={() => openBedModal(roomIndex, bedIndex)}
+                                    className={`cursor-pointer border-2 ${statusColor} rounded-lg p-3 hover:shadow-md transition text-center`}
+                                  >
+                                    <p className="font-bold text-sm">Bed {bed.bedNumber}</p>
+                                    <p className="text-xs font-semibold mb-1 flex items-center justify-center gap-1">
+                                      <i className={`fas ${statusIcon} text-xs`}></i>
+                                      {bed.status}
+                                    </p>
+                                    <p className="text-xs font-bold">৳{bed.rent}</p>
+                                    {bed.status === 'Booked' && bed.studentName && (
+                                      <p className="text-xs text-gray-600 truncate mt-1">{bed.studentName}</p>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500 mb-4 italic">No beds added yet</p>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => openBedModal(roomIndex)}
+                            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition font-semibold flex items-center justify-center gap-2"
+                          >
+                            <i className="fas fa-plus"></i> Add Bed
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
+                )}
+
+                {/* Gender Allowed */}
+                <div className="border-t-2 border-gray-200 pt-6 mt-6">
+                  <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
+                    <i className="fas fa-venus-mars text-pink-600"></i> Gender Allowed *
+                  </label>
+                  <select
+                    value={genderAllowed}
+                    onChange={(e) => setGenderAllowed(e.target.value)}
+                    className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
+                  >
+                    <option value="both">Mixed (Any gender)</option>
+                    <option value="male">Male Only</option>
+                    <option value="female">Female Only</option>
+                  </select>
                 </div>
               </div>
             )}
@@ -736,6 +1188,12 @@ export const CreateListingPage = () => {
             <p className="text-sm text-gray-700"><strong>Competitive Price</strong> gets more inquiries</p>
           </div>
         </div>
+
+        {/* Room Modal */}
+        <RoomModal />
+
+        {/* Bed Modal */}
+        <BedModal />
         </>
         )}
       </div>
