@@ -23,7 +23,7 @@ export const CreateListingPage = () => {
   // Pricing
   const [rent, setRent] = useState('');
   const [deposit, setDeposit] = useState('');
-  const [utilities, setUtilities] = useState('');
+  const [utilities, setUtilities] = useState([]);
   
   // Details
   const [genderAllowed, setGenderAllowed] = useState('both');
@@ -127,6 +127,28 @@ export const CreateListingPage = () => {
     setAmenities(prev => ({ ...prev, [id]: !prev[id] }));
   };
   
+  // Utility management functions
+  const addUtility = () => {
+    setUtilities([...utilities, { name: '', price: '' }]);
+  };
+
+  const removeUtility = (index) => {
+    setUtilities(utilities.filter((_, i) => i !== index));
+  };
+
+  const handleUtilityChange = (index, field, value) => {
+    const newUtilities = [...utilities];
+    newUtilities[index] = { ...newUtilities[index], [field]: value };
+    setUtilities(newUtilities);
+  };
+
+  // Calculate total utilities
+  const totalUtilities = utilities.reduce((sum, util) => {
+    return sum + (parseFloat(util.price) || 0);
+  }, 0);
+
+  const totalMonthly = (parseFloat(rent) || 0) + totalUtilities;
+
   const validateStep = (currentStep) => {
     setError('');
     if (currentStep === 1) {
@@ -185,7 +207,10 @@ export const CreateListingPage = () => {
       type,
       rent: parseFloat(rent),
       deposit: parseFloat(deposit),
-      utilities: utilities ? parseFloat(utilities) : 0,
+      utilities: utilities.filter(u => u.name && u.price).map(u => ({
+        name: u.name,
+        price: parseFloat(u.price)
+      })),
       genderAllowed,
       rooms: parseInt(rooms),
       capacity: parseInt(capacity),
