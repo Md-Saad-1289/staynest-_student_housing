@@ -366,70 +366,123 @@ export const CreateListingPage = () => {
               </div>
             )}
 
-            {/* STEP 2: Pricing */}
-            {step === 2 && (
-              <div className="space-y-6 animate-fadeIn">
-                <div className="flex items-center gap-3 mb-8 pb-4 border-b-2 border-green-200">
-                  <div className="w-10 h-10 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">2</div>
-                  <h2 className="text-2xl font-bold text-gray-800">Pricing Details</h2>
-                </div>
+           {/* STEP 2: Pricing */}
+{step === 2 && (
+  <div className="space-y-8 animate-fadeIn">
 
-                <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-                  <p className="text-green-700 font-semibold flex items-center gap-2">
-                    <i className="fas fa-lightbulb"></i> Set competitive prices to attract more students
-                  </p>
-                </div>
+    <div className="flex items-center gap-3 pb-4 border-b-2 border-green-200">
+      <div className="w-10 h-10 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">
+        2
+      </div>
+      <h2 className="text-2xl font-bold text-gray-800">
+        Pricing Details
+      </h2>
+    </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
-                      <i className="fas fa-money-bill-wave text-green-600"></i> Monthly Rent (৳) *
-                    </label>
-                    <input
-                      value={rent}
-                      onChange={(e) => setRent(e.target.value)}
-                      type="number"
-                      className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                      placeholder="e.g., 5000"
-                    />
-                  </div>
-                  <div>
-                    <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
-                      <i className="fas fa-vault text-orange-600"></i> Security Deposit (৳) *
-                    </label>
-                    <input
-                      value={deposit}
-                      onChange={(e) => setDeposit(e.target.value)}
-                          type="number"
-                          min={300}
-                      className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                      placeholder="e.g., 3000"
-                    />
-                  </div>
-                </div>
+    {/* Info Box */}
+    <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg shadow-sm">
+      <p className="text-green-700 font-semibold flex items-center gap-2">
+        <i className="fas fa-lightbulb"></i>
+        Transparent pricing builds trust & increases booking rate
+      </p>
+    </div>
 
-                <div>
-                  <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
-                    <i className="fas fa-lightbulb text-yellow-600"></i> Utilities (Monthly) (৳) - Optional
-                  </label>
-                  <input
-                    value={utilities}
-                    onChange={(e) => setUtilities(e.target.value)}
-                    type="number"
-                    className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                    placeholder="e.g., 500 (electricity, water, gas)"
-                  />
-                </div>
+    {/* Rent + Deposit */}
+    <div className="grid md:grid-cols-2 gap-6">
+      <div className="bg-white p-5 rounded-xl shadow-sm border">
+        <label className="block text-sm font-semibold mb-3">
+          Monthly Rent (৳) *
+        </label>
+        <input
+          value={rent}
+          onChange={(e) => setRent(e.target.value)}
+          type="number"
+          className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition"
+          placeholder="e.g., 5000"
+        />
+      </div>
 
-                {rent && deposit && (
-                  <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
-                    <p className="text-sm text-gray-700 mb-2"><strong>Summary:</strong></p>
-                    <p className="text-gray-700">Monthly: ৳{parseInt(rent) + (utilities ? parseInt(utilities) : 0)} | Deposit: ৳{deposit}</p>
-                  </div>
-                )}
-              </div>
-            )}
+      <div className="bg-white p-5 rounded-xl shadow-sm border">
+        <label className="block text-sm font-semibold mb-3">
+          Security Deposit (৳) *
+        </label>
+        <input
+          value={deposit}
+          onChange={(e) => setDeposit(e.target.value)}
+          type="number"
+          min={300}
+          className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition"
+          placeholder="e.g., 3000"
+        />
+      </div>
+    </div>
 
+    {/* Utilities Section */}
+    <div className="bg-gray-50 p-6 rounded-xl border shadow-sm">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="font-semibold text-lg">Utilities (Optional)</h3>
+        <button
+          type="button"
+          onClick={addUtility}
+          className="text-green-600 font-semibold hover:underline"
+        >
+          + Add Utility
+        </button>
+      </div>
+
+      {utilities.map((utility, index) => (
+        <div key={index} className="grid md:grid-cols-5 gap-3 mb-3 items-center">
+          <input
+            type="text"
+            placeholder="Utility Name (Electricity, Water, WiFi)"
+            value={utility.name}
+            onChange={(e) =>
+              handleUtilityChange(index, "name", e.target.value)
+            }
+            className="md:col-span-3 border rounded-lg px-3 py-2"
+          />
+
+          <input
+            type="number"
+            placeholder="Price (৳)"
+            value={utility.price}
+            onChange={(e) =>
+              handleUtilityChange(index, "price", e.target.value)
+            }
+            className="md:col-span-1 border rounded-lg px-3 py-2"
+          />
+
+          <button
+            type="button"
+            onClick={() => removeUtility(index)}
+            className="text-red-500 font-bold hover:text-red-700"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+    </div>
+
+    {/* Smart Summary */}
+    {(rent || totalUtilities) && (
+      <div className="bg-blue-50 p-6 rounded-xl border-l-4 border-blue-500 shadow-sm">
+        <p className="font-semibold mb-3 text-gray-800">
+          Cost Breakdown
+        </p>
+
+        <div className="space-y-1 text-gray-700">
+          <p>Base Rent: ৳{rent || 0}</p>
+          <p>Total Utilities: ৳{totalUtilities}</p>
+          <p className="font-bold text-lg text-blue-700">
+            Total Monthly: ৳{totalMonthly}
+          </p>
+          <p>Security Deposit: ৳{deposit || 0}</p>
+        </div>
+      </div>
+    )}
+
+  </div>
+)}
             {/* STEP 3: Property Details */}
             {step === 3 && (
               <div className="space-y-6 animate-fadeIn">
