@@ -390,7 +390,7 @@ export const CreateListingPage = () => {
                       onChange={(e) => setRent(e.target.value)}
                       type="number"
                       className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                      placeholder="e.g., 8000"
+                      placeholder="e.g., 5000"
                     />
                   </div>
                   <div>
@@ -400,9 +400,10 @@ export const CreateListingPage = () => {
                     <input
                       value={deposit}
                       onChange={(e) => setDeposit(e.target.value)}
-                      type="number"
+                          type="number"
+                          min={300}
                       className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                      placeholder="e.g., 16000"
+                      placeholder="e.g., 3000"
                     />
                   </div>
                 </div>
@@ -641,40 +642,6 @@ export const CreateListingPage = () => {
           </form>
         </div>
 
-        {/* Sticky Footer CTAs for wider screens */}
-        <div className="hidden lg:flex fixed z-40 left-0 right-0 bottom-6 justify-center pointer-events-none">
-          <div className="max-w-4xl w-full px-4 pointer-events-auto">
-            <div className="bg-white/90 backdrop-blur-md border border-gray-200 rounded-lg shadow-lg p-3 flex gap-3">
-              {step > 1 ? (
-                <button
-                  onClick={handlePrevious}
-                  className="px-5 py-3 bg-gray-100 rounded-lg font-semibold hover:bg-gray-200 transition"
-                >
-                  <i className="fas fa-chevron-left mr-2"></i> Previous
-                </button>
-              ) : (
-                <div className="w-24" />
-              )}
-
-              {step < 4 ? (
-                <button
-                  onClick={handleNext}
-                  className="ml-auto px-5 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition"
-                >
-                  Next <i className="fas fa-chevron-right ml-2"></i>
-                </button>
-              ) : (
-                <button
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className="ml-auto px-5 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-semibold hover:shadow-lg disabled:opacity-50 transition"
-                >
-                  {loading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Listing' : 'Create Listing')}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
 
         {/* Help Text */}
         <div className="mt-8 grid grid-cols-3 gap-4 text-center">
