@@ -37,6 +37,8 @@ export const OwnerDashboardModernPage = ({ tab: tabProp }) => {
   const [error, setError] = useState('');
   const [confirmModal, setConfirmModal] = useState({ open: false });
   const [refreshKey, setRefreshKey] = useState(0);
+  const [listingsFilterStatus, setListingsFilterStatus] = useState('all'); // all, verified, unverified
+  const [listingsSearchQuery, setListingsSearchQuery] = useState('');
 
   // Update activeTab when route param changes
   useEffect(() => {
@@ -154,34 +156,60 @@ export const OwnerDashboardModernPage = ({ tab: tabProp }) => {
   const listingsColumns = [
     {
       key: 'title',
-      label: 'Listing',
+      label: 'Property Details',
       render: (row) => (
         <div>
           <p className="font-semibold text-gray-900 flex items-center gap-2">
             <i className="fas fa-home text-blue-600"></i>
             {row.title}
           </p>
-          <p className="text-xs text-gray-500">{row.address}</p>
+          <p className="text-xs text-gray-500 mt-1">{row.address}, {row.city}</p>
         </div>
       ),
     },
     {
-      key: 'city',
-      label: 'City',
-      render: (row) => <span className="text-sm text-gray-700">{row.city}</span>,
-    },
-    {
       key: 'rent',
       label: 'Monthly Rent',
-      render: (row) => <span className="font-semibold">৳{row.rent.toLocaleString()}</span>,
+      render: (row) => (
+        <div>
+          <p className="font-bold text-gray-900">৳{row.rent?.toLocaleString()}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{row.type || 'Listing'}</p>
+        </div>
+      ),
+    },
+    {
+      key: 'bookings',
+      label: 'Inquiries',
+      render: (row) => {
+        const bookingCount = bookingRequests.filter(b => b.listingId?._id === row._id).length;
+        const pendingCount = bookingRequests.filter(b => b.listingId?._id === row._id && b.status === 'pending').length;
+        return (
+          <div>
+            <p className="font-semibold text-gray-900">{bookingCount}</p>
+            {pendingCount > 0 && (
+              <p className="text-xs text-orange-600 font-medium mt-0.5">{pendingCount} pending</p>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'verified',
       label: 'Status',
       render: (row) => (
-        <StatusBadge
-          status={row.verified ? 'verified' : 'unverified'}
-        />
+        <div className="flex items-center gap-2">
+          {row.verified ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+              <i className="fas fa-check-circle text-sm"></i>
+              Verified
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">
+              <i className="fas fa-clock text-sm"></i>
+              Pending
+            </span>
+          )}
+        </div>
       ),
     },
     {
@@ -191,24 +219,27 @@ export const OwnerDashboardModernPage = ({ tab: tabProp }) => {
         <div className="flex flex-wrap gap-1 sm:gap-2">
           <a
             href={`/listing/${row._id}`}
-            className="px-2 sm:px-3 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 rounded font-medium transition-colors flex items-center gap-1 whitespace-nowrap"
+            className="px-2 sm:px-3 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-medium transition-colors flex items-center gap-1 whitespace-nowrap"
+            title="View public listing"
           >
             <i className="fas fa-eye hidden sm:inline"></i>
-            <span className="sm:inline">View</span>
+            <span>View</span>
           </a>
           <a
             href={`/dashboard/owner/edit-listing/${row._id}`}
-            className="px-2 sm:px-3 py-1 text-xs bg-green-50 text-green-600 hover:bg-green-100 rounded font-medium transition-colors flex items-center gap-1 whitespace-nowrap"
+            className="px-2 sm:px-3 py-1 text-xs bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium transition-colors flex items-center gap-1 whitespace-nowrap"
+            title="Edit listing details"
           >
             <i className="fas fa-edit hidden sm:inline"></i>
-            <span className="sm:inline">Edit</span>
+            <span>Edit</span>
           </a>
           <button
             onClick={() => handleDeleteListing(row._id, row.title)}
-            className="px-2 sm:px-3 py-1 text-xs bg-red-50 text-red-600 hover:bg-red-100 rounded font-medium transition-colors flex items-center gap-1 whitespace-nowrap"
+            className="px-2 sm:px-3 py-1 text-xs bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-medium transition-colors flex items-center gap-1 whitespace-nowrap"
+            title="Delete listing"
           >
             <i className="fas fa-trash hidden sm:inline"></i>
-            <span className="sm:inline">Delete</span>
+            <span>Delete</span>
           </button>
         </div>
       ),
@@ -222,11 +253,8 @@ export const OwnerDashboardModernPage = ({ tab: tabProp }) => {
       label: 'Student',
       render: (row) => (
         <div>
-          <p className="font-semibold text-gray-900 flex items-center gap-2">
-            <i className="fas fa-user text-blue-600"></i>
-            {row.studentId?.name || 'Unknown'}
-          </p>
-          <p className="text-xs text-gray-500">{row.studentId?.email || 'N/A'}</p>
+          <p className="font-semibold text-gray-900">{row.studentId?.name || 'Unknown'}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{row.studentId?.email || 'N/A'}</p>
         </div>
       ),
     },
@@ -235,25 +263,47 @@ export const OwnerDashboardModernPage = ({ tab: tabProp }) => {
       label: 'Property',
       render: (row) => (
         <div>
-          <p className="font-medium text-gray-900">{row.listingId?.title || 'Unknown'}</p>
-          <p className="text-xs text-gray-500">{row.listingId?.city || 'N/A'}</p>
+          <p className="font-semibold text-gray-900">{row.listingId?.title || 'Unknown'}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{row.listingId?.city || 'N/A'}</p>
         </div>
       ),
     },
     {
       key: 'moveInDate',
       label: 'Move-in Date',
-      render: (row) =>
-        new Date(row.moveInDate).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        }),
+      render: (row) => (
+        <div>
+          <p className="font-semibold text-gray-900">
+            {new Date(row.moveInDate).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })}
+          </p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {Math.ceil((new Date(row.moveInDate) - new Date()) / (1000 * 60 * 60 * 24))} days away
+          </p>
+        </div>
+      ),
     },
     {
       key: 'status',
       label: 'Status',
-      render: (row) => <StatusBadge status={row.status} />,
+      render: (row) => {
+        const statusConfig = {
+          pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: 'fas fa-clock' },
+          accepted: { bg: 'bg-green-100', text: 'text-green-700', icon: 'fas fa-check-circle' },
+          rejected: { bg: 'bg-red-100', text: 'text-red-700', icon: 'fas fa-times-circle' },
+          completed: { bg: 'bg-blue-100', text: 'text-blue-700', icon: 'fas fa-flag-checkered' },
+        };
+        const config = statusConfig[row.status] || statusConfig.pending;
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 ${config.bg} ${config.text} rounded-full text-xs font-semibold`}>
+            <i className={`${config.icon} text-sm`}></i>
+            {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
+          </span>
+        );
+      },
     },
     {
       key: 'actions',
@@ -263,23 +313,23 @@ export const OwnerDashboardModernPage = ({ tab: tabProp }) => {
           <div className="flex flex-wrap gap-1 sm:gap-2">
             <button
               onClick={() => handleBookingAction(row._id, 'accepted')}
-              className="px-2 sm:px-3 py-1 text-xs bg-green-50 text-green-600 hover:bg-green-100 rounded font-medium transition-colors flex items-center gap-1 whitespace-nowrap"
+              className="px-3 py-1.5 text-xs bg-green-600 text-white hover:bg-green-700 rounded-lg font-semibold transition-colors flex items-center gap-1 whitespace-nowrap"
+              title="Accept this booking request"
             >
               <i className="fas fa-check hidden sm:inline"></i>
-              <span className="sm:inline">Accept</span>
+              <span>Accept</span>
             </button>
             <button
               onClick={() => handleBookingAction(row._id, 'rejected')}
-              className="px-2 sm:px-3 py-1 text-xs bg-red-50 text-red-600 hover:bg-red-100 rounded font-medium transition-colors flex items-center gap-1 whitespace-nowrap"
+              className="px-3 py-1.5 text-xs bg-red-600 text-white hover:bg-red-700 rounded-lg font-semibold transition-colors flex items-center gap-1 whitespace-nowrap"
+              title="Reject this booking request"
             >
               <i className="fas fa-times hidden sm:inline"></i>
-              <span className="sm:inline">Reject</span>
+              <span>Reject</span>
             </button>
           </div>
         ) : (
-          <span className="text-xs text-gray-500 font-medium capitalize">
-            {row.status}
-          </span>
+          <span className="text-xs text-gray-500 font-medium">No action needed</span>
         ),
     },
   ];
@@ -289,36 +339,46 @@ export const OwnerDashboardModernPage = ({ tab: tabProp }) => {
     {
       key: 'student',
       label: 'Review From',
-      render: (row) => (
-        <div>
-          <p className="font-semibold text-gray-900">{row.studentId?.name || 'Unknown Student'}</p>
-          <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-            <i className="fas fa-star text-yellow-500"></i>
-            {(Object.values(row.ratings).reduce((a, b) => a + b, 0) / 6).toFixed(1)} rating
-          </p>
-        </div>
-      ),
+      render: (row) => {
+        const rating = (Object.values(row.ratings).reduce((a, b) => a + b, 0) / 6).toFixed(1);
+        return (
+          <div>
+            <p className="font-semibold text-gray-900">{row.studentId?.name || 'Unknown Student'}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <i key={i} className={`fas fa-star text-xs ${i < Math.round(rating / 2) ? 'text-yellow-400' : 'text-gray-300'}`}></i>
+                ))}
+              </div>
+              <span className="text-xs font-semibold text-gray-700">{rating}/10</span>
+            </div>
+          </div>
+        );
+      },
     },
     {
       key: 'review',
       label: 'Review',
       render: (row) => (
         <div>
-          <p className="text-sm text-gray-700 line-clamp-2">{row.textReview}</p>
+          <p className="text-sm text-gray-700 line-clamp-3">{row.textReview}</p>
         </div>
       ),
     },
     {
       key: 'reply',
-      label: 'Your Reply',
+      label: 'Your Response',
       render: (row) =>
         row.ownerReply ? (
-          <div className="bg-blue-50 p-3 rounded border-l-4 border-blue-500">
-            <p className="text-xs font-semibold text-blue-900">Your reply:</p>
-            <p className="text-sm text-blue-800 line-clamp-2">{row.ownerReply}</p>
+          <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+            <p className="text-xs font-semibold text-green-900 mb-1">Your reply:</p>
+            <p className="text-sm text-green-800 line-clamp-2">{row.ownerReply}</p>
           </div>
         ) : (
-          <span className="text-xs text-gray-500">Not replied yet</span>
+          <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-semibold">
+            <i className="fas fa-clock text-xs"></i>
+            Awaiting response
+          </span>
         ),
     },
     {
@@ -328,13 +388,14 @@ export const OwnerDashboardModernPage = ({ tab: tabProp }) => {
         !row.ownerReply ? (
           <button
             onClick={() => handleReplyToReview(row._id)}
-            className="px-2 sm:px-3 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 rounded font-medium transition-colors flex items-center gap-1 whitespace-nowrap"
+            className="px-3 py-1.5 text-xs bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-semibold transition-colors flex items-center gap-1 whitespace-nowrap"
+            title="Write a response to this review"
           >
             <i className="fas fa-reply hidden sm:inline"></i>
-            <span className="sm:inline">Reply</span>
+            <span>Reply</span>
           </button>
         ) : (
-          <span className="text-xs text-gray-500">Replied</span>
+          <span className="text-xs text-gray-500 font-medium">Done</span>
         ),
     },
   ];
@@ -457,31 +518,178 @@ export const OwnerDashboardModernPage = ({ tab: tabProp }) => {
       {/* Listings Tab */}
       {activeTab === 'listings' && (
         <div>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-              <i className="fas fa-home text-blue-600 mr-2"></i>
-              My Listings
-            </h2>
-            <button
-              onClick={() => setRefreshKey((k) => k + 1)}
-              className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors w-fit"
-            >
-              <i className="fas fa-sync"></i> Refresh
-            </button>
-          </div>
-          {listings.length === 0 ? (
-            <div className="text-center py-8 sm:py-12 bg-white rounded-lg border border-gray-200">
-              <i className="fas fa-inbox text-3xl sm:text-4xl text-gray-300 mb-3 sm:mb-4"></i>
-              <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">No listings yet</p>
+          {/* Header Section */}
+          <div className="mb-8 sm:mb-10">
+            {/* Main Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 pb-6 border-b-2 border-gray-100">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <i className="fas fa-home text-lg"></i>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-black text-gray-900">My Listings</h2>
+                </div>
+                <p className="text-sm text-gray-600 flex items-center gap-2 ml-15">
+                  <i className="fas fa-chart-bar text-blue-500"></i>
+                  {listings.length} total propert{listings.length !== 1 ? 'ies' : 'y'} • {listings.filter(l => l.verified).length} verified
+                </p>
+              </div>
               <button
                 onClick={() => navigate('/dashboard/owner/create-listing')}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors text-sm sm:text-base"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-bold hover:shadow-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 text-sm sm:text-base shadow-md"
               >
-                <i className="fas fa-plus"></i> Create Your First Listing
+                <i className="fas fa-plus-circle"></i> New Listing
+              </button>
+            </div>
+
+            {/* Search and Filters Card */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 shadow-sm">
+              <div className="space-y-4 sm:space-y-0 sm:flex sm:items-end gap-4">
+                {/* Search */}
+                <div className="flex-1 min-w-0">
+                  <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">Search Properties</label>
+                  <div className="relative">
+                    <i className="fas fa-search absolute left-4 top-3 text-gray-400 text-sm"></i>
+                    <input
+                      type="text"
+                      placeholder="Search by title, address, or city..."
+                      value={listingsSearchQuery}
+                      onChange={(e) => setListingsSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl text-sm hover:border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all placeholder-gray-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Status Filter */}
+                <div className="min-w-fit">
+                  <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wider">Verification Status</label>
+                  <div className="relative">
+                    <i className="fas fa-filter absolute right-4 top-3.5 text-gray-400 text-sm"></i>
+                    <select
+                      value={listingsFilterStatus}
+                      onChange={(e) => setListingsFilterStatus(e.target.value)}
+                      className="w-full sm:w-56 pl-4 pr-10 py-3 border-2 border-gray-200 rounded-xl text-sm hover:border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all appearance-none cursor-pointer bg-white"
+                    >
+                      <option value="all">🔍 All Listings</option>
+                      <option value="verified">✅ Verified Only</option>
+                      <option value="unverified">⏳ Pending Verification</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2 sm:gap-3 pt-1 sm:pt-0">
+                  <button
+                    onClick={() => {
+                      setListingsSearchQuery('');
+                      setListingsFilterStatus('all');
+                    }}
+                    className="px-4 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl font-bold transition-all duration-200 text-sm flex items-center justify-center gap-2 flex-shrink-0 h-11"
+                    title="Clear all filters"
+                  >
+                    <i className="fas fa-redo text-xs"></i>
+                    <span className="hidden sm:inline">Reset</span>
+                  </button>
+                  <button
+                    onClick={() => setRefreshKey((k) => k + 1)}
+                    className="px-4 py-3 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl font-bold transition-all duration-200 text-sm flex items-center justify-center gap-2 flex-shrink-0 h-11"
+                    title="Refresh data"
+                  >
+                    <i className="fas fa-sync"></i>
+                    <span className="hidden sm:inline">Refresh</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Summary */}
+          {listings.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+              {/* Total Stats Card */}
+              <div className="bg-gradient-to-br from-blue-50 via-blue-50 to-indigo-100 p-5 sm:p-6 rounded-xl border border-blue-200 shadow-md hover:shadow-lg transition-shadow duration-300 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-blue-200 rounded-full -mr-10 -mt-10 opacity-20 group-hover:scale-125 transition-transform duration-300"></div>
+                <div className="relative">
+                  <div className="flex items-start justify-between mb-3">
+                    <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">Total Properties</p>
+                    <i className="fas fa-home text-xl text-blue-500 opacity-20"></i>
+                  </div>
+                  <p className="text-3xl sm:text-4xl font-black text-blue-900">{listings.length}</p>
+                  <p className="text-xs text-blue-600 mt-2 font-semibold">Active on platform</p>
+                </div>
+              </div>
+
+              {/* Verified Stats Card */}
+              <div className="bg-gradient-to-br from-green-50 via-green-50 to-emerald-100 p-5 sm:p-6 rounded-xl border border-green-200 shadow-md hover:shadow-lg transition-shadow duration-300 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-green-200 rounded-full -mr-10 -mt-10 opacity-20 group-hover:scale-125 transition-transform duration-300"></div>
+                <div className="relative">
+                  <div className="flex items-start justify-between mb-3">
+                    <p className="text-xs font-bold text-green-700 uppercase tracking-wider">Verified</p>
+                    <i className="fas fa-check-circle text-xl text-green-500 opacity-20"></i>
+                  </div>
+                  <p className="text-3xl sm:text-4xl font-black text-green-900">{listings.filter(l => l.verified).length}</p>
+                  <p className="text-xs text-green-600 mt-2 font-semibold">{Math.round((listings.filter(l => l.verified).length / Math.max(listings.length, 1)) * 100)}% verified</p>
+                </div>
+              </div>
+
+              {/* Pending Stats Card */}
+              <div className="bg-gradient-to-br from-amber-50 via-amber-50 to-yellow-100 p-5 sm:p-6 rounded-xl border border-amber-200 shadow-md hover:shadow-lg transition-shadow duration-300 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-amber-200 rounded-full -mr-10 -mt-10 opacity-20 group-hover:scale-125 transition-transform duration-300"></div>
+                <div className="relative">
+                  <div className="flex items-start justify-between mb-3">
+                    <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">Pending</p>
+                    <i className="fas fa-hourglass-half text-xl text-amber-500 opacity-20"></i>
+                  </div>
+                  <p className="text-3xl sm:text-4xl font-black text-amber-900">{listings.filter(l => !l.verified).length}</p>
+                  <p className="text-xs text-amber-600 mt-2 font-semibold">Awaiting verification</p>
+                </div>
+              </div>
+
+              {/* Inquiries Stats Card */}
+              <div className="bg-gradient-to-br from-orange-50 via-orange-50 to-red-100 p-5 sm:p-6 rounded-xl border border-orange-200 shadow-md hover:shadow-lg transition-shadow duration-300 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-orange-200 rounded-full -mr-10 -mt-10 opacity-20 group-hover:scale-125 transition-transform duration-300"></div>
+                <div className="relative">
+                  <div className="flex items-start justify-between mb-3">
+                    <p className="text-xs font-bold text-orange-700 uppercase tracking-wider">Inquiries</p>
+                    <i className="fas fa-envelope text-xl text-orange-500 opacity-20"></i>
+                  </div>
+                  <p className="text-3xl sm:text-4xl font-black text-orange-900">{bookingRequests.length}</p>
+                  <p className="text-xs text-orange-600 mt-2 font-semibold">Booking requests</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Listings Table */}
+          {listings.length === 0 ? (
+            <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl border-2 border-dashed border-gray-300 shadow-sm">
+              <div className="inline-flex w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full items-center justify-center mb-6 shadow-md">
+                <i className="fas fa-home text-3xl text-blue-500"></i>
+              </div>
+              <p className="text-lg font-bold text-gray-900 mb-2">No listings yet</p>
+              <p className="text-sm text-gray-600 mb-8 max-w-md mx-auto">Start your property hosting journey! Create your first listing to showcase your space and start accepting booking requests from students.</p>
+              <button
+                onClick={() => navigate('/dashboard/owner/create-listing')}
+                className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-bold hover:shadow-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 shadow-md"
+              >
+                <i className="fas fa-plus-circle"></i> Create Your First Listing
               </button>
             </div>
           ) : (
-            <DataTable columns={listingsColumns} data={listings} />
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <DataTable 
+                columns={listingsColumns} 
+                data={listings.filter(l => {
+                  const matchesSearch = l.title.toLowerCase().includes(listingsSearchQuery.toLowerCase()) || 
+                                      l.address.toLowerCase().includes(listingsSearchQuery.toLowerCase()) ||
+                                      (l.city && l.city.toLowerCase().includes(listingsSearchQuery.toLowerCase()));
+                  const matchesStatus = listingsFilterStatus === 'all' || 
+                                      (listingsFilterStatus === 'verified' && l.verified) ||
+                                      (listingsFilterStatus === 'unverified' && !l.verified);
+                  return matchesSearch && matchesStatus;
+                })}
+              />
+            </div>
           )}
         </div>
       )}
@@ -489,22 +697,45 @@ export const OwnerDashboardModernPage = ({ tab: tabProp }) => {
       {/* Bookings Tab */}
       {activeTab === 'bookings' && (
         <div>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-              <i className="fas fa-inbox text-orange-600 mr-2"></i>
-              Booking Requests
-            </h2>
-            <button
-              onClick={() => setRefreshKey((k) => k + 1)}
-              className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors w-fit"
-            >
-              <i className="fas fa-sync"></i> Refresh
-            </button>
+          <div className="mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <i className="fas fa-inbox text-orange-600"></i>
+                  Booking Requests
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1">{stats.pendingBookings} pending requests</p>
+              </div>
+            </div>
+
+            {/* Booking Stats */}
+            {bookingRequests.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-3 sm:p-4 rounded-lg border border-orange-200">
+                  <p className="text-xs font-semibold text-orange-700 uppercase">Pending</p>
+                  <p className="text-2xl font-bold text-orange-900 mt-1">{bookingRequests.filter(b => b.status === 'pending').length}</p>
+                </div>
+                <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 sm:p-4 rounded-lg border border-green-200">
+                  <p className="text-xs font-semibold text-green-700 uppercase">Accepted</p>
+                  <p className="text-2xl font-bold text-green-900 mt-1">{bookingRequests.filter(b => b.status === 'accepted').length}</p>
+                </div>
+                <div className="bg-gradient-to-br from-red-50 to-red-100 p-3 sm:p-4 rounded-lg border border-red-200">
+                  <p className="text-xs font-semibold text-red-700 uppercase">Rejected</p>
+                  <p className="text-2xl font-bold text-red-900 mt-1">{bookingRequests.filter(b => b.status === 'rejected').length}</p>
+                </div>
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 sm:p-4 rounded-lg border border-blue-200">
+                  <p className="text-xs font-semibold text-blue-700 uppercase">Total</p>
+                  <p className="text-2xl font-bold text-blue-900 mt-1">{bookingRequests.length}</p>
+                </div>
+              </div>
+            )}
           </div>
+
           {bookingRequests.length === 0 ? (
-            <div className="text-center py-8 sm:py-12 bg-white rounded-lg border border-gray-200">
-              <i className="fas fa-inbox text-3xl sm:text-4xl text-gray-300 mb-3 sm:mb-4"></i>
-              <p className="text-gray-600 text-sm sm:text-base">No booking requests yet</p>
+            <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+              <i className="fas fa-envelope text-4xl text-gray-300 mb-4"></i>
+              <p className="text-gray-600 mb-2 font-medium">No booking requests</p>
+              <p className="text-sm text-gray-500">Requests will appear here when students book your listings</p>
             </div>
           ) : (
             <DataTable columns={requestsColumns} data={bookingRequests} />
@@ -515,22 +746,48 @@ export const OwnerDashboardModernPage = ({ tab: tabProp }) => {
       {/* Reviews Tab */}
       {activeTab === 'reviews' && (
         <div>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-              <i className="fas fa-star text-yellow-500 mr-2"></i>
-              Reviews & Ratings
-            </h2>
-            <button
-              onClick={() => setRefreshKey((k) => k + 1)}
-              className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors w-fit"
-            >
-              <i className="fas fa-sync"></i> Refresh
-            </button>
+          <div className="mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <i className="fas fa-star text-yellow-500"></i>
+                  Reviews & Ratings
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1">{reviews.length} total reviews</p>
+              </div>
+            </div>
+
+            {/* Review Stats */}
+            {reviews.length > 0 && (
+              <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-3 sm:p-4 rounded-lg border border-yellow-200">
+                  <p className="text-xs font-semibold text-yellow-700 uppercase">Avg Rating</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-2xl font-bold text-yellow-900">{stats.avgRating}</p>
+                    <span className="text-xs text-yellow-700">/10</span>
+                  </div>
+                </div>
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 sm:p-4 rounded-lg border border-blue-200">
+                  <p className="text-xs font-semibold text-blue-700 uppercase">Total Reviews</p>
+                  <p className="text-2xl font-bold text-blue-900 mt-1">{reviews.length}</p>
+                </div>
+                <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 sm:p-4 rounded-lg border border-green-200">
+                  <p className="text-xs font-semibold text-green-700 uppercase">Replied</p>
+                  <p className="text-2xl font-bold text-green-900 mt-1">{reviews.filter(r => r.ownerReply).length}</p>
+                </div>
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-3 sm:p-4 rounded-lg border border-purple-200">
+                  <p className="text-xs font-semibold text-purple-700 uppercase">No Response</p>
+                  <p className="text-2xl font-bold text-purple-900 mt-1">{reviews.filter(r => !r.ownerReply).length}</p>
+                </div>
+              </div>
+            )}
           </div>
+
           {reviews.length === 0 ? (
-            <div className="text-center py-8 sm:py-12 bg-white rounded-lg border border-gray-200">
-              <i className="fas fa-star text-3xl sm:text-4xl text-gray-300 mb-3 sm:mb-4"></i>
-              <p className="text-gray-600 text-sm sm:text-base">No reviews yet</p>
+            <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+              <i className="fas fa-comment-dots text-4xl text-gray-300 mb-4"></i>
+              <p className="text-gray-600 mb-2 font-medium">No reviews yet</p>
+              <p className="text-sm text-gray-500">Reviews will appear here when students rate your properties</p>
             </div>
           ) : (
             <DataTable columns={reviewsColumns} data={reviews} />
