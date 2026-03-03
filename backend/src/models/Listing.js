@@ -70,6 +70,29 @@ const listingSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    // new room/bed structure for detailed property management
+    rooms: {
+      type: [
+        {
+          name: { type: String, required: true },
+          type: { type: String, enum: ['Single','Shared','AC','Non-AC'], default: 'Shared' },
+          description: { type: String, default: '' },
+          images: { type: [String], default: [] },
+          beds: [
+            {
+              bedNumber: Number,
+              rent: { type: Number, required: true },
+              status: { type: String, enum: ['Available','Booked','Vacant'], default: 'Available' },
+              vacantDate: { type: Date, default: null },
+              studentName: { type: String, default: '' },
+              contact: { type: String, default: '' },
+              advancePaid: { type: Boolean, default: false },
+            },
+          ],
+        },
+      ],
+      default: [],
+    },
     rules: {
       type: String,
       default: '',

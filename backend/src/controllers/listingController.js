@@ -69,7 +69,7 @@ const getListing = async (req, res) => {
 // Create listing (owner only)
 const createListing = async (req, res) => {
   try {
-    const { title, address, city, type, rent, deposit, genderAllowed, meals, facilities, rules, photos } = req.body;
+    const { title, address, city, type, rent, deposit, genderAllowed, meals, facilities, rules, photos, rooms } = req.body;
 
     if (!title || !address || !city || !type || !rent || !deposit || !genderAllowed) {
       return res.status(400).json({ error: 'Required fields missing' });
@@ -86,6 +86,7 @@ const createListing = async (req, res) => {
       genderAllowed,
       meals: meals || {},
       facilities: facilities || {},
+      rooms: Array.isArray(rooms) ? rooms : [],
       rules,
       photos: photos || [],
       verified: false,
@@ -119,6 +120,11 @@ const updateListing = async (req, res) => {
     // Prevent updating verified status directly via API
     const { verified, ...updateData } = req.body;
     
+    // ensure rooms field is array if provided
+    if (updateData.rooms && !Array.isArray(updateData.rooms)) {
+      updateData.rooms = [];
+    }
+
     Object.assign(listing, updateData);
     await listing.save();
 
