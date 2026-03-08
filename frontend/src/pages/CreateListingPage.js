@@ -1,1278 +1,1082 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { listingService } from '../services/api';
 import { ConfirmModal } from '../components/Dashboard/ConfirmModal';
 
-export const CreateListingPage = () => {
-  const { id } = useParams();
-  const isEditMode = !!id;
-  const [step, setStep] = useState(1);
-  const [loadingData, setLoadingData] = useState(isEditMode);
-  
-  // Basic Info
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [rules, setRules] = useState('');
-  const [address, setAddress] = useState('');
-  const [city, setCity] = useState('');
-  const [type, setType] = useState('');
-  
-  // Meals
-  const [mealsAvailable, setMealsAvailable] = useState(false);
-  const [mealsType, setMealsType] = useState('none');
-  
-  // Pricing
-  const [rent, setRent] = useState('');
-  const [deposit, setDeposit] = useState('');
-  const [utilities, setUtilities] = useState([]);
-  
-  // Room-wise bed management
-  const [roomsList, setRoomsList] = useState([]);
-  
-  // Room modal states
-  const [showRoomModal, setShowRoomModal] = useState(false);
-  const [editingRoomIndex, setEditingRoomIndex] = useState(null);
-  const [roomFormData, setRoomFormData] = useState({ name: '', type: 'Shared', description: '', images: [''] });
-  
-  // Bed modal states
-  const [showBedModal, setShowBedModal] = useState(false);
-  const [selectedRoomIndex, setSelectedRoomIndex] = useState(null);
-  const [bedFormData, setBedFormData] = useState({ status: 'Available', rent: '', vacantDate: '', studentName: '', contact: '', advancePaid: false });
-  const [editingBedIndex, setEditingBedIndex] = useState(null);
+// Reusable Modal Component
+const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
+  if (!isOpen) return null;
 
-  // confirmation modal state
-  const [confirmModal, setConfirmModal] = useState({ open: false });
-
-  const openConfirm = ({ title, message, confirmText = 'Confirm', isDangerous = false, onConfirm }) => {
-    setConfirmModal({ open: true, title, message, confirmText, isDangerous, onConfirm });
-  };
-
-  const closeConfirm = () => setConfirmModal({ open: false });
-  
-  // Details
-  const [genderAllowed, setGenderAllowed] = useState('both');
-  const [furnished, setFurnished] = useState('semi');
-  
-  // Amenities
-  const [amenities, setAmenities] = useState({
-    wifi: false,
-    ac: false,
-    parking: false,
-    laundry: false,
-    kitchen: false,
-    balcony: false,
-    security24: false,
-    gatekeeper: false,
-  });
-  
-  // Media
-  const [photoUrl, setPhotoUrl] = useState('');
-  const [additionalPhotos, setAdditionalPhotos] = useState(['', '', '']);
-  
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const navigate = useNavigate();
-
-  // Load existing listing data if editing
-  useEffect(() => {
-    if (isEditMode) {
-      const loadListing = async () => {
-        try {
-          setLoadingData(true);
-          const response = await listingService.getListing(id);
-          const listing = response.data || response;
-          
-          setTitle(listing.title || '');
-          setDescription(listing.description || '');
-          setRules(listing.rules || '');
-          setAddress(listing.address || '');
-          setCity(listing.city || '');
-          setType(listing.type || '');
-          setRent(listing.rent?.toString() || '');
-          setDeposit(listing.deposit?.toString() || '');
-          setUtilities(listing.utilities || []);
-          setGenderAllowed(listing.genderAllowed || 'both');
-          if (Array.isArray(listing.rooms)) {
-            setRoomsList(listing.rooms);
-          } else {
-            setRoomsList([]);
-          }
-          setFurnished(listing.furnished || 'semi');
-          
-          if (listing.meals) {
-            setMealsAvailable(listing.meals.available || false);
-            setMealsType(listing.meals.type || 'none');
-          }
-          
-          if (listing.amenities) {
-            setAmenities({
-              wifi: listing.amenities.wifi || false,
-              ac: listing.amenities.ac || false,
-              parking: listing.amenities.parking || false,
-              laundry: listing.amenities.laundry || false,
-              kitchen: listing.amenities.kitchen || false,
-              balcony: listing.amenities.balcony || false,
-              security24: listing.amenities.security24 || false,
-              gatekeeper: listing.amenities.gatekeeper || false,
-            });
-          }
-          
-          if (listing.photos && listing.photos.length > 0) {
-            setPhotoUrl(listing.photos[0] || '');
-            setAdditionalPhotos([
-              listing.photos[1] || '',
-              listing.photos[2] || '',
-              listing.photos[3] || '',
-            ]);
-          }
-        } catch (err) {
-          setError('Failed to load listing data');
-          console.error('Load listing error:', err);
-        } finally {
-          setLoadingData(false);
-        }
-      };
-      loadListing();
-    }
-  }, [id, isEditMode]);
-  
-  const amenityOptions = [
-    { id: 'wifi', label: 'WiFi', icon: 'fa-wifi' },
-    { id: 'ac', label: 'Air Conditioning', icon: 'fa-snowflake' },
-    { id: 'parking', label: 'Parking', icon: 'fa-car' },
-    { id: 'laundry', label: 'Laundry', icon: 'fa-shirt' },
-    { id: 'kitchen', label: 'Kitchen', icon: 'fa-utensils' },
-    { id: 'balcony', label: 'Balcony', icon: 'fa-gopuram' },
-    { id: 'security24', label: '24/7 Security', icon: 'fa-shield' },
-    { id: 'gatekeeper', label: 'Gate Keeper', icon: 'fa-user-shield' },
-  ];
-
-  const toggleAmenity = (id) => {
-    setAmenities(prev => ({ ...prev, [id]: !prev[id] }));
-  };
-  
-  // Utility management functions
-  const addUtility = () => {
-    setUtilities([...utilities, { name: '', price: '' }]);
-  };
-
-  const removeUtility = (index) => {
-    setUtilities(utilities.filter((_, i) => i !== index));
-  };
-
-  const handleUtilityChange = (index, field, value) => {
-    const newUtilities = [...utilities];
-    newUtilities[index] = { ...newUtilities[index], [field]: value };
-    setUtilities(newUtilities);
-  };
-
-  // Calculate total utilities
-  const totalUtilities = utilities.reduce((sum, util) => {
-    return sum + (parseFloat(util.price) || 0);
-  }, 0);
-
-  const totalMonthly = (parseFloat(rent) || 0) + totalUtilities;
-
-  // Room Management Functions
-  const addRoom = () => {
-    const newRoom = {
-      name: `Room ${roomsList.length + 1}`,
-      type: 'Shared',
-      description: '',
-      images: [''],
-      beds: []
-    };
-    setRoomsList([...roomsList, newRoom]);
-  };
-
-  const updateRoom = (index, updatedRoom) => {
-    const newRooms = [...roomsList];
-    newRooms[index] = { ...newRooms[index], ...updatedRoom };
-    setRoomsList(newRooms);
-  };
-
-  const deleteRoom = (index) => {
-    openConfirm({
-      title: 'Delete Room',
-      message: 'Are you sure you want to delete this room and all its beds?',
-      confirmText: 'Delete',
-      isDangerous: true,
-      onConfirm: () => {
-        setRoomsList(roomsList.filter((_, i) => i !== index));
-        closeConfirm();
-      }
-    });
-  };
-
-  const openRoomModal = (index = null) => {
-    if (index !== null) {
-      setEditingRoomIndex(index);
-      const room = roomsList[index];
-      setRoomFormData({ name: room.name, type: room.type, description: room.description, images: room.images || [''] });
-    } else {
-      setEditingRoomIndex(null);
-      setRoomFormData({ name: '', type: 'Shared', description: '', images: [''] });
-    }
-    setShowRoomModal(true);
-  };
-
-  const saveRoom = () => {
-    if (!roomFormData.name.trim()) {
-      setError('Room name is required');
-      return;
-    }
-    if (editingRoomIndex !== null) {
-      updateRoom(editingRoomIndex, roomFormData);
-    } else {
-      const newRoom = {
-        ...roomFormData,
-        beds: []
-      };
-      setRoomsList([...roomsList, newRoom]);
-    }
-    setShowRoomModal(false);
-    setError('');
-  };
-
-  const openBedModal = (roomIndex, bedIndex = null) => {
-    setSelectedRoomIndex(roomIndex);
-    if (bedIndex !== null) {
-      setEditingBedIndex(bedIndex);
-      const bed = roomsList[roomIndex].beds[bedIndex];
-      setBedFormData({ ...bed });
-    } else {
-      setEditingBedIndex(null);
-      setBedFormData({ status: 'Available', rent: '', vacantDate: '', studentName: '', contact: '', advancePaid: false });
-    }
-    setShowBedModal(true);
-  };
-
-  const saveBed = () => {
-    if (!bedFormData.rent || isNaN(bedFormData.rent)) {
-      setError('Bed rent must be a valid number');
-      return;
-    }
-    if (bedFormData.status === 'Booked' && !bedFormData.studentName.trim()) {
-      setError('Student name is required for booked beds');
-      return;
-    }
-    if (bedFormData.status === 'Vacant' && !bedFormData.vacantDate) {
-      setError('Vacant date is required');
-      return;
-    }
-    
-    const newRooms = [...roomsList];
-    const beds = newRooms[selectedRoomIndex].beds || [];
-    
-    if (editingBedIndex !== null) {
-      beds[editingBedIndex] = bedFormData;
-    } else {
-      const bedNumber = beds.length + 1;
-      beds.push({ ...bedFormData, bedNumber });
-    }
-    
-    newRooms[selectedRoomIndex].beds = beds;
-    setRoomsList(newRooms);
-    setShowBedModal(false);
-    setError('');
-  };
-
-  const deleteBed = (roomIndex, bedIndex) => {
-    openConfirm({
-      title: 'Delete Bed',
-      message: 'Are you sure you want to delete this bed?',
-      confirmText: 'Delete',
-      isDangerous: true,
-      onConfirm: () => {
-        const newRooms = [...roomsList];
-        newRooms[roomIndex].beds = newRooms[roomIndex].beds.filter((_, i) => i !== bedIndex);
-        setRoomsList(newRooms);
-        closeConfirm();
-      }
-    });
-  };
-
-  // Room Statistics
-  const calculateRoomStats = () => {
-    let totalBeds = 0;
-    let bookedBeds = 0;
-    let expectedRevenue = 0;
-
-    roomsList.forEach(room => {
-      room.beds.forEach(bed => {
-        totalBeds += 1;
-        expectedRevenue += parseFloat(bed.rent) || 0;
-        if (bed.status === 'Booked') bookedBeds += 1;
-      });
-    });
-
-    const occupancy = totalBeds > 0 ? Math.round((bookedBeds / totalBeds) * 100) : 0;
-    return { totalBeds, bookedBeds, occupancy, expectedRevenue };
-  };
-
-  // compute room statistics on each render
-  const roomStats = calculateRoomStats();
-
-  const validateStep = (currentStep) => {
-    setError('');
-    if (currentStep === 1) {
-      if (!title.trim() || !description.trim() || !address.trim() || !city.trim() || !type || !genderAllowed || !furnished) {
-        setError('Step 1: Please fill all required fields');
-        return false;
-      }
-    } else if (currentStep === 2) {
-      if (!rent || !deposit) {
-        setError('Step 2: Please enter rent and deposit');
-        return false;
-      }
-    } else if (currentStep === 3) {
-      if (roomsList.length === 0) {
-        setError('Step 3: Please add at least one room with beds');
-        return false;
-      }
-      const hasBedsInAllRooms = roomsList.every(room => room.beds && room.beds.length > 0);
-      if (!hasBedsInAllRooms) {
-        setError('Step 3: Each room must have at least one bed');
-        return false;
-      }
-    }
-    return true;
-  };
-  
-  const handleNext = (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    if (!validateStep(step)) return;
-    setStep((prev) => {
-      const next = Math.min(prev + 1, 4);
-      return next;
-    });
-    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) {}
-  };
-  
-  const handlePrevious = (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    setError('');
-    setStep((prev) => Math.max(prev - 1, 1));
-    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) {}
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateStep(step)) return;
-
-    const allPhotos = [photoUrl, ...additionalPhotos].filter(p => p.trim());
-
-    const amenitiesObj = {};
-    Object.keys(amenities).forEach((k) => {
-      if (amenities[k]) amenitiesObj[k] = true;
-    });
-
-    const payload = {
-      title,
-      description,
-      rules,
-      address,
-      city,
-      type,
-      rent: parseFloat(rent),
-      deposit: parseFloat(deposit),
-      utilities: utilities.filter(u => u.name && u.price).map(u => ({
-        name: u.name,
-        price: parseFloat(u.price)
-      })),
-      genderAllowed,
-      rooms: roomsList.map(room => ({
-        name: room.name,
-        type: room.type,
-        description: room.description,
-        images: room.images ? room.images.filter(img => img.trim()) : [],
-        beds: room.beds ? room.beds.map(bed => ({
-          bedNumber: bed.bedNumber,
-          rent: parseFloat(bed.rent),
-          status: bed.status,
-          vacantDate: bed.vacantDate || null,
-          studentName: bed.studentName || null,
-          contact: bed.contact || null,
-          advancePaid: bed.advancePaid || false
-        })) : []
-      })),
-      furnished,
-      amenities: amenitiesObj,
-      meals: {
-        available: mealsAvailable,
-        type: mealsType,
-      },
-      photos: allPhotos.length > 0 ? allPhotos : [],
-    };
-
-    try {
-      setLoading(true);
-      if (isEditMode) {
-        await listingService.updateListing(id, payload);
-        alert('✓ Listing updated successfully');
-      } else {
-        await listingService.createListing(payload);
-        alert('✓ Listing created successfully');
-      }
-      navigate('/dashboard/owner');
-    } catch (err) {
-      setError(err?.response?.data?.error || `Failed to ${isEditMode ? 'update' : 'create'} listing`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Room Modal Component
-  const RoomModal = () => {
-    if (!showRoomModal) return null;
-    return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6 flex items-center justify-between sticky top-0">
-            <h2 className="text-2xl font-bold flex items-center gap-2">
-              <i className="fas fa-door-open"></i>
-              {editingRoomIndex !== null ? 'Edit Room' : 'Add New Room'}
-            </h2>
-            <button
-              onClick={() => setShowRoomModal(false)}
-              className="text-white hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center"
-            >
-              <i className="fas fa-times text-xl"></i>
-            </button>
-          </div>
-
-          <div className="p-6 space-y-4">
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-800">Room Name *</label>
-              <input
-                value={roomFormData.name}
-                onChange={(e) => setRoomFormData({ ...roomFormData, name: e.target.value })}
-                placeholder="e.g., Room A, Room 101, Master Bedroom"
-                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-800">Room Type *</label>
-              <select
-                value={roomFormData.type}
-                onChange={(e) => setRoomFormData({ ...roomFormData, type: e.target.value })}
-                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
-              >
-                <option value="Single">Single</option>
-                <option value="Shared">Shared</option>
-                <option value="AC">AC</option>
-                <option value="Non-AC">Non-AC</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-800">Room Description</label>
-              <textarea
-                value={roomFormData.description}
-                onChange={(e) => setRoomFormData({ ...roomFormData, description: e.target.value })}
-                placeholder="Describe the room, furniture, amenities, etc..."
-                rows="3"
-                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-800">Room Image URL</label>
-              <input
-                value={roomFormData.images[0]}
-                onChange={(e) => setRoomFormData({ ...roomFormData, images: [e.target.value] })}
-                placeholder="https://example.com/room-image.jpg"
-                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
-              />
-              {roomFormData.images[0] && (
-                <img
-                  src={roomFormData.images[0]}
-                  alt="room preview"
-                  className="mt-3 h-32 object-cover rounded-lg border"
-                  onError={(e) => (e.target.style.display = 'none')}
-                />
-              )}
-            </div>
-
-            <div className="flex gap-3 pt-4 border-t">
-              <button
-                type="button"
-                onClick={() => setShowRoomModal(false)}
-                className="flex-1 bg-gray-200 text-gray-800 px-4 py-3 rounded-lg hover:bg-gray-300 font-semibold transition"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={saveRoom}
-                className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 py-3 rounded-lg hover:shadow-lg font-semibold transition"
-              >
-                <i className="fas fa-save mr-2"></i> Save Room
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Bed Modal Component
-  const BedModal = () => {
-    if (!showBedModal) return null;
-    return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 flex items-center justify-between sticky top-0">
-            <h2 className="text-2xl font-bold flex items-center gap-2">
-              <i className="fas fa-bed"></i>
-              {editingBedIndex !== null ? 'Edit Bed' : 'Add New Bed'}
-            </h2>
-            <button
-              onClick={() => setShowBedModal(false)}
-              className="text-white hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center"
-            >
-              <i className="fas fa-times text-xl"></i>
-            </button>
-          </div>
-
-          <div className="p-6 space-y-4">
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-800">Rent (৳) *</label>
-              <input
-                type="number"
-                value={bedFormData.rent}
-                onChange={(e) => setBedFormData({ ...bedFormData, rent: e.target.value })}
-                placeholder="e.g., 8000"
-                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-800">Bed Status *</label>
-              <select
-                value={bedFormData.status}
-                onChange={(e) => setBedFormData({ ...bedFormData, status: e.target.value })}
-                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-              >
-                <option value="Available">Available</option>
-                <option value="Booked">Booked</option>
-                <option value="Vacant">Vacant from date</option>
-              </select>
-            </div>
-
-            {bedFormData.status === 'Booked' && (
-              <>
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-800">Student Name *</label>
-                  <input
-                    value={bedFormData.studentName}
-                    onChange={(e) => setBedFormData({ ...bedFormData, studentName: e.target.value })}
-                    placeholder="Full name of the student"
-                    className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-800">Contact Number</label>
-                  <input
-                    value={bedFormData.contact}
-                    onChange={(e) => setBedFormData({ ...bedFormData, contact: e.target.value })}
-                    placeholder="e.g., +880123456789"
-                    className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={bedFormData.advancePaid}
-                    onChange={(e) => setBedFormData({ ...bedFormData, advancePaid: e.target.checked })}
-                    className="w-5 h-5 text-blue-600 cursor-pointer"
-                  />
-                  <label className="text-sm font-semibold text-gray-800 cursor-pointer">Advance Paid</label>
-                </div>
-              </>
-            )}
-
-            {bedFormData.status === 'Vacant' && (
-              <div>
-                <label className="block text-sm font-semibold mb-2 text-gray-800">Vacant From Date *</label>
-                <input
-                  type="date"
-                  value={bedFormData.vacantDate}
-                  onChange={(e) => setBedFormData({ ...bedFormData, vacantDate: e.target.value })}
-                  className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
-                />
-              </div>
-            )}
-
-            <div className="flex gap-3 pt-4 border-t">
-              <button
-                type="button"
-                onClick={() => setShowBedModal(false)}
-                className="flex-1 bg-gray-200 text-gray-800 px-4 py-3 rounded-lg hover:bg-gray-300 font-semibold transition"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={saveBed}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 rounded-lg hover:shadow-lg font-semibold transition"
-              >
-                <i className="fas fa-save mr-2"></i> Save Bed
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  const sizeClasses = {
+    sm: 'max-w-md',
+    md: 'max-w-2xl',
+    lg: 'max-w-4xl',
+    xl: 'max-w-6xl'
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Loading State */}
-        {loadingData && (
-          <div className="text-center py-12">
-            <div className="inline-block">
-              <i className="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
-              <p className="text-gray-600 mt-4">Loading listing data...</p>
-            </div>
-          </div>
-        )}
-
-        {!loadingData && (
-          <>
-            {/* Header */}
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-3">
-                <i className={`fas ${isEditMode ? 'fa-edit' : 'fa-plus'} text-blue-600`}></i>
-                {isEditMode ? 'Edit Your Property' : 'List Your Property'}
-              </h1>
-              <p className="text-gray-600 text-lg">Complete {step} of 4 steps to {isEditMode ? 'update' : 'create'} your listing</p>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="mb-8">
-          <div className="flex justify-between items-center mb-2">
-            {[1, 2, 3, 4].map((num) => (
-              <div key={num} className="flex flex-col items-center flex-1">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-white mb-2 transition ${
-                  num <= step ? 'bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg' : 'bg-gray-300'
-                }`}>
-                  {num <= step - 1 ? <i className="fas fa-check"></i> : num}
-                </div>
-                <span className={`text-sm font-semibold ${num <= step ? 'text-blue-600' : 'text-gray-500'}`}>
-                  {['Basic Info', 'Pricing', 'Rooms & Beds', 'Amenities'][num - 1]}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-1">
-            {[1, 2, 3, 4].map((num) => (
-              <div key={num} className={`h-1 flex-1 rounded-full transition ${num <= step ? 'bg-gradient-to-r from-blue-600 to-purple-600' : 'bg-gray-300'}`}></div>
-            ))}
-          </div>
-        </div>
-
-        {/* Error Alert */}
-        {error && (
-          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 flex items-start gap-3 animate-pulse">
-            <i className="fas fa-circle-exclamation text-xl mt-0.5"></i>
-            <div>
-              <p className="font-semibold">Error</p>
-              <p>{error}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Form Container */}
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
-          <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && step < 4) { e.preventDefault(); } }} className="p-8">
-            {/* STEP 1: Basic Information */}
-            {step === 1 && (
-              <div className="space-y-6 animate-fadeIn">
-                <div className="flex items-center gap-3 mb-8 pb-4 border-b-2 border-blue-200">
-                  <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
-                  <h2 className="text-2xl font-bold text-gray-800">Basic Information</h2>
-                </div>
-
-                <div>
-                  <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
-                    <i className="fas fa-heading text-blue-600"></i> Property Title *
-                  </label>
-                  <input
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                    placeholder="e.g., Premium Female Mess in Dhanmondi"
-                  />
-                </div>
-
-                <div>
-                  <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
-                    <i className="fas fa-pen text-purple-600"></i> Description *
-                  </label>
-                  <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                    rows="4"
-                    placeholder="Describe your property, nearby areas, etc..."
-                  />
-                </div>
-
-
-                <div>
-                  <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
-                    <i className="fas fa-map-marker-alt text-red-600"></i> Address *
-                  </label>
-                  <input
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                    placeholder="e.g., House 45, Road 12, Gulshan"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
-                      <i className="fas fa-city text-purple-600"></i> City *
-                    </label>
-                    <select
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                    >
-                      <option value="">Select City</option>
-                          <option value="Dhaka">Dhaka</option>
-                          <option value="Chittagong">Chittagong</option>
-                          <option value="Sylhet">Sylhet</option>
-                          <option value="Khulna">Khulna</option>
-                          <option value="Rajshahi">Rajshahi</option>
-                          <option value="Barisal">Barisal</option>
-                          <option value="Rangpur">Rangpur</option>
-                          <option value="Mymensingh">Mymensingh</option>
-
-                    </select>
-                  </div>
-                  <div>
-                    <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
-                      <i className="fas fa-building text-green-600"></i> Property Type *
-                    </label>
-                    <select
-                      value={type}
-                      onChange={(e) => setType(e.target.value)}
-                      className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                    >
-                      <option value="">Select Type</option>
-                          <option value="mess">Mess</option>
-                          <option value="hostel">Hostel</option>
-                          <option value="apartment">Apartment</option>
-                          <option value="shared">Shared House</option>
-                          <option value="sublet">Sublet</option>
-                          <option value="other">Other</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
-                      <i className="fas fa-venus-mars text-pink-600"></i> Gender Allowed *
-                    </label>
-                    <select
-                      value={genderAllowed}
-                      onChange={(e) => setGenderAllowed(e.target.value)}
-                      className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                    >
-                      <option value="both">Mixed (Any gender)</option>
-                      <option value="male">Male Only</option>
-                      <option value="female">Female Only</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
-                      <i className="fas fa-couch text-orange-600"></i> Furnished *
-                    </label>
-                    <select
-                      value={furnished}
-                      onChange={(e) => setFurnished(e.target.value)}
-                      className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                    >
-                      <option value="fully">Fully Furnished</option>
-                      <option value="semi">Semi Furnished</option>
-                      <option value="none">Not Furnished</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-
-           {/* STEP 2: Pricing */}
-{step === 2 && (
-  <div className="space-y-8 animate-fadeIn">
-
-    <div className="flex items-center gap-3 pb-4 border-b-2 border-green-200">
-      <div className="w-10 h-10 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">
-        2
-      </div>
-      <h2 className="text-2xl font-bold text-gray-800">
-        Pricing Details
-      </h2>
-    </div>
-
-    {/* Info Box */}
-    <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg shadow-sm">
-      <p className="text-green-700 font-semibold flex items-center gap-2">
-        <i className="fas fa-lightbulb"></i>
-        Transparent pricing builds trust & increases booking rate
-      </p>
-    </div>
-
-    {/* Rent + Deposit */}
-    <div className="grid md:grid-cols-2 gap-6">
-      <div className="bg-white p-5 rounded-xl shadow-sm border">
-        <label className="block text-sm font-semibold mb-3">
-          Monthly Rent (৳) *
-        </label>
-        <input
-          value={rent}
-          onChange={(e) => setRent(e.target.value)}
-          type="number"
-          className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition"
-          placeholder="e.g., 5000"
-        />
-      </div>
-
-      <div className="bg-white p-5 rounded-xl shadow-sm border">
-        <label className="block text-sm font-semibold mb-3">
-          Security Deposit (৳) *
-        </label>
-        <input
-          value={deposit}
-          onChange={(e) => setDeposit(e.target.value)}
-          type="number"
-          min={300}
-          className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition"
-          placeholder="e.g., 3000"
-        />
-      </div>
-    </div>
-
-    {/* Utilities Section */}
-    <div className="bg-gray-50 p-6 rounded-xl border shadow-sm">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-semibold text-lg">Utilities (Optional)</h3>
-        <button
-          type="button"
-          onClick={addUtility}
-          className="text-green-600 font-semibold hover:underline"
-        >
-          + Add Utility
-        </button>
-      </div>
-
-      {utilities.map((utility, index) => (
-        <div key={index} className="grid md:grid-cols-5 gap-3 mb-3 items-center">
-          <input
-            type="text"
-            placeholder="Utility Name (Electricity, Water, WiFi)"
-            value={utility.name}
-            onChange={(e) =>
-              handleUtilityChange(index, "name", e.target.value)
-            }
-            className="md:col-span-3 border rounded-lg px-3 py-2"
-          />
-
-          <input
-            type="number"
-            placeholder="Price (৳)"
-            value={utility.price}
-            onChange={(e) =>
-              handleUtilityChange(index, "price", e.target.value)
-            }
-            className="md:col-span-1 border rounded-lg px-3 py-2"
-          />
-
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className={`bg-white rounded-2xl shadow-2xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto`}>
+        <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6 flex items-center justify-between sticky top-0">
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            {title}
+          </h2>
           <button
-            type="button"
-            onClick={() => removeUtility(index)}
-            className="text-red-500 font-bold hover:text-red-700"
+            onClick={onClose}
+            className="text-white hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center"
           >
-            ✕
+            <i className="fas fa-times text-xl"></i>
           </button>
         </div>
-      ))}
-    </div>
-
-    {/* Smart Summary */}
-    {(rent || totalUtilities) && (
-      <div className="bg-blue-50 p-6 rounded-xl border-l-4 border-blue-500 shadow-sm">
-        <p className="font-semibold mb-3 text-gray-800">
-          Cost Breakdown
-        </p>
-
-        <div className="space-y-1 text-gray-700">
-          <p>Base Rent: ৳{rent || 0}</p>
-          <p>Total Utilities: ৳{totalUtilities}</p>
-          <p className="font-bold text-lg text-blue-700">
-            Total Monthly: ৳{totalMonthly}
-          </p>
-          <p>Security Deposit: ৳{deposit || 0}</p>
+        <div className="p-6">
+          {children}
         </div>
       </div>
-    )}
+    </div>
+  );
+};
 
-  </div>
-)}
-            {/* STEP 3: Room & Bed Management */}
-            {step === 3 && (
-              <div className="space-y-6 animate-fadeIn">
-                <div className="flex items-center justify-between mb-8 pb-4 border-b-2 border-purple-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold">3</div>
-                    <h2 className="text-2xl font-bold text-gray-800">Room & Bed Management</h2>
+// Toast Notification Component
+const Toast = ({ message, type = 'success', onClose }) => {
+  const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-500';
+
+  useEffect(() => {
+    const timer = setTimeout(onClose, 5000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className={`fixed top-4 right-4 ${bgColor} text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3 animate-fadeIn`}>
+      <i className={`fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'}`}></i>
+      <span>{message}</span>
+      <button onClick={onClose} className="ml-4 hover:bg-black/20 rounded-full p-1">
+        <i className="fas fa-times"></i>
+      </button>
+    </div>
+  );
+};
+
+const CreateListingPage = () => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditing = !!id;
+
+  // Form state with field-level errors
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    location: '',
+    furnished: 'semi-furnished',
+    price: '',
+    rooms: [],
+    utilities: [],
+    amenities: {},
+    meals: { breakfast: false, lunch: false, dinner: false },
+    photos: []
+  });
+
+  const [errors, setErrors] = useState({});
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showRoomModal, setShowRoomModal] = useState(false);
+  const [showBedModal, setShowBedModal] = useState(false);
+  const [editingRoom, setEditingRoom] = useState(null);
+  const [editingBed, setEditingBed] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [loading, setLoading] = useState(isEditing);
+
+  // Room/Bed modal state
+  const [roomData, setRoomData] = useState({
+    name: '',
+    type: 'single',
+    beds: []
+  });
+
+  const [bedData, setBedData] = useState({
+    name: '',
+    price: '',
+    available: true,
+    images: []
+  });
+
+  // Validation functions
+  const validateField = useCallback((field, value) => {
+    const newErrors = { ...errors };
+
+    switch (field) {
+      case 'title':
+        if (!value.trim()) {
+          newErrors.title = 'Title is required';
+        } else if (value.length < 5) {
+          newErrors.title = 'Title must be at least 5 characters';
+        } else {
+          delete newErrors.title;
+        }
+        break;
+
+      case 'description':
+        if (!value.trim()) {
+          newErrors.description = 'Description is required';
+        } else if (value.length < 20) {
+          newErrors.description = 'Description must be at least 20 characters';
+        } else {
+          delete newErrors.description;
+        }
+        break;
+
+      case 'location':
+        if (!value.trim()) {
+          newErrors.location = 'Location is required';
+        } else {
+          delete newErrors.location;
+        }
+        break;
+
+      case 'price':
+        const priceNum = parseFloat(value);
+        if (!value || isNaN(priceNum) || priceNum <= 0) {
+          newErrors.price = 'Please enter a valid price greater than 0';
+        } else {
+          delete newErrors.price;
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [errors]);
+
+  const validateStep = useCallback((step) => {
+    const newErrors = {};
+
+    switch (step) {
+      case 1:
+        if (!formData.title.trim()) newErrors.title = 'Title is required';
+        if (!formData.description.trim()) newErrors.description = 'Description is required';
+        if (!formData.location.trim()) newErrors.location = 'Location is required';
+        break;
+
+      case 2:
+        const priceNum = parseFloat(formData.price);
+        if (!formData.price || isNaN(priceNum) || priceNum <= 0) {
+          newErrors.price = 'Please enter a valid price greater than 0';
+        }
+        break;
+
+      case 3:
+        if (formData.rooms.length === 0) {
+          newErrors.rooms = 'At least one room is required';
+        }
+        break;
+
+      case 4:
+        if (formData.photos.length === 0) {
+          newErrors.photos = 'At least one photo is required';
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [formData]);
+
+  // Memoized calculations
+  const calculateRoomStats = useMemo(() => {
+    const totalRooms = formData.rooms.length;
+    const totalBeds = formData.rooms.reduce((sum, room) => sum + room.beds.length, 0);
+    const availableBeds = formData.rooms.reduce((sum, room) =>
+      sum + room.beds.filter(bed => bed.available).length, 0
+    );
+    const totalPrice = formData.rooms.reduce((sum, room) =>
+      sum + room.beds.reduce((bedSum, bed) => bedSum + (parseFloat(bed.price) || 0), 0), 0
+    );
+
+    return { totalRooms, totalBeds, availableBeds, totalPrice };
+  }, [formData.rooms]);
+
+  // Load existing listing for editing
+  useEffect(() => {
+    if (isEditing) {
+      const loadListing = async () => {
+        try {
+          const response = await listingService.getListingById(id);
+          const listing = response.data;
+
+          setFormData({
+            title: listing.title || '',
+            description: listing.description || '',
+            location: listing.location || '',
+            furnished: listing.furnished || 'semi-furnished',
+            price: listing.price?.toString() || '',
+            rooms: listing.rooms || [],
+            utilities: listing.utilities || [],
+            amenities: listing.amenities || {},
+            meals: listing.meals || { breakfast: false, lunch: false, dinner: false },
+            photos: listing.photos || []
+          });
+        } catch (error) {
+          setToast({ message: 'Failed to load listing', type: 'error' });
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      loadListing();
+    }
+  }, [id, isEditing]);
+
+  // Form handlers
+  const handleInputChange = useCallback((field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    validateField(field, value);
+  }, [validateField]);
+
+  const handleNext = useCallback(() => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => Math.min(prev + 1, 4));
+    }
+  }, [currentStep, validateStep]);
+
+  const handlePrev = useCallback(() => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  }, []);
+
+  const handleSubmit = useCallback(async () => {
+    if (!validateStep(4)) return;
+
+    setIsSubmitting(true);
+    try {
+      const submitData = {
+        ...formData,
+        price: parseFloat(formData.price),
+        rooms: formData.rooms.map(room => ({
+          ...room,
+          id: room.id || `room_${Date.now()}_${Math.random()}`,
+          beds: room.beds.map(bed => ({
+            ...bed,
+            id: bed.id || `bed_${Date.now()}_${Math.random()}`,
+            price: parseFloat(bed.price)
+          }))
+        }))
+      };
+
+      if (isEditing) {
+        await listingService.updateListing(id, submitData);
+        setToast({ message: 'Listing updated successfully!', type: 'success' });
+      } else {
+        await listingService.createListing(submitData);
+        setToast({ message: 'Listing created successfully!', type: 'success' });
+      }
+
+      setTimeout(() => {
+        navigate('/dashboard/owner');
+      }, 2000);
+
+    } catch (error) {
+      setToast({
+        message: error.response?.data?.message || 'Failed to save listing',
+        type: 'error'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [formData, isEditing, id, validateStep, navigate]);
+
+  // Room management
+  const handleAddRoom = useCallback(() => {
+    setRoomData({ name: '', type: 'single', beds: [] });
+    setEditingRoom(null);
+    setShowRoomModal(true);
+  }, []);
+
+  const handleEditRoom = useCallback((room) => {
+    setRoomData({ ...room });
+    setEditingRoom(room);
+    setShowRoomModal(true);
+  }, []);
+
+  const handleSaveRoom = useCallback(() => {
+    if (!roomData.name.trim()) {
+      setToast({ message: 'Room name is required', type: 'error' });
+      return;
+    }
+
+    const roomId = roomData.id || `room_${Date.now()}_${Math.random()}`;
+    const newRoom = { ...roomData, id: roomId };
+
+    setFormData(prev => ({
+      ...prev,
+      rooms: editingRoom
+        ? prev.rooms.map(r => r.id === editingRoom.id ? newRoom : r)
+        : [...prev.rooms, newRoom]
+    }));
+
+    setShowRoomModal(false);
+    setToast({ message: 'Room saved successfully!', type: 'success' });
+  }, [roomData, editingRoom]);
+
+  const handleDeleteRoom = useCallback((roomId) => {
+    setFormData(prev => ({
+      ...prev,
+      rooms: prev.rooms.filter(r => r.id !== roomId)
+    }));
+    setToast({ message: 'Room deleted successfully!', type: 'success' });
+  }, []);
+
+  // Bed management
+  const handleAddBed = useCallback((roomId) => {
+    setBedData({ name: '', price: '', available: true, images: [] });
+    setEditingBed(null);
+    setShowBedModal(true);
+  }, []);
+
+  const handleEditBed = useCallback((bed) => {
+    setBedData({ ...bed });
+    setEditingBed(bed);
+    setShowBedModal(true);
+  }, []);
+
+  const handleSaveBed = useCallback(() => {
+    if (!bedData.name.trim()) {
+      setToast({ message: 'Bed name is required', type: 'error' });
+      return;
+    }
+
+    const priceNum = parseFloat(bedData.price);
+    if (!bedData.price || isNaN(priceNum) || priceNum <= 0) {
+      setToast({ message: 'Please enter a valid bed price', type: 'error' });
+      return;
+    }
+
+    const bedId = bedData.id || `bed_${Date.now()}_${Math.random()}`;
+    const newBed = { ...bedData, id: bedId, price: priceNum.toString() };
+
+    setFormData(prev => ({
+      ...prev,
+      rooms: prev.rooms.map(room =>
+        room.id === editingBed?.roomId || room.id === roomData.id
+          ? {
+              ...room,
+              beds: editingBed
+                ? room.beds.map(b => b.id === editingBed.id ? newBed : b)
+                : [...room.beds, newBed]
+            }
+          : room
+      )
+    }));
+
+    setShowBedModal(false);
+    setToast({ message: 'Bed saved successfully!', type: 'success' });
+  }, [bedData, editingBed, roomData.id]);
+
+  const handleDeleteBed = useCallback((roomId, bedId) => {
+    setFormData(prev => ({
+      ...prev,
+      rooms: prev.rooms.map(room =>
+        room.id === roomId
+          ? { ...room, beds: room.beds.filter(b => b.id !== bedId) }
+          : room
+      )
+    }));
+    setToast({ message: 'Bed deleted successfully!', type: 'success' });
+  }, []);
+
+  // Utility management
+  const handleAddUtility = useCallback((utility) => {
+    if (!formData.utilities.includes(utility)) {
+      setFormData(prev => ({
+        ...prev,
+        utilities: [...prev.utilities, utility]
+      }));
+    }
+  }, [formData.utilities]);
+
+  const handleRemoveUtility = useCallback((utility) => {
+    setFormData(prev => ({
+      ...prev,
+      utilities: prev.utilities.filter(u => u !== utility)
+    }));
+  }, []);
+
+  // Amenity management
+  const handleAmenityChange = useCallback((amenity, value) => {
+    setFormData(prev => ({
+      ...prev,
+      amenities: { ...prev.amenities, [amenity]: value }
+    }));
+  }, []);
+
+  // Photo management
+  const handlePhotoUpload = useCallback((event) => {
+    const files = Array.from(event.target.files);
+    const newPhotos = files.map(file => ({
+      id: `photo_${Date.now()}_${Math.random()}`,
+      url: URL.createObjectURL(file),
+      file
+    }));
+
+    setFormData(prev => ({
+      ...prev,
+      photos: [...prev.photos, ...newPhotos]
+    }));
+  }, []);
+
+  const handleRemovePhoto = useCallback((photoId) => {
+    setFormData(prev => ({
+      ...prev,
+      photos: prev.photos.filter(p => p.id !== photoId)
+    }));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading listing...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {isEditing ? 'Edit Listing' : 'Create New Listing'}
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Step {currentStep} of 4: {
+                  currentStep === 1 ? 'Basic Information' :
+                  currentStep === 2 ? 'Pricing & Details' :
+                  currentStep === 3 ? 'Rooms & Beds' :
+                  'Photos & Amenities'
+                }
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/dashboard/owner')}
+              className="px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <i className="fas fa-arrow-left mr-2"></i>
+              Back to Dashboard
+            </button>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-2">
+              {[1, 2, 3, 4].map(step => (
+                <div key={step} className="flex items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    step <= currentStep
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-200 text-gray-600'
+                  }`}>
+                    {step}
                   </div>
+                  {step < 4 && (
+                    <div className={`w-16 h-1 mx-2 ${
+                      step < currentStep ? 'bg-purple-600' : 'bg-gray-200'
+                    }`}></div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Form Content */}
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-2xl shadow-sm border p-8">
+          {currentStep === 1 && (
+            <div className="space-y-6 animate-fadeIn">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Listing Title *
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                    errors.title ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="e.g., Comfortable Student Hostel in Dhanmondi"
+                />
+                {errors.title && (
+                  <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description *
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  rows={4}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                    errors.description ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="Describe your property, facilities, and what makes it special..."
+                />
+                {errors.description && (
+                  <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Location *
+                </label>
+                <input
+                  type="text"
+                  value={formData.location}
+                  onChange={(e) => handleInputChange('location', e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                    errors.location ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="e.g., Dhanmondi, Dhaka"
+                />
+                {errors.location && (
+                  <p className="mt-1 text-sm text-red-600">{errors.location}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Furnished Status
+                </label>
+                <select
+                  value={formData.furnished}
+                  onChange={(e) => handleInputChange('furnished', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="fully-furnished">Fully Furnished</option>
+                  <option value="semi-furnished">Semi Furnished</option>
+                  <option value="unfurnished">Unfurnished</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 2 && (
+            <div className="space-y-6 animate-fadeIn">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Base Price (BDT) *
+                </label>
+                <input
+                  type="number"
+                  value={formData.price}
+                  onChange={(e) => handleInputChange('price', e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                    errors.price ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="e.g., 8000"
+                  min="0"
+                  step="100"
+                />
+                {errors.price && (
+                  <p className="mt-1 text-sm text-red-600">{errors.price}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Meals Included
+                </label>
+                <div className="grid grid-cols-3 gap-4">
+                  {['breakfast', 'lunch', 'dinner'].map(meal => (
+                    <label key={meal} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.meals[meal]}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          meals: { ...prev.meals, [meal]: e.target.checked }
+                        }))}
+                        className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                      />
+                      <span className="ml-2 text-sm text-gray-700 capitalize">{meal}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 3 && (
+            <div className="space-y-6 animate-fadeIn">
+              {/* Room Stats */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="text-lg font-medium text-gray-900 mb-3">Property Summary</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-600">{calculateRoomStats.totalRooms}</div>
+                    <div className="text-sm text-gray-600">Rooms</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-600">{calculateRoomStats.totalBeds}</div>
+                    <div className="text-sm text-gray-600">Total Beds</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">{calculateRoomStats.availableBeds}</div>
+                    <div className="text-sm text-gray-600">Available</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">৳{calculateRoomStats.totalPrice.toLocaleString()}</div>
+                    <div className="text-sm text-gray-600">Total Value</div>
+                  </div>
+                </div>
+              </div>
+
+              {errors.rooms && (
+                <p className="text-sm text-red-600">{errors.rooms}</p>
+              )}
+
+              {/* Rooms List */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900">Rooms</h3>
                   <button
-                    type="button"
-                    onClick={addRoom}
-                    className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 py-2 rounded-lg hover:shadow-lg transition flex items-center gap-2 font-semibold"
+                    onClick={handleAddRoom}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                   >
-                    <i className="fas fa-plus"></i> Add Room
+                    <i className="fas fa-plus mr-2"></i>
+                    Add Room
                   </button>
                 </div>
 
-                {/* Info Box */}
-                <div className="bg-purple-50 border-l-4 border-purple-500 p-4 rounded-lg">
-                  <p className="text-purple-700 font-semibold flex items-center gap-2">
-                    <i className="fas fa-lightbulb"></i>
-                    Define individual rooms and beds with pricing, status, and student details
-                  </p>
-                </div>
-
-                {/* Room Stats Summary */}
-                {roomsList.length > 0 && (() => {
-                  const stats = calculateRoomStats();
-                  return (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
-                        <p className="text-sm text-blue-700 font-semibold">Total Beds</p>
-                        <p className="text-3xl font-bold text-blue-600">{stats.totalBeds}</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
-                        <p className="text-sm text-green-700 font-semibold">Booked Beds</p>
-                        <p className="text-3xl font-bold text-green-600">{stats.bookedBeds}</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-xl border border-orange-200">
-                        <p className="text-sm text-orange-700 font-semibold">Occupancy</p>
-                        <p className="text-3xl font-bold text-orange-600">{stats.occupancy}%</p>
-                      </div>
-                      <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-4 rounded-xl border border-indigo-200">
-                        <p className="text-sm text-indigo-700 font-semibold">Monthly Revenue</p>
-                        <p className="text-3xl font-bold text-indigo-600">৳{stats.expectedRevenue.toLocaleString()}</p>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Rooms Grid */}
-                {roomsList.length === 0 ? (
-                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center bg-gray-50">
-                    <i className="fas fa-door-open text-4xl text-gray-300 mb-4"></i>
-                    <p className="text-gray-600 font-semibold text-lg">No rooms added yet</p>
-                    <p className="text-gray-500">Click "Add Room" to start managing your rooms and beds</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {roomsList.map((room, roomIndex) => (
-                      <div key={roomIndex} className="bg-white border-2 border-purple-200 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition">
-                        {/* Room Header */}
-                        <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-4 flex items-center justify-between">
-                          <div>
-                            <h3 className="text-xl font-bold">{room.name}</h3>
-                            <p className="text-sm text-purple-200">{room.type} • {room.beds ? room.beds.length : 0} beds</p>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => openRoomModal(roomIndex)}
-                              className="bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded transition"
-                              title="Edit room"
-                            >
-                              <i className="fas fa-edit"></i>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => deleteRoom(roomIndex)}
-                              className="bg-red-500/20 hover:bg-red-500/30 text-white px-3 py-2 rounded transition"
-                              title="Delete room"
-                            >
-                              <i className="fas fa-trash"></i>
-                            </button>
-                          </div>
+                <div className="space-y-4">
+                  {formData.rooms.map(room => (
+                    <div key={room.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="font-medium text-gray-900">{room.name}</h4>
+                          <p className="text-sm text-gray-600 capitalize">{room.type} Room</p>
                         </div>
-
-                        {/* Room Description */}
-                        {room.description && (
-                          <div className="bg-gray-50 px-4 py-2 border-b text-sm text-gray-600">
-                            {room.description}
-                          </div>
-                        )}
-
-                        {/* Beds Grid */}
-                        <div className="p-4">
-                          {room.beds && room.beds.length > 0 ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-                              {room.beds.map((bed, bedIndex) => {
-                                let statusColor = 'bg-green-100 text-green-800 border-green-300';
-                                let statusIcon = 'fa-check-circle';
-                                if (bed.status === 'Booked') {
-                                  statusColor = 'bg-red-100 text-red-800 border-red-300';
-                                  statusIcon = 'fa-times-circle';
-                                } else if (bed.status === 'Vacant') {
-                                  statusColor = 'bg-yellow-100 text-yellow-800 border-yellow-300';
-                                  statusIcon = 'fa-clock';
-                                }
-
-                                return (
-                                  <div
-                                    key={bedIndex}
-                                    onClick={() => openBedModal(roomIndex, bedIndex)}
-                                    className={`cursor-pointer border-2 ${statusColor} rounded-lg p-3 hover:shadow-md transition text-center`}
-                                  >
-                                    <p className="font-bold text-sm">Bed {bed.bedNumber}</p>
-                                    <p className="text-xs font-semibold mb-1 flex items-center justify-center gap-1">
-                                      <i className={`fas ${statusIcon} text-xs`}></i>
-                                      {bed.status}
-                                    </p>
-                                    <p className="text-xs font-bold">৳{bed.rent}</p>
-                                    {bed.status === 'Booked' && bed.studentName && (
-                                      <p className="text-xs text-gray-600 truncate mt-1">{bed.studentName}</p>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-gray-500 mb-4 italic">No beds added yet</p>
-                          )}
-
+                        <div className="flex items-center gap-2">
                           <button
-                            type="button"
-                            onClick={() => openBedModal(roomIndex)}
-                            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition font-semibold flex items-center justify-center gap-2"
+                            onClick={() => handleEditRoom(room)}
+                            className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
                           >
-                            <i className="fas fa-plus"></i> Add Bed
+                            <i className="fas fa-edit"></i>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteRoom(room.id)}
+                            className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded"
+                          >
+                            <i className="fas fa-trash"></i>
                           </button>
                         </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">
+                          {room.beds.length} bed{room.beds.length !== 1 ? 's' : ''}
+                        </span>
+                        <button
+                          onClick={() => handleAddBed(room.id)}
+                          className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                        >
+                          <i className="fas fa-plus mr-1"></i>
+                          Add Bed
+                        </button>
+                      </div>
+
+                      {/* Beds in this room */}
+                      {room.beds.length > 0 && (
+                        <div className="mt-3 space-y-2">
+                          {room.beds.map(bed => (
+                            <div key={bed.id} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                              <div>
+                                <span className="text-sm font-medium">{bed.name}</span>
+                                <span className="text-sm text-gray-600 ml-2">৳{bed.price}</span>
+                                {!bed.available && (
+                                  <span className="text-xs text-red-600 ml-2">(Occupied)</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => handleEditBed({ ...bed, roomId: room.id })}
+                                  className="px-2 py-1 text-xs text-blue-600 hover:bg-blue-100 rounded"
+                                >
+                                  <i className="fas fa-edit"></i>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteBed(room.id, bed.id)}
+                                  className="px-2 py-1 text-xs text-red-600 hover:bg-red-100 rounded"
+                                >
+                                  <i className="fas fa-trash"></i>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 4 && (
+            <div className="space-y-6 animate-fadeIn">
+              {/* Photos */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Property Photos *
+                </label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    className="hidden"
+                    id="photo-upload"
+                  />
+                  <label htmlFor="photo-upload" className="cursor-pointer">
+                    <i className="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                    <p className="text-gray-600">Click to upload photos</p>
+                    <p className="text-sm text-gray-500">PNG, JPG up to 10MB each</p>
+                  </label>
+                </div>
+
+                {formData.photos.length > 0 && (
+                  <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {formData.photos.map(photo => (
+                      <div key={photo.id} className="relative group">
+                        <img
+                          src={photo.url}
+                          alt="Property"
+                          className="w-full h-24 object-cover rounded-lg"
+                          onError={(e) => {
+                            e.target.src = '/placeholder-image.png';
+                          }}
+                        />
+                        <button
+                          onClick={() => handleRemovePhoto(photo.id)}
+                          className="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <i className="fas fa-times text-xs"></i>
+                        </button>
                       </div>
                     ))}
                   </div>
                 )}
 
+                {errors.photos && (
+                  <p className="mt-1 text-sm text-red-600">{errors.photos}</p>
+                )}
               </div>
-            )}
 
-            {/* STEP 4: Amenities & Photos */}
-            {step === 4 && (
-              <div className="space-y-6 animate-fadeIn">
-                <div className="flex items-center gap-3 mb-8 pb-4 border-b-2 border-orange-200">
-                  <div className="w-10 h-10 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold">4</div>
-                  <h2 className="text-2xl font-bold text-gray-800">Amenities & Photos</h2>
-                </div>
-
-                {/* Amenities Section */}
-                <div>
-                  <label className="flex text-sm font-semibold mb-4 text-gray-800 items-center gap-2">
-                    <i className="fas fa-star text-yellow-500"></i> Select Amenities
-                  </label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {amenityOptions.map(({ id, label, icon }) => (
-                      <div
-                        key={id}
-                        onClick={() => toggleAmenity(id)}
-                        className={`p-4 border-2 rounded-lg cursor-pointer transition flex flex-col items-center gap-2 ${
-                          amenities[id]
-                            ? 'border-blue-500 bg-blue-50 shadow-md'
-                            : 'border-gray-200 bg-white hover:border-gray-300'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={amenities[id]}
-                          onChange={() => toggleAmenity(id)}
-                          className="w-5 h-5 cursor-pointer accent-blue-600"
-                        />
-                        <i className={`fas ${icon} text-lg`}></i>
-                        <span className="text-xs font-semibold text-center">{label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Photos Section */}
-                <div>
-                  <label className="flex text-sm font-semibold mb-4 text-gray-800 items-center gap-2">
-                    <i className="fas fa-image text-indigo-600"></i> Cover Photo URL *
-                  </label>
-                  <input
-                    value={photoUrl}
-                    onChange={(e) => setPhotoUrl(e.target.value)}
-                    placeholder="https://example.com/image.jpg"
-                    className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                  />
-                  <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                    <i className="fas fa-lightbulb text-yellow-500"></i> Provide a high-quality external image URL
-                  </p>
-                </div>
-
-                <div>
-                  <label className="flex text-sm font-semibold mb-4 text-gray-800 items-center gap-2">
-                    <i className="fas fa-images text-indigo-600"></i> Additional Photos (Optional)
-                  </label>
-                  <div className="space-y-2">
-                    {additionalPhotos.map((photo, idx) => (
+              {/* Amenities */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Amenities
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {[
+                    'WiFi', 'AC', 'Laundry', 'Parking', 'Security',
+                    'Generator', 'Water Heater', 'Study Table', 'Cupboard'
+                  ].map(amenity => (
+                    <label key={amenity} className="flex items-center">
                       <input
-                        key={idx}
-                        value={photo}
-                        onChange={(e) => {
-                          const newPhotos = [...additionalPhotos];
-                          newPhotos[idx] = e.target.value;
-                          setAdditionalPhotos(newPhotos);
-                        }}
-                        placeholder={`Photo ${idx + 2} URL (optional)`}
-                        className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
+                        type="checkbox"
+                        checked={formData.amenities[amenity] || false}
+                        onChange={(e) => handleAmenityChange(amenity, e.target.checked)}
+                        className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                       />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Image Previews */}
-                <div className="mt-4">
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">Preview</label>
-                  <div className="flex items-center gap-3">
-                    {photoUrl ? (
-                      <img src={photoUrl} alt="cover" className="w-28 h-20 object-cover rounded-lg border" onError={(e)=>{e.target.style.display='none'}} />
-                    ) : (
-                      <div className="w-28 h-20 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-500">No cover</div>
-                    )}
-                    <div className="flex gap-2">
-                      {additionalPhotos.map((p, i) => (
-                        p ? (
-                          <img key={i} src={p} alt={`photo-${i}`} className="w-20 h-14 object-cover rounded-md border" onError={(e)=>{e.target.style.display='none'}} />
-                        ) : (
-                          <div key={i} className="w-20 h-14 bg-gray-50 rounded-md border flex items-center justify-center text-xs text-gray-400">Empty</div>
-                        )
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Final Review */}
-                <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border-2 border-purple-200">
-                  <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                    <i className="fas fa-check-circle text-green-600"></i> Review Your Listing
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-sm">
-                    <div>
-                      <p><strong>Type:</strong> {type ? type.charAt(0).toUpperCase() + type.slice(1) : ''}</p>
-                    </div>
-                    <div>
-                      <p><strong>City:</strong> {city}</p>
-                    </div>
-                    <div>
-                      <p><strong>Total Rooms:</strong> {roomsList.length}</p>
-                    </div>
-                    <div>
-                      <p><strong>Total Beds:</strong> {roomStats.totalBeds}</p>
-                    </div>
-                    <div>
-                      <p><strong>Booked Beds:</strong> {roomStats.bookedBeds}</p>
-                    </div>
-                    <div>
-                      <p><strong>Occupancy:</strong> {roomStats.occupancy}%</p>
-                    </div>
-                    <div>
-                      <p><strong>Monthly Revenue:</strong> ৳{roomStats.expectedRevenue.toLocaleString()}</p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <p><strong>Amenities:</strong> {Object.values(amenities).filter(Boolean).length}</p>
-                    </div>
-                  </div>
+                      <span className="ml-2 text-sm text-gray-700">{amenity}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
-            )}
 
-            {/* Navigation Buttons */}
-            <div className="flex gap-3 pt-8 mt-8 border-t-2 border-gray-200">
-              {step > 1 && (
+              {/* Utilities */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Utilities Included
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {['Electricity', 'Gas', 'Water', 'Internet'].map(utility => (
+                    <button
+                      key={utility}
+                      onClick={() => formData.utilities.includes(utility)
+                        ? handleRemoveUtility(utility)
+                        : handleAddUtility(utility)
+                      }
+                      className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                        formData.utilities.includes(utility)
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      {utility}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Navigation Buttons */}
+          <div className="flex items-center justify-between mt-8 pt-6 border-t">
+            <button
+              onClick={handlePrev}
+              disabled={currentStep === 1}
+              className="px-6 py-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <i className="fas fa-arrow-left mr-2"></i>
+              Previous
+            </button>
+
+            <div className="flex items-center gap-4">
+              {currentStep < 4 ? (
                 <button
-                  type="button"
-                  onClick={handlePrevious}
-                  className="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 font-semibold flex items-center justify-center gap-2 transition"
-                >
-                  <i className="fas fa-chevron-left"></i> Previous
-                </button>
-              )}
-              {step < 4 ? (
-                <button
-                  type="button"
                   onClick={handleNext}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:shadow-lg font-semibold flex items-center justify-center gap-2 transition"
+                  className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                 >
-                  Next <i className="fas fa-chevron-right"></i>
+                  Next
+                  <i className="fas fa-arrow-right ml-2"></i>
                 </button>
               ) : (
                 <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-lg hover:shadow-lg disabled:opacity-50 font-semibold flex items-center justify-center gap-2 transition"
+                  onClick={() => setShowConfirmModal(true)}
+                  disabled={isSubmitting}
+                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  <i className="fas fa-check-circle"></i> {loading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Listing' : 'Create Listing')}
+                  {isSubmitting ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin mr-2"></i>
+                      {isEditing ? 'Updating...' : 'Creating...'}
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-check mr-2"></i>
+                      {isEditing ? 'Update Listing' : 'Create Listing'}
+                    </>
+                  )}
                 </button>
               )}
             </div>
-          </form>
-        </div>
-
-
-        {/* Help Text */}
-        <div className="mt-8 grid grid-cols-3 gap-4 text-center">
-          <div className="bg-white p-4 rounded-lg shadow">
-            <i className="fas fa-info-circle text-blue-600 text-2xl mb-2"></i>
-            <p className="text-sm text-gray-700"><strong>Detailed Info</strong> helps attract quality students</p>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow">
-            <i className="fas fa-image text-orange-600 text-2xl mb-2"></i>
-            <p className="text-sm text-gray-700"><strong>Good Photos</strong> increase bookings</p>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow">
-            <i className="fas fa-price-tag text-green-600 text-2xl mb-2"></i>
-            <p className="text-sm text-gray-700"><strong>Competitive Price</strong> gets more inquiries</p>
           </div>
         </div>
-
-        {/* Room Modal */}
-        <RoomModal />
-
-        {/* Bed Modal */}
-        <BedModal />
-
-        {/* Confirm Modal */}
-        <ConfirmModal
-          isOpen={confirmModal.open}
-          title={confirmModal.title}
-          message={confirmModal.message}
-          confirmText={confirmModal.confirmText}
-          isDangerous={confirmModal.isDangerous}
-          onConfirm={confirmModal.onConfirm}
-          onCancel={closeConfirm}
-        />
-        </>
-        )}
       </div>
+
+      {/* Room Modal */}
+      <Modal
+        isOpen={showRoomModal}
+        onClose={() => setShowRoomModal(false)}
+        title={editingRoom ? 'Edit Room' : 'Add New Room'}
+        size="md"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Room Name *
+            </label>
+            <input
+              type="text"
+              value={roomData.name}
+              onChange={(e) => setRoomData(prev => ({ ...prev, name: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              placeholder="e.g., Room 101"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Room Type
+            </label>
+            <select
+              value={roomData.type}
+              onChange={(e) => setRoomData(prev => ({ ...prev, type: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            >
+              <option value="single">Single</option>
+              <option value="double">Double</option>
+              <option value="triple">Triple</option>
+              <option value="dormitory">Dormitory</option>
+            </select>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-4">
+            <button
+              onClick={() => setShowRoomModal(false)}
+              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveRoom}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+            >
+              {editingRoom ? 'Update Room' : 'Add Room'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Bed Modal */}
+      <Modal
+        isOpen={showBedModal}
+        onClose={() => setShowBedModal(false)}
+        title={editingBed ? 'Edit Bed' : 'Add New Bed'}
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Bed Name *
+              </label>
+              <input
+                type="text"
+                value={bedData.name}
+                onChange={(e) => setBedData(prev => ({ ...prev, name: e.target.value }))}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="e.g., Bed A"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Price (BDT) *
+              </label>
+              <input
+                type="number"
+                value={bedData.price}
+                onChange={(e) => setBedData(prev => ({ ...prev, price: e.target.value }))}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="e.g., 8500"
+                min="0"
+                step="100"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={bedData.available}
+                onChange={(e) => setBedData(prev => ({ ...prev, available: e.target.checked }))}
+                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+              />
+              <span className="ml-2 text-sm text-gray-700">Available for booking</span>
+            </label>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Bed Images
+            </label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files);
+                  setBedData(prev => ({
+                    ...prev,
+                    images: [...prev.images, ...files.map(file => ({
+                      id: `img_${Date.now()}_${Math.random()}`,
+                      url: URL.createObjectURL(file),
+                      file
+                    }))]
+                  }));
+                }}
+                className="hidden"
+                id="bed-image-upload"
+              />
+              <label htmlFor="bed-image-upload" className="cursor-pointer">
+                <i className="fas fa-camera text-2xl text-gray-400 mb-2"></i>
+                <p className="text-gray-600">Add bed photos</p>
+              </label>
+            </div>
+
+            {bedData.images.length > 0 && (
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {bedData.images.map(image => (
+                  <div key={image.id} className="relative group">
+                    <img
+                      src={image.url}
+                      alt="Bed"
+                      className="w-full h-16 object-cover rounded"
+                      onError={(e) => {
+                        e.target.src = '/placeholder-image.png';
+                      }}
+                    />
+                    <button
+                      onClick={() => setBedData(prev => ({
+                        ...prev,
+                        images: prev.images.filter(img => img.id !== image.id)
+                      }))}
+                      className="absolute top-1 right-1 bg-red-500 text-white w-4 h-4 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-4">
+            <button
+              onClick={() => setShowBedModal(false)}
+              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveBed}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+            >
+              {editingBed ? 'Update Bed' : 'Add Bed'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleSubmit}
+        title={isEditing ? 'Update Listing' : 'Create Listing'}
+        message={`Are you sure you want to ${isEditing ? 'update' : 'create'} this listing?`}
+        confirmText={isEditing ? 'Update' : 'Create'}
+        isLoading={isSubmitting}
+      />
+
+      {/* Toast Notifications */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };
