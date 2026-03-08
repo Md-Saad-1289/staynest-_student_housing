@@ -1081,4 +1081,4 @@ const CreateListingPage = () => {
   );
 };
 
-export default CreateListingPage;
+export { CreateListingPage };
