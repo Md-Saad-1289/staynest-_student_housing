@@ -69,7 +69,7 @@ const getListing = async (req, res) => {
 // Create listing (owner only)
 const createListing = async (req, res) => {
   try {
-    const { title, address, city, type, rent, deposit, genderAllowed, furnished, utilities, meals, amenities, rules, photos, rooms } = req.body;
+    const { title, address, city, type, rent, deposit, genderAllowed, furnished, utilities, meals, amenities, rules, contact, landmarks, photos, rooms } = req.body;
 
     if (!title || !address || !city || !type || !rent || !deposit || !genderAllowed) {
       return res.status(400).json({ error: 'Required fields missing' });
@@ -90,6 +90,8 @@ const createListing = async (req, res) => {
       amenities: amenities || {},
       rooms: Array.isArray(rooms) ? rooms : [],
       rules,
+      contact,
+      landmarks,
       photos: photos || [],
       verified: false,
     });

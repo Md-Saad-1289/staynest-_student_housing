@@ -204,6 +204,12 @@ export const ListingDetailPage = () => {
           {/* About This Place */}
           <div>
             <p className="text-gray-700 leading-relaxed mb-4">{currentListing.description}</p>
+            {currentListing.landmarks && (
+              <p className="text-sm text-gray-600 mb-2"><i className="fas fa-map-marker-alt text-red-500"></i> Nearby: {currentListing.landmarks}</p>
+            )}
+            {currentListing.contact && (
+              <p className="text-sm text-gray-600 mb-2"><i className="fas fa-phone text-green-500"></i> Contact: {currentListing.contact}</p>
+            )}
             {currentListing.rules && (
               <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                 <p className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2"><i className="fas fa-gavel text-blue-600"></i> House Rules</p>

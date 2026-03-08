@@ -75,6 +75,9 @@ const CreateListingPage = () => {
     title: '',
     description: '',
     location: '',
+    landmarks: '',
+    contact: '',
+    rules: '',
     furnished: 'semi-furnished',
     price: '',
     rooms: [],
@@ -141,6 +144,15 @@ const CreateListingPage = () => {
           delete newErrors.location;
         }
         break;
+      case 'contact':
+        if (!value.trim()) {
+          newErrors.contact = 'Contact number is required';
+        } else if (!/^\+?[0-9]{10,15}$/.test(value)) {
+          newErrors.contact = 'Enter a valid phone number';
+        } else {
+          delete newErrors.contact;
+        }
+        break;
 
       case 'price':
         const priceNum = parseFloat(value);
@@ -167,6 +179,7 @@ const CreateListingPage = () => {
         if (!formData.title.trim()) newErrors.title = 'Title is required';
         if (!formData.description.trim()) newErrors.description = 'Description is required';
         if (!formData.location.trim()) newErrors.location = 'Location is required';
+        if (!formData.contact.trim()) newErrors.contact = 'Contact phone is required';
         break;
 
       case 2:
@@ -222,6 +235,9 @@ const CreateListingPage = () => {
             title: listing.title || '',
             description: listing.description || '',
             location: listing.location || '',
+            landmarks: listing.landmarks || '',
+            contact: listing.contact || '',
+            rules: listing.rules || '',
             furnished: listing.furnished || 'semi-furnished',
             price: listing.price?.toString() || '',
             rooms: listing.rooms || [],
@@ -574,6 +590,56 @@ const CreateListingPage = () => {
                 {errors.location && (
                   <p className="mt-1 text-sm text-red-600">{errors.location}</p>
                 )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nearby Landmarks
+                </label>
+                <input
+                  type="text"
+                  value={formData.landmarks}
+                  onChange={(e) => handleInputChange('landmarks', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="e.g., 300m from BUET, near Airport Road"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Mention nearby universities, markets or transport lines.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Contact Phone *
+                </label>
+                <input
+                  type="text"
+                  value={formData.contact}
+                  onChange={(e) => handleInputChange('contact', e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                    errors.contact ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="e.g., +8801712345678"
+                />
+                {errors.contact && (
+                  <p className="mt-1 text-sm text-red-600">{errors.contact}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  House Rules
+                </label>
+                <textarea
+                  value={formData.rules}
+                  onChange={(e) => handleInputChange('rules', e.target.value)}
+                  rows={2}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="e.g., No smoking, no pets"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Specify any important rules or restrictions.
+                </p>
               </div>
 
               <div>

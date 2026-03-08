@@ -106,6 +106,14 @@ const listingSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    contact: {
+      type: String,
+      default: ''
+    },
+    landmarks: {
+      type: String,
+      default: ''
+    },
     description: {
       type: String,
       default: '',
