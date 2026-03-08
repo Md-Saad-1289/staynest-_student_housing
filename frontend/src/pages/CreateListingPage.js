@@ -40,6 +40,15 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
 const Toast = ({ message, type = 'success', onClose }) => {
   const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-500';
 
+// Banner for highlighting important tips
+const InfoBanner = ({ children }) => (
+  <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-4 rounded-lg mb-6 shadow-lg flex items-center gap-3">
+    <i className="fas fa-info-circle text-xl"></i>
+    <span className="text-sm">{children}</span>
+  </div>
+);
+
+
   useEffect(() => {
     const timer = setTimeout(onClose, 5000);
     return () => clearTimeout(timer);
@@ -456,7 +465,8 @@ const CreateListingPage = () => {
               <h1 className="text-3xl font-bold text-gray-900">
                 {isEditing ? 'Edit Listing' : 'Create New Listing'}
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-gray-600 mt-1 flex items-center gap-1">
+                <i className="fas fa-step-forward"></i>
                 Step {currentStep} of 4: {
                   currentStep === 1 ? 'Basic Information' :
                   currentStep === 2 ? 'Pricing & Details' :
@@ -503,6 +513,9 @@ const CreateListingPage = () => {
         <div className="bg-white rounded-2xl shadow-sm border p-8">
           {currentStep === 1 && (
             <div className="space-y-6 animate-fadeIn">
+              <InfoBanner>
+                Pro Tip: A clear title with location and key amenities (e.g., "Dhanmondi shared room with AC & WiFi") attracts more students.
+              </InfoBanner>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Listing Title *
@@ -516,6 +529,9 @@ const CreateListingPage = () => {
                   }`}
                   placeholder="e.g., Comfortable Student Hostel in Dhanmondi"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Include neighborhood, room type, and standout features.
+                </p>
                 {errors.title && (
                   <p className="mt-1 text-sm text-red-600">{errors.title}</p>
                 )}
@@ -534,6 +550,9 @@ const CreateListingPage = () => {
                   }`}
                   placeholder="Describe your property, facilities, and what makes it special..."
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Add details about nearby universities, mess timing, rules, and transport.
+                </p>
                 {errors.description && (
                   <p className="mt-1 text-sm text-red-600">{errors.description}</p>
                 )}
@@ -580,6 +599,9 @@ const CreateListingPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Base Price (BDT) *
                 </label>
+                <p className="text-xs text-gray-500 mt-1">
+                  Set the monthly price per bed/room. Keep it competitive for students.
+                </p>
                 <input
                   type="number"
                   value={formData.price}
@@ -597,7 +619,8 @@ const CreateListingPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <i className="fas fa-utensils"></i>
                   Meals Included
                 </label>
                 <div className="grid grid-cols-3 gap-4">
@@ -623,6 +646,11 @@ const CreateListingPage = () => {
           {currentStep === 3 && (
             <div className="space-y-6 animate-fadeIn">
               {/* Room Stats */}
+              <div>
+                <p className="text-sm text-gray-600 mb-2">
+                  Add every room and bed option you offer—students rely on accurate availability.
+                </p>
+              </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="text-lg font-medium text-gray-900 mb-3">Property Summary</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -752,6 +780,9 @@ const CreateListingPage = () => {
                     className="hidden"
                     id="photo-upload"
                   />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Use clear, well-lit photos (at least 800x600) to showcase the space.
+                  </p>
                   <label htmlFor="photo-upload" className="cursor-pointer">
                     <i className="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
                     <p className="text-gray-600">Click to upload photos</p>
@@ -789,7 +820,8 @@ const CreateListingPage = () => {
 
               {/* Amenities */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <i className="fas fa-wifi"></i>
                   Amenities
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -812,7 +844,8 @@ const CreateListingPage = () => {
 
               {/* Utilities */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <i className="fas fa-bolt"></i>
                   Utilities Included
                 </label>
                 <div className="flex flex-wrap gap-2">
