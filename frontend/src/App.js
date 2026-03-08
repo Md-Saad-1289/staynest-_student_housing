@@ -11,8 +11,6 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ListingDetailPage } from './pages/ListingDetailPage';
 import { StudentBookingsPage } from './pages/StudentBookingsPage';
-import { OwnerDashboardPage } from './pages/OwnerDashboardPage';
-import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { CreateListingPage } from './pages/CreateListingPage';
 import { StudentDashboardModernPage } from './pages/StudentDashboardModernPage';
 import { OwnerDashboardModernPage } from './pages/OwnerDashboardModernPage';
