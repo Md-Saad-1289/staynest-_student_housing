@@ -40,16 +40,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
 const Toast = ({ message, type = 'success', onClose }) => {
   const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-500';
 
-// Banner for highlighting important tips
-const InfoBanner = ({ children }) => (
-  <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-4 rounded-lg mb-6 shadow-lg flex items-center gap-3">
-    <i className="fas fa-info-circle text-xl"></i>
-    <span className="text-sm">{children}</span>
-  </div>
-);
-
-
-  useEffect(() => {
+  React.useEffect(() => {
     const timer = setTimeout(onClose, 5000);
     return () => clearTimeout(timer);
   }, [onClose]);

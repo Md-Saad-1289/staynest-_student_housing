@@ -69,22 +69,23 @@ const getListing = async (req, res) => {
 // Create listing (owner only)
 const createListing = async (req, res) => {
   try {
-    const { title, address, city, type, rent, deposit, genderAllowed, furnished, utilities, meals, amenities, rules, contact, landmarks, photos, rooms } = req.body;
+    const { title, description, location, landmarks, contact, rules, furnished, price, rooms, utilities, amenities, meals, photos } = req.body;
 
-    if (!title || !address || !city || !type || !rent || !deposit || !genderAllowed) {
+    if (!title || !location || !price || !contact) {
       return res.status(400).json({ error: 'Required fields missing' });
     }
 
     const listing = new Listing({
       ownerId: req.user.userId,
       title,
-      address,
-      city,
-      type,
-      rent: parseInt(rent),
-      deposit: parseInt(deposit),
-      genderAllowed,
-      furnished: furnished || 'semi',
+      description,
+      address: location, // Map location to address
+      city: location, // For now, use location as both address and city
+      type: 'Student Hostel', // Default type
+      rent: parseInt(price), // Map price to rent
+      deposit: Math.round(parseInt(price) * 0.5), // Calculate deposit as 50% of rent
+      genderAllowed: 'both', // Default
+      furnished: furnished || 'semi-furnished',
       utilities: Array.isArray(utilities) ? utilities : [],
       meals: meals || {},
       amenities: amenities || {},
