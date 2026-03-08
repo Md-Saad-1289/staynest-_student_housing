@@ -174,9 +174,6 @@ export const CreateListingPage = () => {
 
   const totalMonthly = (parseFloat(rent) || 0) + totalUtilities;
 
-  // compute room statistics on each render
-  const roomStats = calculateRoomStats();
-
   // Room Management Functions
   const addRoom = () => {
     const newRoom = {
@@ -313,6 +310,9 @@ export const CreateListingPage = () => {
     const occupancy = totalBeds > 0 ? Math.round((bookedBeds / totalBeds) * 100) : 0;
     return { totalBeds, bookedBeds, occupancy, expectedRevenue };
   };
+
+  // compute room statistics on each render
+  const roomStats = calculateRoomStats();
 
   const validateStep = (currentStep) => {
     setError('');
