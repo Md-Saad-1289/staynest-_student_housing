@@ -23,7 +23,7 @@ const MOCK_LISTING = {
   genderAllowed: 'any',
   description: 'No description provided.',
   rules: '',
-  facilities: {},
+  amenities: {},
   meals: { available: false, type: 'all' },
   photos: [],
   address: 'Unknown',

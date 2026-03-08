@@ -45,10 +45,19 @@ const listingSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    genderAllowed: {
+    furnished: {
       type: String,
-      enum: ['male', 'female', 'both'],
-      required: true,
+      enum: ['fully', 'semi', 'none'],
+      default: 'semi',
+    },
+    utilities: {
+      type: [
+        {
+          name: { type: String, required: true },
+          price: { type: Number, required: true },
+        },
+      ],
+      default: [],
     },
     meals: {
       available: {
@@ -61,7 +70,7 @@ const listingSchema = new mongoose.Schema(
         default: 'none',
       },
     },
-    facilities: {
+    amenities: {
       type: Map,
       of: Boolean,
       default: {},

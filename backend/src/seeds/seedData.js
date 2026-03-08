@@ -87,7 +87,7 @@ const seedData = async () => {
         deposit: 15000,
         genderAllowed: 'male',
         meals: { available: true, type: 'all' },
-        facilities: { wifi: true, tv: true, ac: false, studyTable: true, balcony: true },
+        amenities: { wifi: true, tv: true, ac: false, studyTable: true, balcony: true },
         photos: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80'],
         rooms: [
           {
@@ -117,7 +117,7 @@ const seedData = async () => {
         deposit: 12000,
         genderAllowed: 'female',
         meals: { available: true, type: 'breakfast' },
-        facilities: { wifi: true, tv: true, ac: true, studyTable: true, security: true },
+        amenities: { wifi: true, tv: true, ac: true, studyTable: true, security: true },
         photos: ['https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80'],
         rooms: [
           {
@@ -144,7 +144,7 @@ const seedData = async () => {
         deposit: 10000,
         genderAllowed: 'both',
         meals: { available: false, type: 'none' },
-        facilities: { wifi: true, studyTable: true },
+        amenities: { wifi: true, studyTable: true },
         photos: ['https://images.unsplash.com/photo-1549187774-b4f0f0e7a2d0?auto=format&fit=crop&w=1200&q=80'],
         rooms: [],
         rules: 'Self-catering allowed. Keep kitchen clean.',

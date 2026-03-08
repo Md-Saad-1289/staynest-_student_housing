@@ -755,20 +755,20 @@ export const ListingsManagement = () => {
                   )}
 
                   {/* Facilities */}
-                  {(selectedListing.facilities && (Array.isArray(selectedListing.facilities) ? selectedListing.facilities.length > 0 : Object.keys(selectedListing.facilities || {}).length > 0)) && (
+                  {(selectedListing.amenities && (Array.isArray(selectedListing.amenities) ? selectedListing.amenities.length > 0 : Object.keys(selectedListing.amenities || {}).length > 0)) && (
                     <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
                       <h4 className="text-lg font-bold text-gray-900 mb-4 pb-3 border-b-2 border-purple-600 flex items-center gap-2">
                         <i className="fas fa-home text-purple-600"></i> Amenities & Facilities
                       </h4>
                       <div className="grid grid-cols-2 gap-3">
-                            {Array.isArray(selectedListing.facilities)
-                              ? selectedListing.facilities.map((facility, idx) => (
+                            {Array.isArray(selectedListing.amenities)
+                              ? selectedListing.amenities.map((amenity, idx) => (
                                   <div key={idx} className="flex items-center gap-2 p-3 bg-white rounded-lg border border-purple-200">
                                     <i className="fas fa-check-circle text-purple-600"></i>
-                                    <span className="text-gray-800 font-medium text-sm">{facility}</span>
+                                    <span className="text-gray-800 font-medium text-sm">{amenity}</span>
                                   </div>
                                 ))
-                              : Object.entries(selectedListing.facilities || {}).map(([key, val]) => (
+                              : Object.entries(selectedListing.amenities || {}).map(([key, val]) => (
                                   val ? (
                                     <div key={key} className="flex items-center gap-2 p-3 bg-white rounded-lg border border-purple-200">
                                       <i className="fas fa-check-circle text-purple-600"></i>

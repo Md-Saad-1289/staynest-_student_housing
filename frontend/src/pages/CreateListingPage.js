@@ -105,16 +105,16 @@ export const CreateListingPage = () => {
             setMealsType(listing.meals.type || 'none');
           }
           
-          if (listing.facilities) {
+          if (listing.amenities) {
             setAmenities({
-              wifi: listing.facilities.wifi || false,
-              ac: listing.facilities.ac || false,
-              parking: listing.facilities.parking || false,
-              laundry: listing.facilities.laundry || false,
-              kitchen: listing.facilities.kitchen || false,
-              balcony: listing.facilities.balcony || false,
-              security24: listing.facilities.security24 || false,
-              gatekeeper: listing.facilities.gatekeeper || false,
+              wifi: listing.amenities.wifi || false,
+              ac: listing.amenities.ac || false,
+              parking: listing.amenities.parking || false,
+              laundry: listing.amenities.laundry || false,
+              kitchen: listing.amenities.kitchen || false,
+              balcony: listing.amenities.balcony || false,
+              security24: listing.amenities.security24 || false,
+              gatekeeper: listing.amenities.gatekeeper || false,
             });
           }
           
@@ -317,7 +317,7 @@ export const CreateListingPage = () => {
   const validateStep = (currentStep) => {
     setError('');
     if (currentStep === 1) {
-      if (!title.trim() || !description.trim() || !address.trim() || !city.trim() || !type) {
+      if (!title.trim() || !description.trim() || !address.trim() || !city.trim() || !type || !genderAllowed || !furnished) {
         setError('Step 1: Please fill all required fields');
         return false;
       }
@@ -363,9 +363,9 @@ export const CreateListingPage = () => {
 
     const allPhotos = [photoUrl, ...additionalPhotos].filter(p => p.trim());
 
-    const facilities = {};
+    const amenitiesObj = {};
     Object.keys(amenities).forEach((k) => {
-      if (amenities[k]) facilities[k] = true;
+      if (amenities[k]) amenitiesObj[k] = true;
     });
 
     const payload = {
@@ -398,7 +398,7 @@ export const CreateListingPage = () => {
         })) : []
       })),
       furnished,
-      facilities,
+      amenities: amenitiesObj,
       meals: {
         available: mealsAvailable,
         type: mealsType,
@@ -776,6 +776,37 @@ export const CreateListingPage = () => {
                     </select>
                   </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
+                      <i className="fas fa-venus-mars text-pink-600"></i> Gender Allowed *
+                    </label>
+                    <select
+                      value={genderAllowed}
+                      onChange={(e) => setGenderAllowed(e.target.value)}
+                      className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
+                    >
+                      <option value="both">Mixed (Any gender)</option>
+                      <option value="male">Male Only</option>
+                      <option value="female">Female Only</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
+                      <i className="fas fa-couch text-orange-600"></i> Furnished *
+                    </label>
+                    <select
+                      value={furnished}
+                      onChange={(e) => setFurnished(e.target.value)}
+                      className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
+                    >
+                      <option value="fully">Fully Furnished</option>
+                      <option value="semi">Semi Furnished</option>
+                      <option value="none">Not Furnished</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1041,21 +1072,6 @@ export const CreateListingPage = () => {
                   </div>
                 )}
 
-                {/* Gender Allowed */}
-                <div className="border-t-2 border-gray-200 pt-6 mt-6">
-                  <label className="flex text-sm font-semibold mb-3 text-gray-800 items-center gap-2">
-                    <i className="fas fa-venus-mars text-pink-600"></i> Gender Allowed *
-                  </label>
-                  <select
-                    value={genderAllowed}
-                    onChange={(e) => setGenderAllowed(e.target.value)}
-                    className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                  >
-                    <option value="both">Mixed (Any gender)</option>
-                    <option value="male">Male Only</option>
-                    <option value="female">Female Only</option>
-                  </select>
-                </div>
               </div>
             )}
 
