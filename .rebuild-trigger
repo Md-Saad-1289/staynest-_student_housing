@@ -1,5 +1,6 @@
 Last rebuild trigger: 2026-03-08 - CreateListingPage fixes deployed
 Fixes included:
+
 - Fixed calculateRoomStats() function call order bug
 - Added missing animate-fadeIn CSS animation
 - Verified all routes and components
