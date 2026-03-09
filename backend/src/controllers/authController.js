@@ -18,8 +18,11 @@ const register = async (req, res) => {
       return res.status(400).json({ error: 'Name must be between 2 and 100 characters' });
     }
 
+    // Trim and normalize email before validation
+    const emailTrimmed = email.trim();
+
     // Validate email format
-    if (!validateEmail(email)) {
+    if (!validateEmail(emailTrimmed)) {
       return res.status(400).json({ error: 'Invalid email format' });
     }
 
@@ -54,14 +57,14 @@ const register = async (req, res) => {
     }
 
     // Check if email already exists
-    const exists = await User.findOne({ email: email.toLowerCase() });
+    const exists = await User.findOne({ email: emailTrimmed.toLowerCase() });
     if (exists) {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
     const user = new User({
       name: trimmedName,
-      email: email.trim().toLowerCase(),
+      email: emailTrimmed.toLowerCase(),
       phoneNo: finalPhone,
       mobile: finalPhone,
       passwordHash: password,
@@ -121,12 +124,18 @@ const login = async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
+    // Basic type checks
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ error: 'Email and password must be strings' });
+    }
+
     // Validate email format
     if (!validateEmail(email)) {
       return res.status(400).json({ error: 'Invalid email format' });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+passwordHash');
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail }).select('+passwordHash');
     if (!user) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
