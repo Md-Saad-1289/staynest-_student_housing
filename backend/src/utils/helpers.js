@@ -14,8 +14,10 @@ const validateEmail = (email) => {
 };
 
 const validateMobile = (mobile) => {
-  const re = /^(\+880|0)?1[3-9]\d{8}$/;
-  return re.test(mobile);
+  if (!mobile) return true; // Optional field
+  // Accept various phone formats: 10+ digits or with common formatting
+  const cleanPhone = mobile.replace(/[\s\-\+\(\)]/g, '');
+  return /^\d{10,}$/.test(cleanPhone);
 };
 
 export { generateToken, validateEmail, validateMobile };

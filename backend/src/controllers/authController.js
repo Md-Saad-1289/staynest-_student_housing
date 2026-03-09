@@ -28,6 +28,11 @@ const register = async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 6 characters long' });
     }
 
+    // Validate password is string and not empty
+    if (typeof password !== 'string' || password.length === 0) {
+      return res.status(400).json({ error: 'Password must be a valid string' });
+    }
+
     // Validate role: allow admin only with correct secret
     let userRole = role || 'student';
     
@@ -68,19 +73,40 @@ const register = async (req, res) => {
     await user.save();
     const token = generateToken(user._id, user.role);
 
-    return res.status(201).json({ token, user: {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      phoneNo: user.phoneNo,
-      role: user.role,
-      isVerified: user.isVerified,
-      profileImage: user.profileImage,
-      nidNumber: user.nidNumber,
-      createdAt: user.createdAt
-    }});
+    return res.status(201).json({ 
+      token, 
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phoneNo: user.phoneNo,
+        role: user.role,
+        isVerified: user.isVerified,
+        profileImage: user.profileImage,
+        nidNumber: user.nidNumber,
+        createdAt: user.createdAt
+      }
+    });
   } catch (err) {
-    console.error('register error:', err);
+    console.error('Register error:', {
+      message: err.message,
+      stack: err.stack,
+      code: err.code,
+      field: err.path
+    });
+    
+    // Handle specific MongoDB validation errors
+    if (err.name === 'ValidationError') {
+      const messages = Object.values(err.errors).map(e => e.message);
+      return res.status(400).json({ error: messages.join(', ') });
+    }
+    
+    // Handle MongoDB duplicate key error
+    if (err.code === 11000) {
+      const field = Object.keys(err.keyPattern)[0];
+      return res.status(400).json({ error: `${field} already exists` });
+    }
+    
     return res.status(500).json({ error: err.message || 'Registration failed' });
   }
 };

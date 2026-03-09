@@ -31,6 +31,6 @@ router.get('/', getListings);
 router.post('/', auth, authorize('owner'), createListing);
 router.get('/:id', getListing);
 router.put('/:id', auth, authorize('owner'), updateListing);
-router.delete('/:id', auth, deleteListing);
+router.delete('/:id', auth, authorize('owner'), deleteListing);
 
 export default router;

@@ -281,6 +281,11 @@ const deleteAdminListing = async (req, res) => {
     }
 
     const { reason } = req.body;
+    
+    // Validate reason (should be a non-empty string or use default)
+    if (reason && (typeof reason !== 'string' || !reason.trim())) {
+      return res.status(400).json({ error: 'Reason must be a non-empty string' });
+    }
 
     // Delete associated reviews and bookings
     await Review.deleteMany({ listingId: req.params.id });
@@ -292,7 +297,7 @@ const deleteAdminListing = async (req, res) => {
       action: 'delete_listing',
       targetType: 'listing',
       targetId: listing._id,
-      reason: reason || 'Deleted by admin',
+      reason: reason?.trim() || 'Deleted by admin',
       meta: { title: listing.title, ownerId: listing.ownerId },
     });
 

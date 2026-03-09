@@ -138,19 +138,6 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/saved-searches', savedSearchRoutes);
 app.use('/api/v1/testimonials', testimonialRoutes);
-// Also mount routes without the /api/v1 prefix to support frontends
-// that use a BASE URL without the versioned path (common in env configs)
-app.use('/auth/login', authLimiter);
-app.use('/auth/register', authLimiter);
-app.use('/auth', authRoutes);
-app.use('/listings', listingRoutes);
-app.use('/bookings', bookingRoutes);
-app.use('/reviews', reviewRoutes);
-app.use('/flags', flagRoutes);
-app.use('/admin', adminRoutes);
-app.use('/notifications', notificationRoutes);
-app.use('/saved-searches', savedSearchRoutes);
-app.use('/testimonials', testimonialRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -159,8 +146,9 @@ app.get('/health', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(500).json({ error: err.message || 'Internal server error' });
+  console.error('Error:', err);
+  const message = err?.message || err?.msg || String(err) || 'Internal server error';
+  res.status(500).json({ error: message });
 });
 
 // 404 handler

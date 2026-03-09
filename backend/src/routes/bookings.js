@@ -16,7 +16,7 @@ router.get('/owner', auth, authorize('owner'), getOwnerBookings);
 router.get('/student', auth, authorize('student'), getStudentBookings);
 router.put('/:id/status', auth, authorize('owner'), updateBookingStatus);
 
-// Public route - get bookings for a specific listing (less specific, goes last)
-router.get('/', getListingBookings);
+// Protected route - get bookings for a specific listing
+router.get('/', auth, getListingBookings);
 
 export default router;
