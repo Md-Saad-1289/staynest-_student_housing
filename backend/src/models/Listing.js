@@ -19,8 +19,7 @@ const listingSchema = new mongoose.Schema(
     },
     city: {
       type: String,
-      enum: ['Dhaka', 'Chittagong', 'Sylhet', 'Khulna', 'Rajshahi', 'Barisal'],
-      required: true,
+      default: 'Dhaka',
     },
     location: {
       lat: {
@@ -34,8 +33,7 @@ const listingSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['mess', 'hostel'],
-      required: true,
+      default: 'hostel',
     },
     rent: {
       type: Number,
@@ -47,7 +45,6 @@ const listingSchema = new mongoose.Schema(
     },
     furnished: {
       type: String,
-      enum: ['fully', 'semi', 'none'],
       default: 'semi',
     },
     utilities: {

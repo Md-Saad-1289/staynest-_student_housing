@@ -115,6 +115,17 @@ const createListing = async (req, res) => {
       return res.status(400).json({ error: 'Description must be a string' });
     }
 
+    // Normalize furnished value
+    const furnishedMap = {
+      'fully-furnished': 'fully',
+      'fully': 'fully',
+      'semi-furnished': 'semi',
+      'semi': 'semi',
+      'unfurnished': 'none',
+      'none': 'none'
+    };
+    const normalizedFurnished = furnishedMap[furnished?.toLowerCase()] || 'semi';
+
     const priceNum = parseInt(price);
     const listing = new Listing({
       ownerId: req.user.userId,
@@ -122,11 +133,10 @@ const createListing = async (req, res) => {
       description: description ? description.trim() : '',
       address: location.trim(),
       city: location.trim(),
-      type: 'Student Hostel',
+      type: 'hostel',
       rent: priceNum,
       deposit: Math.round(priceNum * 0.5),
-      genderAllowed: 'both',
-      furnished: furnished || 'semi-furnished',
+      furnished: normalizedFurnished,
       utilities: Array.isArray(utilities) ? utilities : [],
       meals: meals && typeof meals === 'object' ? meals : {},
       amenities: amenities && typeof amenities === 'object' ? amenities : {},
