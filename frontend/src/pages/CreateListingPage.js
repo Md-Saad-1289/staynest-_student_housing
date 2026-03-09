@@ -549,8 +549,8 @@ const Field = ({ label, labelIcon, required, hint, hintIcon, error, children }) 
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 const CreateListingPage = () => {
-  const navigate = useNavigate ? useNavigate() : { push: () => {} };
-  const params = useParams ? useParams() : {};
+  const navigate = useNavigate();
+  const params = useParams();
   const id = params.id;
   const isEditing = !!id;
 
