@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema(
 
     // mobile/phoneNo are kept in sync via pre-save hook for flexibility
     phoneNo: { type: String, trim: true, default: '' },
+    mobile: { type: String, trim: true, default: '' },
 
     // single address string
     fullAddress: { type: String, trim: true, default: '' },

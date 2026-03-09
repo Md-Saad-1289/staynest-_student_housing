@@ -8,37 +8,62 @@ const getListings = async (req, res) => {
   try {
     const { city, minRent, maxRent, genderAllowed, type, page = 1, limit = 10 } = req.query;
 
+    // Validate pagination parameters
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit) || 10)); // Max 50 results per page
+
     const filter = { verified: true };
 
-    if (city) filter.city = city;
-    if (genderAllowed) filter.genderAllowed = genderAllowed;
-    if (type) filter.type = type;
-
-    if (minRent || maxRent) {
-      filter.rent = {};
-      if (minRent) filter.rent.$gte = parseInt(minRent);
-      if (maxRent) filter.rent.$lte = parseInt(maxRent);
+    // Validate and add filters
+    if (city && typeof city === 'string' && city.trim()) {
+      filter.city = city.trim();
+    }
+    if (genderAllowed && ['male', 'female', 'both', 'any'].includes(genderAllowed)) {
+      filter.genderAllowed = genderAllowed;
+    }
+    if (type && typeof type === 'string' && type.trim()) {
+      filter.type = type.trim();
     }
 
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    // Validate rent filters
+    if (minRent || maxRent) {
+      filter.rent = {};
+      if (minRent) {
+        const min = parseInt(minRent);
+        if (!isNaN(min) && min >= 0) {
+          filter.rent.$gte = min;
+        }
+      }
+      if (maxRent) {
+        const max = parseInt(maxRent);
+        if (!isNaN(max) && max >= 0) {
+          filter.rent.$lte = max;
+        }
+      }
+    }
+
+    const skip = (pageNum - 1) * limitNum;
     const listings = await Listing.find(filter)
-      .populate('ownerId', 'name email mobile')
+      .populate('ownerId', 'name email mobile phoneNo')
       .skip(skip)
-      .limit(parseInt(limit))
+      .limit(limitNum)
       .sort({ createdAt: -1 });
 
     const total = await Listing.countDocuments(filter);
+    const totalPages = Math.ceil(total / limitNum);
 
     res.json({
       listings,
       pagination: {
         total,
-        page: parseInt(page),
-        pages: Math.ceil(total / parseInt(limit)),
+        page: pageNum,
+        pages: totalPages,
+        limit: limitNum,
       },
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('getListings error:', error);
+    res.status(500).json({ error: 'Failed to fetch listings' });
   }
 };
 
@@ -71,29 +96,45 @@ const createListing = async (req, res) => {
   try {
     const { title, description, location, landmarks, contact, rules, furnished, price, rooms, utilities, amenities, meals, photos } = req.body;
 
-    if (!title || !location || !price || !contact) {
-      return res.status(400).json({ error: 'Required fields missing' });
+    // Validate required fields
+    if (!title || typeof title !== 'string' || title.trim().length === 0) {
+      return res.status(400).json({ error: 'Title is required and must be a non-empty string' });
+    }
+    if (!location || typeof location !== 'string' || location.trim().length === 0) {
+      return res.status(400).json({ error: 'Location is required and must be a non-empty string' });
+    }
+    if (!price || isNaN(price) || parseInt(price) <= 0) {
+      return res.status(400).json({ error: 'Price must be a positive number' });
+    }
+    if (!contact || typeof contact !== 'string' || contact.trim().length === 0) {
+      return res.status(400).json({ error: 'Contact information is required' });
     }
 
+    // Validate optional fields
+    if (description && typeof description !== 'string') {
+      return res.status(400).json({ error: 'Description must be a string' });
+    }
+
+    const priceNum = parseInt(price);
     const listing = new Listing({
       ownerId: req.user.userId,
-      title,
-      description,
-      address: location, // Map location to address
-      city: location, // For now, use location as both address and city
-      type: 'Student Hostel', // Default type
-      rent: parseInt(price), // Map price to rent
-      deposit: Math.round(parseInt(price) * 0.5), // Calculate deposit as 50% of rent
-      genderAllowed: 'both', // Default
+      title: title.trim(),
+      description: description ? description.trim() : '',
+      address: location.trim(),
+      city: location.trim(),
+      type: 'Student Hostel',
+      rent: priceNum,
+      deposit: Math.round(priceNum * 0.5),
+      genderAllowed: 'both',
       furnished: furnished || 'semi-furnished',
       utilities: Array.isArray(utilities) ? utilities : [],
-      meals: meals || {},
-      amenities: amenities || {},
+      meals: meals && typeof meals === 'object' ? meals : {},
+      amenities: amenities && typeof amenities === 'object' ? amenities : {},
       rooms: Array.isArray(rooms) ? rooms : [],
-      rules,
-      contact,
-      landmarks,
-      photos: photos || [],
+      rules: rules ? rules.trim() : '',
+      contact: contact.trim(),
+      landmarks: landmarks ? landmarks.trim() : '',
+      photos: Array.isArray(photos) ? photos : [],
       verified: false,
     });
 
@@ -104,7 +145,8 @@ const createListing = async (req, res) => {
       listing,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('createListing error:', error);
+    res.status(500).json({ error: 'Failed to create listing' });
   }
 };
 

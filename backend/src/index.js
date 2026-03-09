@@ -51,16 +51,39 @@ if (process.env.FRONTEND_URL_PROD) FRONTEND_ORIGINS.push(process.env.FRONTEND_UR
 if (process.env.FRONTEND_URL_DEV) FRONTEND_ORIGINS.push(process.env.FRONTEND_URL_DEV);
 if (process.env.FRONTEND_URL_EXTRA) FRONTEND_ORIGINS.push(process.env.FRONTEND_URL_EXTRA);
 
+// Add localhost for development if in dev environment
+if (process.env.NODE_ENV !== 'production' && !FRONTEND_ORIGINS.includes('http://localhost:3000')) {
+  FRONTEND_ORIGINS.push('http://localhost:3000');
+}
+
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (e.g., mobile apps, curl)
+    // Allow requests with no origin (e.g., mobile apps, Postman, curl)
     if (!origin) return callback(null, true);
+    
+    // In production, enforce CORS strictly
+    if (process.env.NODE_ENV === 'production' && FRONTEND_ORIGINS.length === 0) {
+      console.warn('WARNING: No FRONTEND_URL environment variables set in production. Some CORS requests may fail.');
+      return callback(new Error('CORS policy: Frontend origins not configured'), false);
+    }
+    
+    // If no origins configured (dev mode), allow all
     if (FRONTEND_ORIGINS.length === 0) return callback(null, true);
+    
+    // Check if origin is allowed
     if (FRONTEND_ORIGINS.includes(origin)) return callback(null, true);
+    
+    // Log rejected origins in development
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(`CORS rejected origin: ${origin}`);
+    }
+    
     return callback(new Error('CORS policy: This origin is not allowed'), false);
   },
   credentials: true,
   optionsSuccessStatus: 204,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.use(express.json());

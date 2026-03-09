@@ -7,11 +7,26 @@ const register = async (req, res) => {
   try {
     const { name, email, mobile, phoneNo, password, role, nidNumber, adminSecret } = req.body;
 
+    // Validate required fields
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'name, email and password are required' });
     }
 
-    if (!validateEmail(email)) return res.status(400).json({ error: 'Invalid email' });
+    // Validate name (not empty after trim, reasonable length)
+    const trimmedName = name.trim();
+    if (trimmedName.length < 2 || trimmedName.length > 100) {
+      return res.status(400).json({ error: 'Name must be between 2 and 100 characters' });
+    }
+
+    // Validate email format
+    if (!validateEmail(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // Validate password strength (minimum 6 characters)
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
 
     // Validate role: allow admin only with correct secret
     let userRole = role || 'student';
@@ -23,17 +38,24 @@ const register = async (req, res) => {
       }
     }
     
-    if (!['student', 'owner', 'admin'].includes(userRole)) return res.status(400).json({ error: 'Invalid role' });
+    if (!['student', 'owner', 'admin'].includes(userRole)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
 
     // Accept either `phoneNo` or legacy `mobile`
     const finalPhone = (phoneNo || mobile || '').trim();
-    if (finalPhone && !validateMobile(finalPhone)) return res.status(400).json({ error: 'Invalid phone number' });
+    if (finalPhone && !validateMobile(finalPhone)) {
+      return res.status(400).json({ error: 'Invalid phone number format' });
+    }
 
-    const exists = await User.findOne({ email });
-    if (exists) return res.status(400).json({ error: 'Email already registered' });
+    // Check if email already exists
+    const exists = await User.findOne({ email: email.toLowerCase() });
+    if (exists) {
+      return res.status(400).json({ error: 'Email already registered' });
+    }
 
     const user = new User({
-      name: name.trim(),
+      name: trimmedName,
       email: email.trim().toLowerCase(),
       phoneNo: finalPhone,
       mobile: finalPhone,
@@ -58,7 +80,8 @@ const register = async (req, res) => {
       createdAt: user.createdAt
     }});
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error('register error:', err);
+    return res.status(500).json({ error: err.message || 'Registration failed' });
   }
 };
 
@@ -66,13 +89,31 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 
-    const user = await User.findOne({ email }).select('+passwordHash');
-    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+    // Validate required fields
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
 
-    const valid = await user.comparePassword(password);
-    if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+    // Validate email format
+    if (!validateEmail(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+passwordHash');
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    // Check if account is banned
+    if (user.isBanned) {
+      return res.status(403).json({ error: 'Your account has been banned' });
+    }
 
     const token = generateToken(user._id, user.role);
     return res.json({ token, user: {
@@ -87,7 +128,8 @@ const login = async (req, res) => {
       createdAt: user.createdAt
     }});
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error('login error:', err);
+    return res.status(500).json({ error: err.message || 'Login failed' });
   }
 };
 
@@ -204,21 +246,45 @@ const updateProfile = async (req, res) => {
 const changePassword = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { currentPassword, newPassword } = req.body;
-    if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Both passwords required' });
-    if (newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 chars' });
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    // Validate required fields
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({ error: 'current password, new password, and confirmation required' });
+    }
+
+    // Validate password length
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    }
+
+    // Validate password confirmation
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ error: 'Passwords do not match' });
+    }
+
+    // Prevent using same password
+    if (currentPassword === newPassword) {
+      return res.status(400).json({ error: 'New password cannot be the same as current password' });
+    }
 
     const user = await User.findById(userId).select('+passwordHash');
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const ok = await user.comparePassword(currentPassword);
-    if (!ok) return res.status(401).json({ error: 'Current password incorrect' });
+    // Verify current password
+    const isCurrentPasswordValid = await user.comparePassword(currentPassword);
+    if (!isCurrentPasswordValid) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
 
+    // Set new password (will be hashed by pre-save hook)
     user.passwordHash = newPassword;
     await user.save();
-    return res.json({ message: 'Password changed' });
+
+    return res.json({ message: 'Password changed successfully' });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error('changePassword error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to change password' });
   }
 };
 
